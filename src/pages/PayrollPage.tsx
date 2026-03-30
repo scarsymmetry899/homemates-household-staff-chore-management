@@ -33,7 +33,7 @@ const PayrollPage = () => {
             <p className="label-sm text-primary-foreground/60">This Month</p>
             <TrendingUp size={16} className="text-primary-foreground/60" />
           </div>
-          <p className="label-sm text-primary-foreground/50">Total Payroll</p>
+          <p className="label-sm text-primary-foreground/50">Net Disbursement</p>
           <p className="font-display text-3xl text-primary-foreground">
             ₹{totalPayroll.toLocaleString("en-IN")}
           </p>
