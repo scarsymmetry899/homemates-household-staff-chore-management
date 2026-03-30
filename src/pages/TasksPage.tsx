@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Circle, Clock, Plus, X } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Plus, X, Trash2 } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { toast } from "sonner";
 type TaskFilter = "all" | "pending" | "done";
 
 const TasksPage = () => {
-  const { staff, toggleTask, addTask } = useAppState();
+  const { staff, toggleTask, addTask, deleteTask } = useAppState();
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [showForm, setShowForm] = useState(false);
   const [newTask, setNewTask] = useState({ staffId: "", task: "" });
@@ -148,8 +148,12 @@ const TasksPage = () => {
             <StaggerItem key={`${task.staffId}-${task.taskIndex}-${task.task}`}>
               <SwipeableCard
                 onSwipeRight={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
+                onSwipeLeft={() => {
+                  deleteTask(task.staffId, task.taskIndex);
+                  toast.success("Task deleted", { description: task.task });
+                }}
                 rightLabel={task.done ? "Undo" : "Done"}
-                leftLabel="Reassign"
+                leftLabel="Delete"
               >
                 <PressableCard>
                   <div
@@ -175,6 +179,17 @@ const TasksPage = () => {
                       </div>
                     </div>
                     {!task.done && <Clock size={14} className="text-status-late shrink-0 mt-1" />}
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteTask(task.staffId, task.taskIndex);
+                        toast.success("Task deleted", { description: task.task });
+                      }}
+                      className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-1"
+                    >
+                      <Trash2 size={13} />
+                    </motion.button>
                   </div>
                 </PressableCard>
               </SwipeableCard>

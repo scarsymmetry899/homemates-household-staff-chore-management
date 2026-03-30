@@ -31,6 +31,8 @@ interface AppState {
   addExpense: (expense: Omit<Expense, "id">) => void;
   dismissAlert: (alertId: string) => void;
   addTask: (staffId: string, task: string) => void;
+  removeStaff: (staffId: string) => void;
+  deleteTask: (staffId: string, taskIndex: number) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -133,9 +135,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
   }, []);
 
+  const removeStaff = useCallback((staffId: string) => {
+    setStaff((prev) => prev.filter((s) => s.id !== staffId));
+  }, []);
+
+  const deleteTask = useCallback((staffId: string, taskIndex: number) => {
+    setStaff((prev) =>
+      prev.map((s) =>
+        s.id === staffId
+          ? { ...s, assignments: s.assignments.filter((_, i) => i !== taskIndex) }
+          : s
+      )
+    );
+  }, []);
+
   return (
     <AppContext.Provider
-      value={{ staff, expenses, alerts, toggleTask, updateStaffStatus, addExpense, dismissAlert, addTask }}
+      value={{ staff, expenses, alerts, toggleTask, updateStaffStatus, addExpense, dismissAlert, addTask, removeStaff, deleteTask }}
     >
       {children}
     </AppContext.Provider>

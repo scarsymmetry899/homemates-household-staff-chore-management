@@ -25,7 +25,7 @@ const statusStyle: Record<string, string> = {
 
 const StaffDirectory = () => {
   const navigate = useNavigate();
-  const { staff } = useAppState();
+  const { staff, removeStaff } = useAppState();
   const [activeDept, setActiveDept] = useState<string>("All");
 
   const filtered = activeDept === "All"
@@ -103,10 +103,11 @@ const StaffDirectory = () => {
                   toast.success(`Calling ${s.name}...`);
                 }}
                 onSwipeLeft={() => {
-                  toast(`Sending message to ${s.name}...`);
+                  removeStaff(s.id);
+                  toast.success(`${s.name} removed from staff`);
                 }}
                 rightLabel="Call"
-                leftLabel="Message"
+                leftLabel="Remove"
               >
                 <PressableCard className="glass-card rounded-2xl overflow-hidden">
                   <div className="flex gap-4 p-5">

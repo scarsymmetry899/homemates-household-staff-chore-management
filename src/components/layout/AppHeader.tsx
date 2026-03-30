@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Bell, Settings } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
-import avatarImg from "@/assets/staff/arthur-penhaligon.jpg";
+import logoImg from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
 const AppHeader = () => {
@@ -13,12 +13,12 @@ const AppHeader = () => {
     <header className="flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-md sticky top-0 z-40">
       <div className="flex items-center gap-3">
         <img
-          src={avatarImg}
-          alt="Manager"
-          className="w-10 h-10 rounded-xl object-cover shadow-card"
+          src={logoImg}
+          alt="Homemaker"
+          className="w-10 h-10 rounded-xl object-contain"
         />
         <span className="font-display text-base font-medium text-foreground tracking-tight">
-          HOMEMAKER
+          Homemaker
         </span>
       </div>
       <div className="flex items-center gap-2">
