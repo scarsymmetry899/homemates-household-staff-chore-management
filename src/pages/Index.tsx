@@ -151,7 +151,7 @@ const Index = () => {
             <span className="text-card-foreground font-semibold">{doneTasks} / {totalTasks}</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            {totalTasks - doneTasks} deliverables in the pipeline
+            {totalTasks - doneTasks} tasks left for the day
           </p>
         </AnimatedCard>
 
