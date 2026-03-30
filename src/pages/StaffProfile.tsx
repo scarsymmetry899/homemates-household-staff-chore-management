@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, Send, CalendarDays, Shield, Pencil, Download } from "lucide-react";
+import { ArrowLeft, Bell, Send, CalendarDays, Shield, Pencil, Download, Trash2 } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { toast } from "sonner";
 const StaffProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { staff, toggleTask } = useAppState();
+  const { staff, toggleTask, removeStaff, deleteTask } = useAppState();
   const s = staff.find((s) => s.id === id);
 
   if (!s) {
