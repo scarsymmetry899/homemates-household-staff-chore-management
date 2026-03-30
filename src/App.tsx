@@ -3,8 +3,14 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import AppLayout from "./components/layout/AppLayout";
+import Index from "./pages/Index";
+import StaffDirectory from "./pages/StaffDirectory";
+import StaffProfile from "./pages/StaffProfile";
+import TasksPage from "./pages/TasksPage";
+import PayrollPage from "./pages/PayrollPage";
+import InsightsPage from "./pages/InsightsPage";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -15,8 +21,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/staff" element={<StaffDirectory />} />
+            <Route path="/staff/:id" element={<StaffProfile />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/payroll" element={<PayrollPage />} />
+            <Route path="/insights" element={<InsightsPage />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
