@@ -8,11 +8,11 @@ import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRef
 import { toast } from "sonner";
 
 const statusLabel: Record<string, string> = {
-  "on-duty": "On-Duty",
-  late: "Late (20m)",
-  absent: "Absent",
-  "en-route": "En-Route",
-  "off-duty": "Off-Duty",
+  "on-duty": "Clocked In",
+  late: "Running Late",
+  absent: "No-Show",
+  "en-route": "Inbound",
+  "off-duty": "Off-Grid",
 };
 
 const statusStyle: Record<string, string> = {
