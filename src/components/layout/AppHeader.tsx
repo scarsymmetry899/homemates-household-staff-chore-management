@@ -11,13 +11,13 @@ const AppHeader = () => {
 
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-md sticky top-0 z-40">
-      <div className="flex items-center gap-3">
-        <img
-          src={logoImg}
-          alt="Homemaker"
-          className="w-14 h-14 object-contain"
-        />
-      </div>
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={() => navigate("/")}
+        className="flex items-center gap-3"
+      >
+        <img src={logoImg} alt="Homemaker" className="w-14 h-14 object-contain" />
+      </motion.button>
       <div className="flex items-center gap-2">
         <motion.button
           whileTap={{ scale: 0.9 }}

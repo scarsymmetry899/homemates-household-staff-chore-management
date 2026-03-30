@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Phone, Eye, Sparkles } from "lucide-react";
+import { Phone, MessageCircle, Eye, Sparkles, Plus, X, Camera, UserPlus } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
-import { departments } from "@/data/staff";
+import { departments, type Department } from "@/data/staff";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
 
@@ -25,8 +25,20 @@ const statusStyle: Record<string, string> = {
 
 const StaffDirectory = () => {
   const navigate = useNavigate();
-  const { staff, removeStaff } = useAppState();
+  const { staff, removeStaff, addStaff } = useAppState();
   const [activeDept, setActiveDept] = useState<string>("All");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newStaff, setNewStaff] = useState({
+    name: "",
+    role: "",
+    phone: "",
+    department: "Hospitality" as Department,
+    salary: "",
+    location: "",
+    tenure: "",
+    shiftStart: "08:00 AM",
+    shiftEnd: "05:00 PM",
+  });
 
   const filtered = activeDept === "All"
     ? staff
@@ -40,6 +52,34 @@ const StaffDirectory = () => {
     toast.success("Staff directory refreshed");
   }, []);
 
+  const handleAddStaff = () => {
+    if (!newStaff.name || !newStaff.role || !newStaff.phone) {
+      toast.error("Please fill in name, role, and phone number");
+      return;
+    }
+    addStaff({
+      name: newStaff.name,
+      role: newStaff.role,
+      phone: newStaff.phone,
+      department: newStaff.department,
+      salary: Number(newStaff.salary) || 0,
+      status: "off-duty",
+      tenure: newStaff.tenure || "New",
+      location: newStaff.location || "Not assigned",
+      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(newStaff.name)}&background=567C8D&color=fff&size=200`,
+      shiftStart: newStaff.shiftStart,
+      shiftEnd: newStaff.shiftEnd,
+    });
+    toast.success(`${newStaff.name} added to the team!`);
+    setNewStaff({ name: "", role: "", phone: "", department: "Hospitality", salary: "", location: "", tenure: "", shiftStart: "08:00 AM", shiftEnd: "05:00 PM" });
+    setShowAddForm(false);
+  };
+
+  const handleMessage = (phone: string, name: string) => {
+    window.open(`https://t.me/${phone.replace(/[\s+]/g, "")}`, "_blank");
+    toast.success(`Opening Telegram for ${name}...`);
+  };
+
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
@@ -50,16 +90,70 @@ const StaffDirectory = () => {
             <br />
             <span className="font-display italic text-secondary">Champions</span>
           </h1>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="mt-3 btn-estate text-primary-foreground label-sm px-6 py-3 rounded-2xl inline-flex items-center gap-2"
-          >
-            <Sparkles size={14} /> Deploy Help
-          </motion.button>
+          <div className="flex gap-3 mt-3">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAddForm(true)}
+              className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl inline-flex items-center gap-2"
+            >
+              <UserPlus size={14} /> Add Homemate
+            </motion.button>
+          </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Last synced: {new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
+            Last synced: {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
           </p>
         </section>
+
+        {/* Add Staff Form */}
+        <AnimatePresence>
+          {showAddForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="glass-card rounded-2xl p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="headline-sm text-card-foreground">New Homemate</h3>
+                  <button onClick={() => setShowAddForm(false)} className="glass-btn w-8 h-8 rounded-xl flex items-center justify-center">
+                    <X size={16} className="text-muted-foreground" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-2xl bg-surface-container flex items-center justify-center text-muted-foreground">
+                    <Camera size={20} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Photo (optional)</p>
+                </div>
+                <input placeholder="Full Name *" value={newStaff.name} onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+                  className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
+                <input placeholder="Role (e.g. Cook, Nanny, Gardener) *" value={newStaff.role} onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
+                  className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
+                <input placeholder="Phone Number *" value={newStaff.phone} onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
+                  className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
+                <select value={newStaff.department} onChange={(e) => setNewStaff({ ...newStaff, department: e.target.value as Department })}
+                  className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30">
+                  {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <input type="number" placeholder="Monthly Salary (₹)" value={newStaff.salary} onChange={(e) => setNewStaff({ ...newStaff, salary: e.target.value })}
+                  className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
+                <input placeholder="Location / Area" value={newStaff.location} onChange={(e) => setNewStaff({ ...newStaff, location: e.target.value })}
+                  className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
+                <div className="flex gap-2">
+                  <input placeholder="Shift Start (e.g. 08:00 AM)" value={newStaff.shiftStart} onChange={(e) => setNewStaff({ ...newStaff, shiftStart: e.target.value })}
+                    className="flex-1 bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
+                  <input placeholder="Shift End (e.g. 05:00 PM)" value={newStaff.shiftEnd} onChange={(e) => setNewStaff({ ...newStaff, shiftEnd: e.target.value })}
+                    className="flex-1 bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
+                </div>
+                <motion.button whileTap={{ scale: 0.95 }} onClick={handleAddStaff}
+                  className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl">
+                  Add to Team
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
@@ -84,12 +178,10 @@ const StaffDirectory = () => {
               key={dept}
               onClick={() => setActiveDept(dept)}
               className={`label-sm whitespace-nowrap px-4 py-2.5 rounded-xl transition-all ${
-                activeDept === dept
-                  ? "btn-estate text-primary-foreground"
-                  : "glass-btn text-muted-foreground"
+                activeDept === dept ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
               }`}
             >
-              {dept === "All" ? "All Depts" : dept}
+              {dept === "All" ? "All Roles" : dept}
             </button>
           ))}
         </div>
@@ -129,11 +221,17 @@ const StaffDirectory = () => {
                     </div>
                   </div>
                   <div className="flex border-t border-border/40">
-                    <button className="flex-1 flex items-center justify-center gap-2 py-3 text-muted-foreground hover:text-foreground transition-colors">
+                    <button
+                      onClick={() => toast.success(`Calling ${s.name}...`)}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 text-muted-foreground hover:text-foreground transition-colors"
+                    >
                       <Phone size={14} />
                     </button>
-                    <button className="flex-1 flex items-center justify-center gap-2 py-3 text-muted-foreground hover:text-foreground transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <button
+                      onClick={() => handleMessage(s.phone, s.name)}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <MessageCircle size={14} />
                     </button>
                     <button
                       onClick={() => navigate(`/staff/${s.id}`)}

@@ -1,27 +1,27 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 interface AuthPageProps {
-  onLogin: () => void;
+  onLogin: (name?: string) => void;
 }
 
 const AuthPage = ({ onLogin }: AuthPageProps) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock auth — just log in
-    onLogin();
+    const name = isSignUp && fullName ? fullName : email.split("@")[0];
+    onLogin(name.charAt(0).toUpperCase() + name.slice(1));
   };
 
   const handleGoogleLogin = () => {
-    // Mock Google sign-in
-    onLogin();
+    onLogin("there");
   };
 
   return (
@@ -32,7 +32,6 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
         transition={{ duration: 0.6 }}
         className="w-full max-w-sm space-y-8"
       >
-        {/* Logo & Branding */}
         <div className="text-center space-y-3">
           <motion.img
             initial={{ scale: 0.8, opacity: 0 }}
@@ -45,7 +44,6 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
           <p className="text-sm text-muted-foreground">Your household, simplified.</p>
         </div>
 
-        {/* Google Sign In */}
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleGoogleLogin}
@@ -60,15 +58,25 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
           <span className="text-sm font-semibold text-foreground">Continue with Google</span>
         </motion.button>
 
-        {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-border" />
           <span className="text-xs text-muted-foreground uppercase tracking-wider">or</span>
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        {/* Email Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignUp && (
+            <div className="relative">
+              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Your name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full glass-card rounded-2xl py-3.5 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/30"
+              />
+            </div>
+          )}
           <div className="relative">
             <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -90,11 +98,7 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
               required
               className="w-full glass-card rounded-2xl py-3.5 pl-11 pr-11 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/30"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-            >
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
@@ -108,13 +112,9 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
           </motion.button>
         </form>
 
-        {/* Toggle */}
         <p className="text-center text-sm text-muted-foreground">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-secondary font-semibold"
-          >
+          <button onClick={() => setIsSignUp(!isSignUp)} className="text-secondary font-semibold">
             {isSignUp ? "Sign In" : "Sign Up"}
           </button>
         </p>

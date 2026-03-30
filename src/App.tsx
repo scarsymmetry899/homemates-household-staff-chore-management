@@ -25,8 +25,11 @@ const App = () => {
     return localStorage.getItem("homemaker_auth") === "true";
   });
 
-  const handleLogin = () => {
+  const handleLogin = (name?: string) => {
     localStorage.setItem("homemaker_auth", "true");
+    if (name) {
+      localStorage.setItem("homemaker_owner_name", name);
+    }
     setIsAuthenticated(true);
   };
 

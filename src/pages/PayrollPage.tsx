@@ -8,7 +8,6 @@ import { toast } from "sonner";
 const PayrollPage = () => {
   const { staff } = useAppState();
   const totalPayroll = staff.reduce((a, s) => a + s.payroll.netPay, 0);
-  const totalBonuses = staff.reduce((a, s) => a + s.payroll.bonus, 0);
   const totalDeductions = staff.reduce((a, s) => a + s.payroll.deductions, 0);
 
   const handleRefresh = useCallback(async () => {
@@ -24,7 +23,7 @@ const PayrollPage = () => {
           <h1 className="display-sm text-foreground">
             Payroll
             <br />
-            <span className="font-display italic text-secondary">Disbursement</span>
+            <span className="font-display italic text-secondary">Overview</span>
           </h1>
         </section>
 
@@ -39,19 +38,21 @@ const PayrollPage = () => {
           </p>
           <div className="flex gap-6 pt-2">
             <div>
-              <p className="label-sm text-primary-foreground/50">Bonuses</p>
-              <p className="text-primary-foreground font-semibold text-sm">+₹{totalBonuses.toLocaleString("en-IN")}</p>
+              <p className="label-sm text-primary-foreground/50">Total Base</p>
+              <p className="text-primary-foreground font-semibold text-sm">₹{staff.reduce((a, s) => a + s.payroll.baseSalary, 0).toLocaleString("en-IN")}</p>
             </div>
-            <div>
-              <p className="label-sm text-primary-foreground/50">Deductions</p>
-              <p className="text-status-absent font-semibold text-sm">-₹{totalDeductions.toLocaleString("en-IN")}</p>
-            </div>
+            {totalDeductions > 0 && (
+              <div>
+                <p className="label-sm text-primary-foreground/50">Deductions</p>
+                <p className="text-status-absent font-semibold text-sm">-₹{totalDeductions.toLocaleString("en-IN")}</p>
+              </div>
+            )}
           </div>
         </AnimatedCard>
 
         <StaggerContainer className="space-y-3 pb-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Crew Compensation</h3>
+            <h3 className="headline-sm text-foreground">Staff Compensation</h3>
             <button
               onClick={() => toast.success("Export started", { description: "Payroll report generating..." })}
               className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl flex items-center gap-1"
@@ -69,17 +70,13 @@ const PayrollPage = () => {
                     <p className="label-sm text-muted-foreground">{s.role}</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="grid grid-cols-2 gap-3 text-center">
                   <div>
-                    <p className="label-sm text-muted-foreground">Base</p>
+                    <p className="label-sm text-muted-foreground">Base Salary</p>
                     <p className="text-sm font-semibold text-card-foreground">₹{s.payroll.baseSalary.toLocaleString("en-IN")}</p>
                   </div>
                   <div>
-                    <p className="label-sm text-status-on-time">Bonus</p>
-                    <p className="text-sm font-semibold text-status-on-time">+₹{s.payroll.bonus.toLocaleString("en-IN")}</p>
-                  </div>
-                  <div>
-                    <p className="label-sm text-status-absent">Deduct</p>
+                    <p className="label-sm text-status-absent">Deductions</p>
                     <p className="text-sm font-semibold text-status-absent">-₹{s.payroll.deductions.toLocaleString("en-IN")}</p>
                   </div>
                 </div>
