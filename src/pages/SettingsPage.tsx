@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut } from "lucide-react";
+import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil } from "lucide-react";
 import { PageTransition, AnimatedCard, PullToRefresh } from "@/components/animations/MotionComponents";
+import { useAppState } from "@/context/AppContext";
 import { toast } from "sonner";
 
 interface SettingToggle {
@@ -42,11 +43,14 @@ const settingSections: { title: string; items: SettingToggle[] }[] = [
 ];
 
 const SettingsPage = ({ onLogout }: SettingsPageProps) => {
+  const { ownerName, setOwnerName } = useAppState();
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
     settingSections.forEach((s) => s.items.forEach((i) => (defaults[i.id] = i.defaultOn)));
     return defaults;
   });
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(ownerName);
 
   const handleToggle = (id: string) => {
     setToggles((prev) => {
@@ -56,6 +60,14 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
       });
       return next;
     });
+  };
+
+  const handleSaveName = () => {
+    if (nameInput.trim()) {
+      setOwnerName(nameInput.trim());
+      toast.success("Display name updated", { description: nameInput.trim() });
+    }
+    setEditingName(false);
   };
 
   const handleRefresh = useCallback(async () => {
@@ -71,8 +83,39 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
           <h1 className="display-sm text-foreground">Settings</h1>
         </section>
 
+        {/* Owner Name */}
+        <AnimatedCard delay={0.02} className="glass-card rounded-2xl p-5 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <User size={18} className="text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="label-sm text-muted-foreground">Display Name</p>
+              {editingName ? (
+                <div className="flex gap-2 mt-1">
+                  <input
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    className="bg-surface-low rounded-lg px-3 py-1.5 text-sm text-card-foreground border border-border/30 flex-1"
+                    autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+                  />
+                  <button onClick={handleSaveName} className="label-sm text-secondary px-3">Save</button>
+                </div>
+              ) : (
+                <p className="text-sm font-semibold text-card-foreground">{ownerName}</p>
+              )}
+            </div>
+            {!editingName && (
+              <button onClick={() => { setEditingName(true); setNameInput(ownerName); }} className="text-secondary">
+                <Pencil size={14} />
+              </button>
+            )}
+          </div>
+        </AnimatedCard>
+
         {settingSections.map((section, si) => (
-          <AnimatedCard key={section.title} delay={si * 0.08} className="space-y-3">
+          <AnimatedCard key={section.title} delay={(si + 1) * 0.08} className="space-y-3">
             <h3 className="headline-sm text-foreground">{section.title}</h3>
             <div className="glass-card rounded-2xl overflow-hidden divide-y divide-border/20">
               {section.items.map((item) => {
@@ -92,11 +135,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                       <p className="text-sm font-semibold text-card-foreground">{item.label}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
                     </div>
-                    <div
-                      className={`w-12 h-7 rounded-full p-0.5 transition-colors duration-200 ${
-                        isOn ? "bg-primary" : "bg-muted"
-                      }`}
-                    >
+                    <div className={`w-12 h-7 rounded-full p-0.5 transition-colors duration-200 ${isOn ? "bg-primary" : "bg-muted"}`}>
                       <motion.div
                         animate={{ x: isOn ? 20 : 0 }}
                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
