@@ -6,18 +6,20 @@ import arthurImg from "@/assets/staff/arthur-penhaligon.jpg";
 import mariaImg from "@/assets/staff/maria-gomez.jpg";
 
 export type StaffStatus = "on-duty" | "late" | "absent" | "en-route" | "off-duty";
-export type Department = "Hospitality" | "Security" | "Grounds" | "Culinary" | "Maintenance";
+export type Department = "Hospitality" | "Security" | "Grounds" | "Culinary" | "Maintenance" | "Other";
 
 export interface StaffMember {
   id: string;
   name: string;
   role: string;
   department: Department;
+  customDepartment?: string;
   photo: string;
   phone: string;
   salary: number;
   status: StaffStatus;
   reliabilityScore: number;
+  punctualityScore: number;
   tenure: string;
   location: string;
   skills: string[];
@@ -46,6 +48,7 @@ export const staffMembers: StaffMember[] = [
     salary: 25000,
     status: "on-duty",
     reliabilityScore: 99.4,
+    punctualityScore: 98.5,
     tenure: "4 Years, 2 Months",
     location: "West Wing Annex",
     skills: ["Deep cleaning", "Linen management", "Event setup"],
@@ -76,6 +79,7 @@ export const staffMembers: StaffMember[] = [
     salary: 22000,
     status: "late",
     reliabilityScore: 87.2,
+    punctualityScore: 72.0,
     tenure: "2 Years, 8 Months",
     location: "Main Gate",
     skills: ["Driving", "Vehicle maintenance", "Route planning"],
@@ -103,6 +107,7 @@ export const staffMembers: StaffMember[] = [
     salary: 20000,
     status: "on-duty",
     reliabilityScore: 95.8,
+    punctualityScore: 97.2,
     tenure: "3 Years, 1 Month",
     location: "Garden Wing",
     skills: ["Landscaping", "Irrigation systems", "Botanical care"],
@@ -129,6 +134,7 @@ export const staffMembers: StaffMember[] = [
     salary: 30000,
     status: "absent",
     reliabilityScore: 92.1,
+    punctualityScore: 85.0,
     tenure: "5 Years, 6 Months",
     location: "Main Kitchen",
     skills: ["North Indian cooking", "Continental", "Menu planning"],
@@ -153,6 +159,7 @@ export const staffMembers: StaffMember[] = [
     salary: 18000,
     status: "on-duty",
     reliabilityScore: 96.5,
+    punctualityScore: 99.0,
     tenure: "6 Years, 3 Months",
     location: "Storage Wing",
     skills: ["Inventory management", "Vendor coordination", "Procurement"],
@@ -178,6 +185,7 @@ export const staffMembers: StaffMember[] = [
     salary: 20000,
     status: "on-duty",
     reliabilityScore: 98.9,
+    punctualityScore: 96.8,
     tenure: "3 Years, 9 Months",
     location: "East Wing",
     skills: ["Childcare", "Meal prep for kids", "First aid"],
@@ -196,4 +204,4 @@ export const staffMembers: StaffMember[] = [
   },
 ];
 
-export const departments: Department[] = ["Hospitality", "Security", "Grounds", "Culinary", "Maintenance"];
+export const departments: Department[] = ["Hospitality", "Security", "Grounds", "Culinary", "Maintenance", "Other"];

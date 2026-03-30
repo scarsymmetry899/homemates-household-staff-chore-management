@@ -98,7 +98,7 @@ const Index = () => {
         {/* Active Homemates */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Active Homemates</h3>
+            <h3 className="headline-sm text-foreground">Active Homemakers</h3>
             <button onClick={() => navigate("/staff")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
               View All
             </button>
