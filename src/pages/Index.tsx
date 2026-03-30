@@ -120,9 +120,9 @@ const Index = () => {
         {/* Task Throughput */}
         <AnimatedCard delay={0.2} className="glass-card rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-card-foreground">Ops Throughput</h3>
+            <h3 className="headline-sm text-card-foreground">Today's Progress</h3>
             <button onClick={() => navigate("/tasks")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
-              Pipeline
+              All Tasks
             </button>
           </div>
           <div className="flex items-center justify-center">
@@ -142,7 +142,7 @@ const Index = () => {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="font-display text-2xl text-foreground">{taskPct}%</span>
-                <span className="label-sm text-muted-foreground">Shipped</span>
+                <span className="label-sm text-muted-foreground">Done</span>
               </div>
             </div>
           </div>
@@ -151,7 +151,7 @@ const Index = () => {
             <span className="text-card-foreground font-semibold">{doneTasks} / {totalTasks}</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            {totalTasks - doneTasks} deliverables in the pipeline
+            {totalTasks - doneTasks} tasks left for the day
           </p>
         </AnimatedCard>
 
@@ -159,14 +159,14 @@ const Index = () => {
         <AnimatedCard delay={0.25} className="btn-estate rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="label-sm text-primary-foreground/60">Monthly Cycle</p>
-              <h3 className="headline-sm text-primary-foreground mt-1">Burn Rate</h3>
+              <p className="label-sm text-primary-foreground/60">This Month</p>
+              <h3 className="headline-sm text-primary-foreground mt-1">Household Spending</h3>
             </div>
             <div className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center backdrop-blur-sm">
               <TrendingUp size={16} className="text-primary-foreground" />
             </div>
           </div>
-          <p className="label-sm text-primary-foreground/60">Total Outflow</p>
+          <p className="label-sm text-primary-foreground/60">Total Spent</p>
           <p className="font-display text-3xl text-primary-foreground">
             ₹24,850 <span className="text-sm text-primary-foreground/50">INR</span>
           </p>

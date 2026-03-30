@@ -44,11 +44,11 @@ const StaffDirectory = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Workforce Command Center</p>
+          <p className="label-sm text-muted-foreground">Your Household Heroes</p>
           <h1 className="display-sm text-foreground">
-            Crew
+            Home
             <br />
-            <span className="font-display italic text-secondary">Roster</span>
+            <span className="font-display italic text-secondary">Champions</span>
           </h1>
           <motion.button
             whileTap={{ scale: 0.95 }}

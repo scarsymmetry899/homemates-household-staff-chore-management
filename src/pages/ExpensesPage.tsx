@@ -66,7 +66,7 @@ const ExpensesPage = () => {
             <p className="label-sm text-primary-foreground/60">This Month</p>
             <TrendingUp size={16} className="text-primary-foreground/60" />
           </div>
-          <p className="label-sm text-primary-foreground/50">Cash Burn Rate</p>
+          <p className="label-sm text-primary-foreground/50">Monthly Spending</p>
           <p className="font-display text-3xl text-primary-foreground">
             ₹{total.toLocaleString("en-IN")}
           </p>
