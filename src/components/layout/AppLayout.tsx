@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import AppHeader from "./AppHeader";
+import SmartCommandBox from "@/components/SmartCommandBox";
 
 const AppLayout = () => {
   const location = useLocation();
@@ -12,6 +13,7 @@ const AppLayout = () => {
       <main className="flex-1 pb-24 overflow-x-hidden">
         <Outlet />
       </main>
+      <SmartCommandBox />
       <BottomNav />
     </div>
   );
