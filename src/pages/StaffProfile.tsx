@@ -107,7 +107,7 @@ const StaffProfile = () => {
 
       <div className="px-5 space-y-6 -mt-2">
         <section className="space-y-3 pt-4">
-          <p className="label-sm text-muted-foreground">Household Staff</p>
+          <p className="label-sm text-muted-foreground">Homemaker Profile</p>
           <h1 className="font-display text-3xl text-foreground tracking-tight leading-tight">{s.name}</h1>
           <div className="flex gap-8">
             <div>
