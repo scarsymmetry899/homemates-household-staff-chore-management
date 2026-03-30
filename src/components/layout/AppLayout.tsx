@@ -7,9 +7,9 @@ const AppLayout = () => {
   const isStaffProfile = location.pathname.startsWith("/staff/");
 
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto relative">
+    <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col max-w-md mx-auto relative overflow-x-hidden">
       {!isStaffProfile && <AppHeader />}
-      <main className="flex-1 pb-24">
+      <main className="flex-1 pb-24 overflow-x-hidden">
         <Outlet />
       </main>
       <BottomNav />
