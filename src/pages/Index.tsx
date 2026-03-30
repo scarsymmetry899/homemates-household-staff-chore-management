@@ -159,8 +159,8 @@ const Index = () => {
         <AnimatedCard delay={0.25} className="btn-estate rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="label-sm text-primary-foreground/60">Monthly Cycle</p>
-              <h3 className="headline-sm text-primary-foreground mt-1">Burn Rate</h3>
+              <p className="label-sm text-primary-foreground/60">This Month</p>
+              <h3 className="headline-sm text-primary-foreground mt-1">Household Spending</h3>
             </div>
             <div className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center backdrop-blur-sm">
               <TrendingUp size={16} className="text-primary-foreground" />
