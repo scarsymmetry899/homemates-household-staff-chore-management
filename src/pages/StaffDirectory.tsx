@@ -107,7 +107,7 @@ const StaffDirectory = () => {
                   toast.success(`${s.name} removed from staff`);
                 }}
                 rightLabel="Call"
-                leftLabel="Message"
+                leftLabel="Remove"
               >
                 <PressableCard className="glass-card rounded-2xl overflow-hidden">
                   <div className="flex gap-4 p-5">
