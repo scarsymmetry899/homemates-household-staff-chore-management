@@ -20,11 +20,11 @@ const PayrollPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Financial Oversight</p>
+          <p className="label-sm text-muted-foreground">Compensation Hub</p>
           <h1 className="display-sm text-foreground">
             Payroll
             <br />
-            <span className="font-display italic text-secondary">Ledger</span>
+            <span className="font-display italic text-secondary">Disbursement</span>
           </h1>
         </section>
 
