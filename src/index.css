@@ -6,74 +6,74 @@
 
 @layer base {
   :root {
-    /* Heritage Modern - "The Digital Estate" — Warm Cream */
-    --background: 36 33% 96%; /* warm cream #FAF6F0 */
-    --foreground: 150 50% 12%; /* #082717 primary dark */
+    /* Coastal Calm — Navy / Teal / Beige */
+    --background: 24 29% 94%; /* beige #F5EFEB */
+    --foreground: 207 29% 26%; /* navy #2F4156 */
 
-    --card: 37 40% 98%; /* slightly warm white #FEFCF8 */
-    --card-foreground: 100 4% 11%; /* #1B1C1A on-surface */
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 207 29% 26%; /* navy */
 
-    --popover: 37 40% 98%;
-    --popover-foreground: 100 4% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 207 29% 26%;
 
-    --primary: 150 50% 12%; /* #082717 forest green */
-    --primary-foreground: 36 33% 96%;
-    --primary-container: 150 33% 18%; /* #1F3D2B */
+    --primary: 207 29% 26%; /* navy #2F4156 */
+    --primary-foreground: 0 0% 100%;
+    --primary-container: 197 24% 45%; /* teal #567C8D */
 
-    --secondary: 38 52% 30%; /* gold */
-    --secondary-foreground: 36 33% 96%;
-    --secondary-container: 38 97% 80%; /* #FEDB98 */
-    --secondary-container-foreground: 38 50% 31%;
+    --secondary: 197 24% 45%; /* teal */
+    --secondary-foreground: 0 0% 100%;
+    --secondary-container: 206 32% 84%; /* sky blue #C8D9E6 */
+    --secondary-container-foreground: 207 29% 26%;
 
-    --muted: 35 20% 93%; /* warm muted */
-    --muted-foreground: 100 4% 40%;
+    --muted: 206 32% 84%; /* sky blue */
+    --muted-foreground: 207 20% 45%;
 
-    --accent: 35 20% 93%;
-    --accent-foreground: 100 4% 11%;
+    --accent: 206 32% 84%;
+    --accent-foreground: 207 29% 26%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 12% 82%; /* warm border */
-    --input: 35 15% 90%;
-    --ring: 38 52% 30%;
+    --border: 206 20% 82%;
+    --input: 206 20% 88%;
+    --ring: 197 24% 45%;
 
     --radius: 0.875rem;
 
-    /* Surface hierarchy — cream warmth */
-    --surface: 36 33% 96%;
-    --surface-container-low: 35 22% 94%;
-    --surface-container-lowest: 37 40% 98%;
-    --surface-container: 34 16% 91%;
-    --surface-container-high: 33 12% 88%;
-    --surface-container-highest: 32 8% 85%;
+    /* Surface hierarchy — beige warmth */
+    --surface: 24 29% 94%;
+    --surface-container-low: 24 20% 92%;
+    --surface-container-lowest: 0 0% 100%;
+    --surface-container: 24 15% 89%;
+    --surface-container-high: 24 10% 86%;
+    --surface-container-highest: 24 8% 83%;
 
     /* Semantic status */
-    --status-on-time: 150 50% 12%;
+    --status-on-time: 160 50% 35%;
     --status-grace-late: 45 93% 47%;
     --status-late: 30 90% 50%;
     --status-absent: 0 72% 51%;
     --status-leave: 200 60% 50%;
-    --status-off-duty: 40 5% 75%;
+    --status-off-duty: 207 10% 65%;
 
-    /* Estate gradient */
-    --gradient-estate: linear-gradient(135deg, hsl(150 50% 12%), hsl(150 33% 18%));
+    /* Estate gradient → Navy gradient */
+    --gradient-estate: linear-gradient(135deg, hsl(207 29% 26%), hsl(197 24% 45%));
 
-    /* Premium shadows */
-    --shadow-ambient: 0px 20px 40px rgba(27, 28, 26, 0.06);
-    --shadow-card: 0px 4px 16px rgba(27, 28, 26, 0.04);
-    --shadow-glass: 0px 8px 32px rgba(27, 28, 26, 0.08), inset 0 1px 0 rgba(255,255,255,0.5);
-    --shadow-btn: 0px 4px 14px rgba(27, 28, 26, 0.10), 0px 1px 3px rgba(27, 28, 26, 0.06);
-    --shadow-btn-hover: 0px 8px 24px rgba(27, 28, 26, 0.14), 0px 2px 6px rgba(27, 28, 26, 0.08);
+    /* Premium shadows — navy tinted */
+    --shadow-ambient: 0px 20px 40px rgba(47, 65, 86, 0.06);
+    --shadow-card: 0px 4px 16px rgba(47, 65, 86, 0.04);
+    --shadow-glass: 0px 8px 32px rgba(47, 65, 86, 0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+    --shadow-btn: 0px 4px 14px rgba(47, 65, 86, 0.12), 0px 1px 3px rgba(47, 65, 86, 0.06);
+    --shadow-btn-hover: 0px 8px 24px rgba(47, 65, 86, 0.16), 0px 2px 6px rgba(47, 65, 86, 0.08);
 
-    --sidebar-background: 35 20% 93%;
-    --sidebar-foreground: 100 4% 11%;
-    --sidebar-primary: 150 50% 12%;
-    --sidebar-primary-foreground: 36 33% 96%;
-    --sidebar-accent: 35 20% 93%;
-    --sidebar-accent-foreground: 100 4% 11%;
-    --sidebar-border: 30 12% 82%;
-    --sidebar-ring: 38 52% 30%;
+    --sidebar-background: 206 32% 84%;
+    --sidebar-foreground: 207 29% 26%;
+    --sidebar-primary: 207 29% 26%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 206 32% 84%;
+    --sidebar-accent-foreground: 207 29% 26%;
+    --sidebar-border: 206 20% 82%;
+    --sidebar-ring: 197 24% 45%;
   }
 }
 
@@ -147,27 +147,27 @@
   }
 
   .estate-gradient {
-    background: linear-gradient(135deg, hsl(150 50% 12%), hsl(150 33% 22%));
+    background: linear-gradient(135deg, hsl(207 29% 26%), hsl(197 24% 45%));
   }
 
-  /* Glassmorphism */
+  /* Glassmorphism — white glass on beige */
   .glass {
-    background: hsla(37, 40%, 98%, 0.65);
+    background: hsla(0, 0%, 100%, 0.65);
     backdrop-filter: blur(24px) saturate(1.4);
-    border: 1px solid hsla(37, 40%, 98%, 0.4);
+    border: 1px solid hsla(0, 0%, 100%, 0.4);
   }
 
   .glass-card {
-    background: hsla(37, 40%, 98%, 0.55);
+    background: hsla(0, 0%, 100%, 0.55);
     backdrop-filter: blur(20px) saturate(1.3);
-    border: 1px solid hsla(37, 40%, 98%, 0.35);
+    border: 1px solid hsla(0, 0%, 100%, 0.35);
     box-shadow: var(--shadow-glass);
   }
 
   .glass-btn {
-    background: hsla(37, 40%, 98%, 0.7);
+    background: hsla(0, 0%, 100%, 0.7);
     backdrop-filter: blur(16px) saturate(1.2);
-    border: 1px solid hsla(37, 40%, 98%, 0.5);
+    border: 1px solid hsla(0, 0%, 100%, 0.5);
     box-shadow: var(--shadow-btn);
     transition: all 0.2s ease;
   }
@@ -182,31 +182,31 @@
     box-shadow: var(--shadow-card);
   }
 
-  /* Premium button base */
+  /* Premium button base — navy to teal */
   .btn-estate {
-    background: linear-gradient(135deg, hsl(150 50% 12%), hsl(150 33% 22%));
-    box-shadow: 0px 4px 14px hsla(150, 50%, 12%, 0.25), 0px 1px 3px hsla(150, 50%, 12%, 0.1), inset 0 1px 0 hsla(150, 33%, 30%, 0.3);
+    background: linear-gradient(135deg, hsl(207 29% 26%), hsl(197 24% 45%));
+    box-shadow: 0px 4px 14px hsla(207, 29%, 26%, 0.25), 0px 1px 3px hsla(207, 29%, 26%, 0.1), inset 0 1px 0 hsla(197, 24%, 55%, 0.3);
     transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .btn-estate:hover {
-    box-shadow: 0px 8px 24px hsla(150, 50%, 12%, 0.3), 0px 2px 6px hsla(150, 50%, 12%, 0.15), inset 0 1px 0 hsla(150, 33%, 30%, 0.3);
+    box-shadow: 0px 8px 24px hsla(207, 29%, 26%, 0.3), 0px 2px 6px hsla(207, 29%, 26%, 0.15), inset 0 1px 0 hsla(197, 24%, 55%, 0.3);
     transform: translateY(-1px);
   }
 
   .btn-estate:active {
     transform: translateY(0);
-    box-shadow: 0px 2px 8px hsla(150, 50%, 12%, 0.2);
+    box-shadow: 0px 2px 8px hsla(207, 29%, 26%, 0.2);
   }
 
-  .btn-gold {
-    background: linear-gradient(135deg, hsl(38 52% 30%), hsl(38 52% 40%));
-    box-shadow: 0px 4px 14px hsla(38, 52%, 30%, 0.25), inset 0 1px 0 hsla(38, 52%, 50%, 0.3);
+  .btn-teal {
+    background: linear-gradient(135deg, hsl(197 24% 45%), hsl(197 30% 55%));
+    box-shadow: 0px 4px 14px hsla(197, 24%, 45%, 0.25), inset 0 1px 0 hsla(197, 30%, 60%, 0.3);
     transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .btn-gold:hover {
-    box-shadow: 0px 8px 24px hsla(38, 52%, 30%, 0.3), inset 0 1px 0 hsla(38, 52%, 50%, 0.3);
+  .btn-teal:hover {
+    box-shadow: 0px 8px 24px hsla(197, 24%, 45%, 0.3), inset 0 1px 0 hsla(197, 30%, 60%, 0.3);
     transform: translateY(-1px);
   }
 
@@ -225,8 +225,8 @@
 
   /* Pull to refresh indicator */
   .pull-indicator {
-    background: hsla(37, 40%, 98%, 0.8);
+    background: hsla(0, 0%, 100%, 0.8);
     backdrop-filter: blur(12px);
-    border: 1px solid hsla(37, 40%, 98%, 0.5);
+    border: 1px solid hsla(0, 0%, 100%, 0.5);
   }
 }
