@@ -15,11 +15,8 @@ const AppHeader = () => {
         <img
           src={logoImg}
           alt="Homemaker"
-          className="w-10 h-10 rounded-xl object-contain"
+          className="w-14 h-14 object-contain"
         />
-        <span className="font-display text-base font-medium text-foreground tracking-tight">
-          Homemaker
-        </span>
       </div>
       <div className="flex items-center gap-2">
         <motion.button
