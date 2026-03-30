@@ -112,29 +112,40 @@ const StaffProfile = () => {
           </div>
           <div className="space-y-3">
             {s.assignments.map((task, i) => (
-              <motion.label
-                key={i}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-3 cursor-pointer select-none"
-                onClick={() => handleToggle(i)}
-              >
-                <motion.div
-                  animate={{ scale: task.done ? [1, 1.3, 1] : 1 }}
-                  transition={{ duration: 0.3 }}
-                  className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-card ${
-                    task.done ? "btn-estate" : "glass-btn"
-                  }`}
+              <div key={i} className="flex items-center gap-3">
+                <motion.label
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-3 cursor-pointer select-none flex-1"
+                  onClick={() => handleToggle(i)}
                 >
-                  {task.done && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary-foreground))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </motion.div>
-                <span className={`text-sm transition-all ${task.done ? "text-muted-foreground line-through" : "text-card-foreground"}`}>
-                  {task.task}
-                </span>
-              </motion.label>
+                  <motion.div
+                    animate={{ scale: task.done ? [1, 1.3, 1] : 1 }}
+                    transition={{ duration: 0.3 }}
+                    className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-card ${
+                      task.done ? "btn-estate" : "glass-btn"
+                    }`}
+                  >
+                    {task.done && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary-foreground))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </motion.div>
+                  <span className={`text-sm transition-all ${task.done ? "text-muted-foreground line-through" : "text-card-foreground"}`}>
+                    {task.task}
+                  </span>
+                </motion.label>
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    deleteTask(s.id, i);
+                    toast.success("Task deleted", { description: task.task });
+                  }}
+                  className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                >
+                  <Trash2 size={13} />
+                </motion.button>
+              </div>
             ))}
           </div>
         </AnimatedCard>

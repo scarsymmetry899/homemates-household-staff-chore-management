@@ -179,6 +179,17 @@ const TasksPage = () => {
                       </div>
                     </div>
                     {!task.done && <Clock size={14} className="text-status-late shrink-0 mt-1" />}
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteTask(task.staffId, task.taskIndex);
+                        toast.success("Task deleted", { description: task.task });
+                      }}
+                      className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-1"
+                    >
+                      <Trash2 size={13} />
+                    </motion.button>
                   </div>
                 </PressableCard>
               </SwipeableCard>
