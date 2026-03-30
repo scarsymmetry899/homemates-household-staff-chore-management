@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Circle, Clock, Plus, X, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Plus, X, Trash2, CalendarDays, Send } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
@@ -11,7 +11,12 @@ const TasksPage = () => {
   const { staff, toggleTask, addTask, deleteTask } = useAppState();
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [showForm, setShowForm] = useState(false);
-  const [newTask, setNewTask] = useState({ staffId: "", task: "" });
+  const [newTask, setNewTask] = useState({
+    staffId: "",
+    task: "",
+    dueDate: "",
+    notifyTelegram: false,
+  });
 
   const allTasks = staff.flatMap((s) =>
     s.assignments.map((t, i) => ({
@@ -39,9 +44,24 @@ const TasksPage = () => {
 
   const handleAddTask = () => {
     if (!newTask.staffId || !newTask.task.trim()) return;
-    addTask(newTask.staffId, newTask.task.trim());
-    toast.success("Task added", { description: newTask.task });
-    setNewTask({ staffId: "", task: "" });
+
+    const cleanTask = newTask.task.trim();
+    const selectedMember = staff.find((s) => s.id === newTask.staffId);
+
+    addTask(newTask.staffId, cleanTask, newTask.dueDate || undefined);
+    toast.success("Task added", {
+      description: newTask.dueDate
+        ? `${cleanTask} · Due ${new Date(newTask.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
+        : cleanTask,
+    });
+
+    if (newTask.notifyTelegram && selectedMember) {
+      toast.info("Telegram dispatch queued", {
+        description: `This task will auto-send to ${selectedMember.name} once Telegram API is connected.`,
+      });
+    }
+
+    setNewTask({ staffId: "", task: "", dueDate: "", notifyTelegram: false });
     setShowForm(false);
   };
 
@@ -113,16 +133,18 @@ const TasksPage = () => {
                     <X size={16} className="text-muted-foreground" />
                   </button>
                 </div>
+
                 <select
                   value={newTask.staffId}
                   onChange={(e) => setNewTask({ ...newTask, staffId: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
                 >
-                  <option value="">Assign to staff member</option>
+                  <option value="">Assign to homemaker</option>
                   {staff.map((s) => (
                     <option key={s.id} value={s.id}>{s.name} — {s.role}</option>
                   ))}
                 </select>
+
                 <input
                   type="text"
                   placeholder="Task description"
@@ -130,12 +152,39 @@ const TasksPage = () => {
                   onChange={(e) => setNewTask({ ...newTask, task: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
                 />
+
+                <div className="space-y-2">
+                  <label className="label-sm text-muted-foreground">Due date</label>
+                  <input
+                    type="date"
+                    value={newTask.dueDate}
+                    onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                    className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
+                  />
+                </div>
+
+                <div className="glass-btn rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="label-sm text-foreground">Dispatch via Telegram</p>
+                    <p className="text-xs text-muted-foreground">Auto-send after Telegram API is connected</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setNewTask((prev) => ({ ...prev, notifyTelegram: !prev.notifyTelegram }))}
+                    className={`w-11 h-6 rounded-full p-1 transition-colors ${newTask.notifyTelegram ? "bg-secondary" : "bg-surface-container"}`}
+                  >
+                    <span
+                      className={`block h-4 w-4 rounded-full bg-background transition-transform ${newTask.notifyTelegram ? "translate-x-5" : "translate-x-0"}`}
+                    />
+                  </button>
+                </div>
+
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleAddTask}
-                  className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl"
+                  className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl inline-flex items-center justify-center gap-2"
                 >
-                  Create Task
+                  <Send size={14} /> Create & Assign Task
                 </motion.button>
               </div>
             </motion.div>
@@ -145,7 +194,7 @@ const TasksPage = () => {
         {/* Task List */}
         <StaggerContainer className="space-y-3 pb-4">
           {filtered.map((task) => (
-            <StaggerItem key={`${task.staffId}-${task.taskIndex}-${task.task}`}>
+            <StaggerItem key={`${task.staffId}-${task.taskIndex}-${task.task}-${task.dueDate || "na"}`}>
               <SwipeableCard
                 onSwipeRight={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
                 onSwipeLeft={() => {
@@ -177,6 +226,12 @@ const TasksPage = () => {
                         <span className="text-xs text-muted-foreground">·</span>
                         <span className="text-xs text-muted-foreground">{task.staffRole}</span>
                       </div>
+                      {task.dueDate && (
+                        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
+                          <CalendarDays size={12} />
+                          Due {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        </div>
+                      )}
                     </div>
                     {!task.done && <Clock size={14} className="text-status-late shrink-0 mt-1" />}
                     <motion.button

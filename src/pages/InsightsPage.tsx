@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, Clock, Users, Calendar, ChevronDown } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 
 type ViewMode = "daily" | "weekly" | "monthly";
@@ -60,33 +61,42 @@ const InsightsPage = () => {
 
   const currentSelection = viewMode === "monthly" ? selectedMonth : viewMode === "weekly" ? selectedWeek : selectedDay;
   const currentOptions = viewMode === "monthly" ? monthOptions : viewMode === "weekly" ? weekOptions : dayOptions;
-  const currentLabel = currentOptions.find(o => o.value === currentSelection)?.label || "";
+  const currentLabel = currentOptions.find((o) => o.value === currentSelection)?.label || "";
 
   // Column headers based on view mode
   const columnHeaders = useMemo(() => {
     if (viewMode === "daily") return ["Status"];
     if (viewMode === "weekly") return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    // Monthly: show all days of the selected month
+
     const now = new Date();
     const monthDate = new Date(now.getFullYear(), now.getMonth() - selectedMonth, 1);
     const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
     return Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`);
   }, [viewMode, selectedMonth]);
 
-  // Generate attendance data for ALL staff
-  const attendanceData = useMemo(() =>
-    staff.map((s, si) => ({
-      name: s.name,
-      photo: s.photo,
-      role: s.role,
-      days: Array.from({ length: columnHeaders.length }, (_, di) => {
-        const offset = viewMode === "monthly" ? selectedMonth : viewMode === "weekly" ? selectedWeek : selectedDay;
-        const seed = ((si * 31 + di + offset * 7) * 17 + 3) % 10;
-        if (seed < 6) return "present";
-        if (seed < 8) return "late";
-        return "absent";
-      }),
-    })), [staff, viewMode, columnHeaders.length, selectedMonth, selectedWeek, selectedDay]);
+  const attendanceGridMinWidth = useMemo(() => {
+    const firstColumnWidth = 170;
+    const dayColumnWidth = viewMode === "daily" ? 90 : 36;
+    return firstColumnWidth + columnHeaders.length * dayColumnWidth;
+  }, [columnHeaders.length, viewMode]);
+
+  // Generate attendance data for all homemakers
+  const attendanceData = useMemo(
+    () =>
+      staff.map((s, si) => ({
+        name: s.name,
+        photo: s.photo,
+        role: s.role,
+        days: Array.from({ length: columnHeaders.length }, (_, di) => {
+          const offset = viewMode === "monthly" ? selectedMonth : viewMode === "weekly" ? selectedWeek : selectedDay;
+          const seed = ((si * 31 + di + offset * 7) * 17 + 3) % 10;
+          if (seed < 6) return "present";
+          if (seed < 8) return "late";
+          return "absent";
+        }),
+      })),
+    [staff, viewMode, columnHeaders.length, selectedMonth, selectedWeek, selectedDay]
+  );
 
   const [overrides, setOverrides] = useState<Record<string, string>>({});
 
@@ -133,7 +143,10 @@ const InsightsPage = () => {
           {(["daily", "weekly", "monthly"] as ViewMode[]).map((mode) => (
             <button
               key={mode}
-              onClick={() => { setViewMode(mode); setShowDropdown(false); }}
+              onClick={() => {
+                setViewMode(mode);
+                setShowDropdown(false);
+              }}
               className={`label-sm px-5 py-2.5 rounded-xl capitalize ${viewMode === mode ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"}`}
             >
               {mode}
@@ -198,51 +211,60 @@ const InsightsPage = () => {
 
         {/* Scrollable Attendance Grid */}
         <AnimatedCard delay={0.1} className="glass-card rounded-2xl overflow-hidden">
-          <div className="p-4 overflow-x-auto no-scrollbar">
-            <div
-              className="grid gap-1.5 items-center"
-              style={{
-                gridTemplateColumns: `minmax(120px, 1fr) repeat(${columnHeaders.length}, ${viewMode === "daily" ? "3rem" : "1.75rem"})`,
-                minWidth: viewMode === "monthly" ? `${120 + columnHeaders.length * 32}px` : viewMode === "weekly" ? "380px" : "200px",
-              }}
-            >
-              {/* Header row */}
-              <span className="label-sm text-muted-foreground sticky left-0 bg-card z-10">Homemakers</span>
-              {columnHeaders.map((d, i) => (
-                <span key={i} className="label-sm text-muted-foreground text-center text-[10px]">{d}</span>
-              ))}
+          <div
+            className="touch-pan-x"
+            onPointerDownCapture={(e) => e.stopPropagation()}
+            onTouchStartCapture={(e) => e.stopPropagation()}
+          >
+            <ScrollArea className="w-full">
+              <div className="p-4">
+                <div
+                  className="grid gap-1.5 items-center"
+                  style={{
+                    gridTemplateColumns: `minmax(170px, 170px) repeat(${columnHeaders.length}, ${viewMode === "daily" ? "5rem" : "1.75rem"})`,
+                    minWidth: `${attendanceGridMinWidth}px`,
+                  }}
+                >
+                  <span className="label-sm text-muted-foreground sticky left-0 z-10 bg-card/95 backdrop-blur-sm px-2 py-1 rounded-md">Homemakers</span>
+                  {columnHeaders.map((d, i) => (
+                    <span key={i} className="label-sm text-muted-foreground text-center text-[10px]">
+                      {d}
+                    </span>
+                  ))}
 
-              {/* Staff rows - ALL staff */}
-              {attendanceData.map((s) => (
-                <div key={s.name} className="contents">
-                  <div className="flex items-center gap-2 py-2 sticky left-0 bg-card z-10">
-                    <img src={s.photo} alt={s.name} className="w-7 h-7 rounded-lg object-cover shrink-0" loading="lazy" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-card-foreground truncate">{s.name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{s.role}</p>
+                  {attendanceData.map((s) => (
+                    <div key={s.name} className="contents">
+                      <div className="flex items-center gap-2 py-2 sticky left-0 z-10 bg-card/95 backdrop-blur-sm px-2 rounded-md">
+                        <img src={s.photo} alt={s.name} className="w-7 h-7 rounded-lg object-cover shrink-0" loading="lazy" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-card-foreground truncate">{s.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{s.role}</p>
+                        </div>
+                      </div>
+                      {s.days.map((day, i) => {
+                        const status = getCellStatus(s.name, i, day);
+                        let pressTimer: ReturnType<typeof setTimeout>;
+                        return (
+                          <motion.div
+                            key={`${s.name}-${i}`}
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.1 + i * 0.01 }}
+                            className={`w-6 h-6 rounded-lg ${cellColor[status]} cursor-pointer mx-auto`}
+                            onPointerDown={() => {
+                              pressTimer = setTimeout(() => handleLongPress(s.name, i, status), 500);
+                            }}
+                            onPointerUp={() => clearTimeout(pressTimer)}
+                            onPointerLeave={() => clearTimeout(pressTimer)}
+                          />
+                        );
+                      })}
                     </div>
-                  </div>
-                  {s.days.map((day, i) => {
-                    const status = getCellStatus(s.name, i, day);
-                    let pressTimer: ReturnType<typeof setTimeout>;
-                    return (
-                      <motion.div
-                        key={`${s.name}-${i}`}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.1 + i * 0.01 }}
-                        className={`w-6 h-6 rounded-lg ${cellColor[status]} cursor-pointer mx-auto`}
-                        onPointerDown={() => {
-                          pressTimer = setTimeout(() => handleLongPress(s.name, i, status), 500);
-                        }}
-                        onPointerUp={() => clearTimeout(pressTimer)}
-                        onPointerLeave={() => clearTimeout(pressTimer)}
-                      />
-                    );
-                  })}
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
         </AnimatedCard>
 
@@ -251,7 +273,7 @@ const InsightsPage = () => {
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-               <p className="label-sm text-status-on-time">Punctuality Score</p>
+                <p className="label-sm text-status-on-time">Punctuality Score</p>
                 <TrendingUp size={16} className="text-status-on-time" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">
@@ -263,11 +285,11 @@ const InsightsPage = () => {
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-               <p className="label-sm text-status-late">Late Check-ins</p>
+                <p className="label-sm text-status-late">Late Check-ins</p>
                 <Clock size={16} className="text-status-late" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">
-                {staff.filter(s => s.status === "late").length} <span className="text-base text-muted-foreground font-sans">today</span>
+                {staff.filter((s) => s.status === "late").length} <span className="text-base text-muted-foreground font-sans">today</span>
               </p>
               <p className="text-xs text-muted-foreground mt-1">Keep an eye on recurring patterns.</p>
             </PressableCard>
@@ -275,7 +297,7 @@ const InsightsPage = () => {
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-               <p className="label-sm text-secondary">Active Homemakers</p>
+                <p className="label-sm text-secondary">Active Homemakers</p>
                 <Users size={16} className="text-secondary" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">
