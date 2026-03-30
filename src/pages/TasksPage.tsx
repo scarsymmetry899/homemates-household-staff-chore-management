@@ -8,7 +8,7 @@ import { toast } from "sonner";
 type TaskFilter = "all" | "pending" | "done";
 
 const TasksPage = () => {
-  const { staff, toggleTask, addTask } = useAppState();
+  const { staff, toggleTask, addTask, deleteTask } = useAppState();
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [showForm, setShowForm] = useState(false);
   const [newTask, setNewTask] = useState({ staffId: "", task: "" });
