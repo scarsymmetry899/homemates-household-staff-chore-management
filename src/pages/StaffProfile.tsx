@@ -41,15 +41,15 @@ const StaffProfile = () => {
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate(-1)}
-              className="w-9 h-9 rounded-full glass flex items-center justify-center"
+              className="w-10 h-10 rounded-xl glass flex items-center justify-center shadow-btn"
             >
               <ArrowLeft size={18} />
             </motion.button>
             <div className="flex gap-2">
-              <button className="w-9 h-9 rounded-full glass flex items-center justify-center">
+              <button className="w-10 h-10 rounded-xl glass flex items-center justify-center shadow-btn">
                 <Bell size={16} />
               </button>
-              <button className="w-9 h-9 rounded-full estate-gradient flex items-center justify-center text-primary-foreground">
+              <button className="w-10 h-10 rounded-xl btn-estate flex items-center justify-center text-primary-foreground">
                 <Shield size={16} />
               </button>
             </div>
@@ -58,14 +58,14 @@ const StaffProfile = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="absolute bottom-4 left-4 glass px-3 py-1.5 rounded-full"
+            className="absolute bottom-4 left-4 glass px-3.5 py-2 rounded-xl shadow-btn"
           >
             <span className="label-sm text-status-on-time">{s.reliabilityScore}% Reliability</span>
           </motion.div>
         </motion.div>
       </div>
 
-      <div className="px-6 space-y-6 -mt-2">
+      <div className="px-5 space-y-6 -mt-2">
         <section className="space-y-3 pt-4">
           <p className="label-sm text-muted-foreground">Primary Household Staff</p>
           <h1 className="font-display text-3xl text-foreground tracking-tight leading-tight">{s.name}</h1>
@@ -84,20 +84,20 @@ const StaffProfile = () => {
             <p className="text-sm text-card-foreground font-medium">{s.location}</p>
           </div>
           <div className="flex gap-3">
-            <motion.button whileTap={{ scale: 0.95 }} className="estate-gradient text-primary-foreground label-sm px-5 py-2.5 rounded-md flex items-center gap-2">
+            <motion.button whileTap={{ scale: 0.95 }} className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
               <Send size={14} /> Send Instruction
             </motion.button>
-            <motion.button whileTap={{ scale: 0.95 }} className="bg-surface-low text-foreground label-sm px-5 py-2.5 rounded-md flex items-center gap-2">
-              <CalendarDays size={14} /> View Schedule
+            <motion.button whileTap={{ scale: 0.95 }} className="glass-btn text-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
+              <CalendarDays size={14} /> Schedule
             </motion.button>
           </div>
         </section>
 
         {/* Assignments - Interactive */}
-        <AnimatedCard delay={0.15} className="bg-card rounded-xl p-5 shadow-card space-y-4">
+        <AnimatedCard delay={0.15} className="glass-card rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="headline-sm text-card-foreground">Assignments</h3>
-            <span className="label-sm text-muted-foreground">Today</span>
+            <span className="label-sm text-muted-foreground glass-btn px-2.5 py-1 rounded-lg">Today</span>
           </div>
           <div className="space-y-3">
             {s.assignments.map((task, i) => (
@@ -110,8 +110,8 @@ const StaffProfile = () => {
                 <motion.div
                   animate={{ scale: task.done ? [1, 1.3, 1] : 1 }}
                   transition={{ duration: 0.3 }}
-                  className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${
-                    task.done ? "estate-gradient" : "bg-surface-container"
+                  className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-card ${
+                    task.done ? "btn-estate" : "glass-btn"
                   }`}
                 >
                   {task.done && (
@@ -130,12 +130,12 @@ const StaffProfile = () => {
 
         {/* Internal Notes */}
         {s.notes && (
-          <AnimatedCard delay={0.2} className="bg-surface-low rounded-xl p-5 space-y-3">
+          <AnimatedCard delay={0.2} className="bg-surface-low/50 rounded-2xl p-5 space-y-3 border border-border/20">
             <h3 className="headline-sm text-foreground">Internal Notes</h3>
             <blockquote className="font-display italic text-sm text-muted-foreground leading-relaxed border-l-2 border-secondary pl-4">
               "{s.notes}"
             </blockquote>
-            <button className="flex items-center gap-2 label-sm text-secondary">
+            <button className="flex items-center gap-2 label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
               <Pencil size={12} /> Edit Notes
             </button>
           </AnimatedCard>
@@ -145,11 +145,11 @@ const StaffProfile = () => {
         <section className="space-y-4">
           <h3 className="headline-sm text-foreground">Attendance</h3>
           <StaggerContainer className="relative pl-6">
-            <div className="absolute left-2 top-2 bottom-2 w-px bg-surface-container" />
+            <div className="absolute left-2 top-2 bottom-2 w-px bg-border/30" />
             {s.attendance.map((entry, i) => (
               <StaggerItem key={i} className="relative mb-5 last:mb-0">
                 <div
-                  className={`absolute left-[-18px] top-1.5 w-3 h-3 rounded-full ${
+                  className={`absolute left-[-18px] top-1.5 w-3 h-3 rounded-full shadow-card ${
                     entry.type === "check-in" || entry.type === "on-site"
                       ? "bg-status-on-time"
                       : entry.type === "late"
@@ -167,10 +167,10 @@ const StaffProfile = () => {
         </section>
 
         {/* Payroll */}
-        <AnimatedCard delay={0.25} className="estate-gradient rounded-xl p-6 space-y-4 mb-4">
+        <AnimatedCard delay={0.25} className="btn-estate rounded-2xl p-6 space-y-4 mb-4">
           <div className="flex items-center justify-between">
             <p className="label-sm text-primary-foreground/60">Monthly Payroll</p>
-            <div className="w-8 h-8 rounded-full bg-primary-foreground/10 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center backdrop-blur-sm">
               <Download size={14} className="text-primary-foreground" />
             </div>
           </div>
