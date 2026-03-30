@@ -54,11 +54,11 @@ const TasksPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Operations & Workflow</p>
+          <p className="label-sm text-muted-foreground">Mission Control</p>
           <h1 className="display-sm text-foreground">
             Task
             <br />
-            <span className="font-display italic text-secondary">Engine</span>
+            <span className="font-display italic text-secondary">Pipeline</span>
           </h1>
         </section>
 
