@@ -158,17 +158,20 @@ const SmartCommandBox = () => {
   }, [input, parseCommand]);
 
   const handleConfirm = useCallback((msgId: string, confirmed: boolean) => {
+    const msg = messages.find((m) => m.id === msgId);
+    if (confirmed && msg?.action) {
+      msg.action.execute();
+    }
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== msgId) return m;
         if (confirmed && m.action) {
-          m.action.execute();
           return { ...m, content: `✅ Done! ${m.action.description}`, action: undefined };
         }
         return { ...m, content: "❌ Cancelled. Type another command.", action: undefined };
       })
     );
-  }, []);
+  }, [messages]);
 
   return (
     <>
