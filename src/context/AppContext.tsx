@@ -184,7 +184,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
   }, []);
 
-  const addStaff = useCallback((member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills">) => {
+  const addStaff = useCallback((member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => {
     const newMember: StaffMember = {
       ...member,
       id: `s${Date.now()}`,
