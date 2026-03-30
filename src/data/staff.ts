@@ -22,12 +22,13 @@ export interface StaffMember {
   location: string;
   skills: string[];
   arrivalTime?: string;
+  shiftStart: string;
+  shiftEnd: string;
   assignments: { task: string; done: boolean }[];
   notes?: string;
   attendance: { date: string; type: string; detail: string }[];
   payroll: {
     baseSalary: number;
-    bonus: number;
     deductions: number;
     netPay: number;
     month: string;
@@ -38,7 +39,7 @@ export const staffMembers: StaffMember[] = [
   {
     id: "1",
     name: "Elena Moretti",
-    role: "Head of Housekeeping",
+    role: "Housekeeper",
     department: "Hospitality",
     photo: elenaImg,
     phone: "+91 98765 43210",
@@ -49,24 +50,26 @@ export const staffMembers: StaffMember[] = [
     location: "West Wing Annex",
     skills: ["Deep cleaning", "Linen management", "Event setup"],
     arrivalTime: "07:50 AM",
+    shiftStart: "08:00 AM",
+    shiftEnd: "05:00 PM",
     assignments: [
       { task: "Linens inventory check", done: true },
       { task: "Supervise silver polishing", done: false },
       { task: "Floral arrangement - Dining Hall", done: false },
     ],
-    notes: "Eleanor has shown exceptional attention to detail during the winter gala preparations. Recommended for annual bonus.",
+    notes: "Elena has shown exceptional attention to detail during the winter gala preparations. Recommended for recognition.",
     attendance: [
       { date: "Today, 08:00 AM", type: "check-in", detail: "Check-in: Main Gate\nShift: Morning Duty" },
       { date: "Yesterday", type: "on-site", detail: "On-Site: 08:05 AM - 05:45 PM\nAll duties completed on schedule." },
       { date: "Oct 24, 2023", type: "leave", detail: "Approved Absence\nReason: Medical Appointment" },
       { date: "Oct 23, 2023", type: "on-site", detail: "On-Site: 07:55 AM - 06:00 PM\nOvertime: 1.0 hr (Kitchen Support)" },
     ],
-    payroll: { baseSalary: 4850, bonus: 450, deductions: 120, netPay: 5180, month: "October 2023" },
+    payroll: { baseSalary: 25000, deductions: 0, netPay: 25000, month: "October 2023" },
   },
   {
     id: "2",
     name: "Marcus Thorne",
-    role: "Security Detail",
+    role: "Chauffeur",
     department: "Security",
     photo: marcusImg,
     phone: "+91 98765 43211",
@@ -75,23 +78,25 @@ export const staffMembers: StaffMember[] = [
     reliabilityScore: 87.2,
     tenure: "2 Years, 8 Months",
     location: "Main Gate",
-    skills: ["Perimeter patrol", "CCTV monitoring", "Emergency response"],
+    skills: ["Driving", "Vehicle maintenance", "Route planning"],
     arrivalTime: "08:25 AM",
+    shiftStart: "08:00 AM",
+    shiftEnd: "06:00 PM",
     assignments: [
-      { task: "Morning perimeter check", done: true },
-      { task: "CCTV log review", done: false },
-      { task: "Gate visitor log update", done: false },
+      { task: "Morning school drop-off", done: true },
+      { task: "Vehicle inspection & cleaning", done: false },
+      { task: "Evening airport pickup", done: false },
     ],
     attendance: [
       { date: "Today, 08:25 AM", type: "late", detail: "Check-in: Main Gate\nLate by 25 minutes" },
       { date: "Yesterday", type: "on-site", detail: "On-Site: 08:00 AM - 06:00 PM" },
     ],
-    payroll: { baseSalary: 4200, bonus: 0, deductions: 200, netPay: 4000, month: "October 2023" },
+    payroll: { baseSalary: 22000, deductions: 0, netPay: 22000, month: "October 2023" },
   },
   {
     id: "3",
     name: "Julian Reed",
-    role: "Grounds Manager",
+    role: "Gardener",
     department: "Grounds",
     photo: julianImg,
     phone: "+91 98765 43212",
@@ -102,20 +107,22 @@ export const staffMembers: StaffMember[] = [
     location: "Garden Wing",
     skills: ["Landscaping", "Irrigation systems", "Botanical care"],
     arrivalTime: "07:45 AM",
+    shiftStart: "07:30 AM",
+    shiftEnd: "04:30 PM",
     assignments: [
-      { task: "Lawn mowing - front estate", done: true },
+      { task: "Lawn mowing - front yard", done: true },
       { task: "Hedge trimming", done: true },
       { task: "Irrigation check", done: false },
     ],
     attendance: [
       { date: "Today, 07:45 AM", type: "check-in", detail: "Check-in: Garden Gate\nShift: Morning Duty" },
     ],
-    payroll: { baseSalary: 3800, bonus: 200, deductions: 80, netPay: 3920, month: "October 2023" },
+    payroll: { baseSalary: 20000, deductions: 0, netPay: 20000, month: "October 2023" },
   },
   {
     id: "4",
     name: "Sienna Brooks",
-    role: "Culinary Lead",
+    role: "Cook",
     department: "Culinary",
     photo: siennaImg,
     phone: "+91 98765 43213",
@@ -125,6 +132,8 @@ export const staffMembers: StaffMember[] = [
     tenure: "5 Years, 6 Months",
     location: "Main Kitchen",
     skills: ["North Indian cooking", "Continental", "Menu planning"],
+    shiftStart: "07:00 AM",
+    shiftEnd: "03:00 PM",
     assignments: [
       { task: "Breakfast prep", done: false },
       { task: "Lunch menu planning", done: false },
@@ -132,12 +141,12 @@ export const staffMembers: StaffMember[] = [
     attendance: [
       { date: "Today", type: "absent", detail: "No check-in recorded\nStatus: Absent" },
     ],
-    payroll: { baseSalary: 5500, bonus: 300, deductions: 500, netPay: 5300, month: "October 2023" },
+    payroll: { baseSalary: 30000, deductions: 0, netPay: 30000, month: "October 2023" },
   },
   {
     id: "5",
     name: "Arthur Penhaligon",
-    role: "Inventory Specialist",
+    role: "Caretaker",
     department: "Maintenance",
     photo: arthurImg,
     phone: "+91 98765 43214",
@@ -148,6 +157,8 @@ export const staffMembers: StaffMember[] = [
     location: "Storage Wing",
     skills: ["Inventory management", "Vendor coordination", "Procurement"],
     arrivalTime: "07:30 AM",
+    shiftStart: "07:30 AM",
+    shiftEnd: "04:00 PM",
     assignments: [
       { task: "Monthly stock audit", done: true },
       { task: "Vendor delivery coordination", done: false },
@@ -155,12 +166,12 @@ export const staffMembers: StaffMember[] = [
     attendance: [
       { date: "Today, 07:30 AM", type: "check-in", detail: "Check-in: Staff Entrance\nShift: Morning Duty" },
     ],
-    payroll: { baseSalary: 3500, bonus: 150, deductions: 60, netPay: 3590, month: "October 2023" },
+    payroll: { baseSalary: 18000, deductions: 0, netPay: 18000, month: "October 2023" },
   },
   {
     id: "6",
     name: "Maria Gomez",
-    role: "Senior Stewardess",
+    role: "Nanny",
     department: "Hospitality",
     photo: mariaImg,
     phone: "+91 98765 43215",
@@ -169,17 +180,19 @@ export const staffMembers: StaffMember[] = [
     reliabilityScore: 98.9,
     tenure: "3 Years, 9 Months",
     location: "East Wing",
-    skills: ["Guest reception", "Table setting", "Event coordination"],
+    skills: ["Childcare", "Meal prep for kids", "First aid"],
     arrivalTime: "07:55 AM",
+    shiftStart: "08:00 AM",
+    shiftEnd: "05:00 PM",
     assignments: [
-      { task: "Guest room inspection", done: true },
-      { task: "Dining room setup", done: true },
-      { task: "Evening tea service prep", done: false },
+      { task: "Kids morning routine", done: true },
+      { task: "Lunch & snack prep", done: true },
+      { task: "Evening activities", done: false },
     ],
     attendance: [
       { date: "Today, 07:55 AM", type: "check-in", detail: "Check-in: Main Entrance\nShift: Morning Duty" },
     ],
-    payroll: { baseSalary: 3800, bonus: 200, deductions: 50, netPay: 3950, month: "October 2023" },
+    payroll: { baseSalary: 20000, deductions: 0, netPay: 20000, month: "October 2023" },
   },
 ];
 

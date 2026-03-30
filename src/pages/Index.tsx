@@ -1,6 +1,6 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, TrendingUp, Bell } from "lucide-react";
+import { ArrowRight, TrendingUp, Bell, MapPin, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
@@ -16,16 +16,31 @@ const statusLabel: Record<string, string> = {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { staff, alerts } = useAppState();
-  const today = new Date();
-  const hour = today.getHours();
+  const { staff, alerts, ownerName, ownerLocation } = useAppState();
+
+  // IST time
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const hour = now.getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
-  const dateStr = today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const dateStr = now.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" });
+  const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata", hour12: true });
 
   const activeAlerts = alerts.filter((a) => !a.dismissed);
   const totalTasks = staff.reduce((a, s) => a + s.assignments.length, 0);
   const doneTasks = staff.reduce((a, s) => a + s.assignments.filter((t) => t.done).length, 0);
   const taskPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const absentCount = staff.filter((s) => s.status === "absent").length;
+  const lateCount = staff.filter((s) => s.status === "late").length;
+
+  // Creative daily tagline based on status
+  const tagline = useMemo(() => {
+    if (taskPct === 100) return "All tasks wrapped up. Your home is running like a dream! 🏡✨";
+    if (absentCount > 1) return "A few hands missing today — might need your attention.";
+    if (lateCount > 0 && taskPct < 50) return "Slow start today, but the day's still young!";
+    if (taskPct >= 75) return "Almost there — your team is crushing it today! 💪";
+    if (taskPct >= 50) return "Halfway through the day's to-dos. Smooth sailing so far.";
+    return "A fresh day at home — let's make it count! ☀️";
+  }, [taskPct, absentCount, lateCount]);
 
   const handleRefresh = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 800));
@@ -35,14 +50,21 @@ const Index = () => {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-7">
+        {/* Time & Location Bar */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1"><Clock size={12} /> {timeStr} IST</span>
+          <span className="flex items-center gap-1"><MapPin size={12} /> {ownerLocation}</span>
+        </div>
+
         {/* Greeting */}
         <section className="space-y-2">
           <p className="label-sm text-muted-foreground">{dateStr}</p>
           <h1 className="display-sm text-foreground">
             {greeting},
             <br />
-            <span className="italic">Boss</span> ✨
+            <span className="italic">{ownerName}</span> ✨
           </h1>
+          <p className="text-sm text-muted-foreground leading-relaxed mt-1">{tagline}</p>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/tasks")}
@@ -73,12 +95,12 @@ const Index = () => {
           </AnimatedCard>
         )}
 
-        {/* Crew On Duty */}
+        {/* Active Homemates */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Active Crew</h3>
+            <h3 className="headline-sm text-foreground">Active Homemates</h3>
             <button onClick={() => navigate("/staff")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
-              Full Roster
+              View All
             </button>
           </div>
           <StaggerContainer className="space-y-3">
@@ -117,7 +139,7 @@ const Index = () => {
           </StaggerContainer>
         </section>
 
-        {/* Task Throughput */}
+        {/* Task Progress */}
         <AnimatedCard delay={0.2} className="glass-card rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="headline-sm text-card-foreground">Today's Progress</h3>
@@ -155,7 +177,7 @@ const Index = () => {
           </p>
         </AnimatedCard>
 
-        {/* Monthly Burn */}
+        {/* Monthly Spending */}
         <AnimatedCard delay={0.25} className="btn-estate rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -176,7 +198,7 @@ const Index = () => {
               <p className="text-primary-foreground font-semibold">₹18.2k</p>
             </div>
             <div>
-              <p className="label-sm text-primary-foreground/50">Ops & Misc</p>
+              <p className="label-sm text-primary-foreground/50">Household</p>
               <p className="text-primary-foreground font-semibold">₹4.1k</p>
             </div>
           </div>

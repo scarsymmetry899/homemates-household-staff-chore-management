@@ -1,6 +1,7 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, Send, CalendarDays, Shield, Pencil, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, Bell, Send, CalendarDays, Shield, Pencil, Download, Trash2, Clock, MessageCircle } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
@@ -8,8 +9,17 @@ import { toast } from "sonner";
 const StaffProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { staff, toggleTask, removeStaff, deleteTask } = useAppState();
+  const { staff, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction } = useAppState();
   const s = staff.find((s) => s.id === id);
+
+  const [editingRole, setEditingRole] = useState(false);
+  const [roleInput, setRoleInput] = useState("");
+  const [editingShift, setEditingShift] = useState(false);
+  const [shiftStartInput, setShiftStartInput] = useState("");
+  const [shiftEndInput, setShiftEndInput] = useState("");
+  const [showDeductionForm, setShowDeductionForm] = useState(false);
+  const [deductionAmount, setDeductionAmount] = useState("");
+  const [deductionReason, setDeductionReason] = useState("");
 
   if (!s) {
     return (
@@ -24,6 +34,36 @@ const StaffProfile = () => {
     if (!s.assignments[i].done) {
       toast.success("Task completed", { description: s.assignments[i].task });
     }
+  };
+
+  const handleSaveRole = () => {
+    if (roleInput.trim()) {
+      updateStaffRole(s.id, roleInput.trim());
+      toast.success("Role updated", { description: roleInput.trim() });
+    }
+    setEditingRole(false);
+  };
+
+  const handleSaveShift = () => {
+    if (shiftStartInput && shiftEndInput) {
+      updateStaffShift(s.id, shiftStartInput, shiftEndInput);
+      toast.success("Shift timings updated");
+    }
+    setEditingShift(false);
+  };
+
+  const handleAddDeduction = () => {
+    if (!deductionAmount || !deductionReason) return;
+    addDeduction(s.id, Number(deductionAmount), deductionReason);
+    toast.success("Deduction added", { description: `₹${deductionAmount} — ${deductionReason}` });
+    setDeductionAmount("");
+    setDeductionReason("");
+    setShowDeductionForm(false);
+  };
+
+  const handleMessage = () => {
+    window.open(`https://t.me/${s.phone.replace(/[\s+]/g, "")}`, "_blank");
+    toast.success("Opening Telegram...");
   };
 
   return (
@@ -67,25 +107,75 @@ const StaffProfile = () => {
 
       <div className="px-5 space-y-6 -mt-2">
         <section className="space-y-3 pt-4">
-          <p className="label-sm text-muted-foreground">Primary Household Staff</p>
+          <p className="label-sm text-muted-foreground">Household Staff</p>
           <h1 className="font-display text-3xl text-foreground tracking-tight leading-tight">{s.name}</h1>
           <div className="flex gap-8">
             <div>
-              <p className="label-sm text-muted-foreground">Position</p>
-              <p className="text-sm text-card-foreground font-medium">{s.role}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="label-sm text-muted-foreground">Position</p>
+                <button onClick={() => { setEditingRole(true); setRoleInput(s.role); }} className="text-secondary">
+                  <Pencil size={10} />
+                </button>
+              </div>
+              {editingRole ? (
+                <div className="flex gap-1 mt-1">
+                  <input
+                    value={roleInput}
+                    onChange={(e) => setRoleInput(e.target.value)}
+                    className="bg-surface-low rounded-lg px-2 py-1 text-sm text-card-foreground border border-border/30 w-28"
+                    autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && handleSaveRole()}
+                  />
+                  <button onClick={handleSaveRole} className="label-sm text-secondary px-2">Save</button>
+                </div>
+              ) : (
+                <p className="text-sm text-card-foreground font-medium">{s.role}</p>
+              )}
             </div>
             <div>
               <p className="label-sm text-muted-foreground">Tenure</p>
               <p className="text-sm text-card-foreground font-medium">{s.tenure}</p>
             </div>
           </div>
+
+          {/* Shift Timings */}
+          <div>
+            <div className="flex items-center gap-1.5">
+              <Clock size={12} className="text-muted-foreground" />
+              <p className="label-sm text-muted-foreground">Shift Timings</p>
+              <button onClick={() => { setEditingShift(true); setShiftStartInput(s.shiftStart); setShiftEndInput(s.shiftEnd); }} className="text-secondary">
+                <Pencil size={10} />
+              </button>
+            </div>
+            {editingShift ? (
+              <div className="flex gap-2 mt-1 items-center">
+                <input
+                  value={shiftStartInput}
+                  onChange={(e) => setShiftStartInput(e.target.value)}
+                  placeholder="e.g. 08:00 AM"
+                  className="bg-surface-low rounded-lg px-2 py-1 text-sm text-card-foreground border border-border/30 w-24"
+                />
+                <span className="text-muted-foreground text-xs">to</span>
+                <input
+                  value={shiftEndInput}
+                  onChange={(e) => setShiftEndInput(e.target.value)}
+                  placeholder="e.g. 05:00 PM"
+                  className="bg-surface-low rounded-lg px-2 py-1 text-sm text-card-foreground border border-border/30 w-24"
+                />
+                <button onClick={handleSaveShift} className="label-sm text-secondary px-2">Save</button>
+              </div>
+            ) : (
+              <p className="text-sm text-card-foreground font-medium">{s.shiftStart} — {s.shiftEnd}</p>
+            )}
+          </div>
+
           <div>
             <p className="label-sm text-muted-foreground">Location</p>
             <p className="text-sm text-card-foreground font-medium">{s.location}</p>
           </div>
-          <div className="flex gap-3">
-            <motion.button whileTap={{ scale: 0.95 }} className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
-              <Send size={14} /> Send Instruction
+          <div className="flex gap-3 flex-wrap">
+            <motion.button whileTap={{ scale: 0.95 }} onClick={handleMessage} className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
+              <MessageCircle size={14} /> Message
             </motion.button>
             <motion.button whileTap={{ scale: 0.95 }} className="glass-btn text-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
               <CalendarDays size={14} /> Schedule
@@ -104,7 +194,7 @@ const StaffProfile = () => {
           </div>
         </section>
 
-        {/* Assignments - Interactive */}
+        {/* Assignments */}
         <AnimatedCard delay={0.15} className="glass-card rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="headline-sm text-card-foreground">Assignments</h3>
@@ -202,20 +292,63 @@ const StaffProfile = () => {
               <span className="text-primary-foreground/70 text-sm">Base Salary</span>
               <span className="text-primary-foreground font-semibold">₹{s.payroll.baseSalary.toLocaleString("en-IN")}.00</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-primary-foreground/70 text-sm font-display italic">Performance Bonus</span>
-              <span className="text-status-grace-late font-semibold">+₹{s.payroll.bonus.toLocaleString("en-IN")}.00</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-primary-foreground/70 text-sm font-display italic">Deductions</span>
-              <span className="text-status-absent font-semibold">-₹{s.payroll.deductions.toLocaleString("en-IN")}.00</span>
-            </div>
+            {s.payroll.deductions > 0 && (
+              <div className="flex justify-between">
+                <span className="text-primary-foreground/70 text-sm font-display italic">Deductions</span>
+                <span className="text-status-absent font-semibold">-₹{s.payroll.deductions.toLocaleString("en-IN")}.00</span>
+              </div>
+            )}
           </div>
           <div className="pt-3 border-t border-primary-foreground/10">
             <p className="label-sm text-primary-foreground/50">Total Net Pay</p>
             <p className="font-display text-3xl text-primary-foreground mt-1">₹{s.payroll.netPay.toLocaleString("en-IN")}.00</p>
           </div>
+
+          {/* Manual Deduction */}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowDeductionForm(!showDeductionForm)}
+            className="w-full bg-primary-foreground/10 text-primary-foreground label-sm py-2.5 rounded-xl backdrop-blur-sm border border-primary-foreground/10"
+          >
+            + Add Deduction
+          </motion.button>
         </AnimatedCard>
+
+        <AnimatePresence>
+          {showDeductionForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="glass-card rounded-2xl p-5 space-y-3 mb-4">
+                <h3 className="headline-sm text-card-foreground">Manual Deduction</h3>
+                <input
+                  type="number"
+                  placeholder="Amount (₹)"
+                  value={deductionAmount}
+                  onChange={(e) => setDeductionAmount(e.target.value)}
+                  className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
+                />
+                <input
+                  type="text"
+                  placeholder="Reason (e.g. Absence, Late penalty)"
+                  value={deductionReason}
+                  onChange={(e) => setDeductionReason(e.target.value)}
+                  className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
+                />
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleAddDeduction}
+                  className="w-full btn-estate text-primary-foreground label-sm py-3 rounded-xl"
+                >
+                  Apply Deduction
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </PageTransition>
   );
