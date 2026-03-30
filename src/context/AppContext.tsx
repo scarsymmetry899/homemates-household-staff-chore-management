@@ -38,7 +38,7 @@ interface AppState {
   addTask: (staffId: string, task: string) => void;
   removeStaff: (staffId: string) => void;
   deleteTask: (staffId: string, taskIndex: number) => void;
-  addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills">) => void;
+  addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => void;
   addDeduction: (staffId: string, amount: number, reason: string) => void;
 }
 
@@ -184,11 +184,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
   }, []);
 
-  const addStaff = useCallback((member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills">) => {
+  const addStaff = useCallback((member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => {
     const newMember: StaffMember = {
       ...member,
       id: `s${Date.now()}`,
       reliabilityScore: 100,
+      punctualityScore: 100,
       skills: [],
       assignments: [],
       attendance: [],

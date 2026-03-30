@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Phone, MessageCircle, Eye, Sparkles, Plus, X, Camera, UserPlus } from "lucide-react";
+import { Phone, MessageCircle, Eye, Plus, X, Camera, UserPlus } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { departments, type Department } from "@/data/staff";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
@@ -28,6 +28,7 @@ const StaffDirectory = () => {
   const { staff, removeStaff, addStaff } = useAppState();
   const [activeDept, setActiveDept] = useState<string>("All");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [customDeptName, setCustomDeptName] = useState("");
   const [newStaff, setNewStaff] = useState({
     name: "",
     role: "",
@@ -42,14 +43,17 @@ const StaffDirectory = () => {
 
   const filtered = activeDept === "All"
     ? staff
-    : staff.filter((s) => s.department === activeDept);
+    : staff.filter((s) => {
+        if (activeDept === "Other") return s.department === "Other";
+        return s.department === activeDept;
+      });
 
   const onDuty = staff.filter((s) => s.status === "on-duty").length;
   const lateCount = staff.filter((s) => s.status === "late").length;
 
   const handleRefresh = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 800));
-    toast.success("Staff directory refreshed");
+    toast.success("Directory refreshed");
   }, []);
 
   const handleAddStaff = () => {
@@ -62,6 +66,7 @@ const StaffDirectory = () => {
       role: newStaff.role,
       phone: newStaff.phone,
       department: newStaff.department,
+      customDepartment: newStaff.department === "Other" ? customDeptName : undefined,
       salary: Number(newStaff.salary) || 0,
       status: "off-duty",
       tenure: newStaff.tenure || "New",
@@ -72,12 +77,18 @@ const StaffDirectory = () => {
     });
     toast.success(`${newStaff.name} added to the team!`);
     setNewStaff({ name: "", role: "", phone: "", department: "Hospitality", salary: "", location: "", tenure: "", shiftStart: "08:00 AM", shiftEnd: "05:00 PM" });
+    setCustomDeptName("");
     setShowAddForm(false);
   };
 
   const handleMessage = (phone: string, name: string) => {
     window.open(`https://t.me/${phone.replace(/[\s+]/g, "")}`, "_blank");
     toast.success(`Opening Telegram for ${name}...`);
+  };
+
+  const getDeptLabel = (dept: Department, custom?: string) => {
+    if (dept === "Other" && custom) return custom;
+    return dept;
   };
 
   return (
@@ -96,7 +107,7 @@ const StaffDirectory = () => {
               onClick={() => setShowAddForm(true)}
               className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl inline-flex items-center gap-2"
             >
-              <UserPlus size={14} /> Add Homemate
+              <UserPlus size={14} /> Add Homemaker
             </motion.button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
@@ -115,7 +126,7 @@ const StaffDirectory = () => {
             >
               <div className="glass-card rounded-2xl p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="headline-sm text-card-foreground">New Homemate</h3>
+                  <h3 className="headline-sm text-card-foreground">New Homemaker</h3>
                   <button onClick={() => setShowAddForm(false)} className="glass-btn w-8 h-8 rounded-xl flex items-center justify-center">
                     <X size={16} className="text-muted-foreground" />
                   </button>
@@ -136,6 +147,14 @@ const StaffDirectory = () => {
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30">
                   {departments.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
+                {newStaff.department === "Other" && (
+                  <input
+                    placeholder="Custom category name (e.g. Pet Care, Tutor)"
+                    value={customDeptName}
+                    onChange={(e) => setCustomDeptName(e.target.value)}
+                    className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
+                  />
+                )}
                 <input type="number" placeholder="Monthly Salary (₹)" value={newStaff.salary} onChange={(e) => setNewStaff({ ...newStaff, salary: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
                 <input placeholder="Location / Area" value={newStaff.location} onChange={(e) => setNewStaff({ ...newStaff, location: e.target.value })}
@@ -213,10 +232,20 @@ const StaffDirectory = () => {
                         <br />
                         {s.name.split(" ").slice(1).join(" ")}
                       </h3>
-                      <p className="label-sm text-muted-foreground mt-1">{s.role}</p>
-                      <div className="flex items-center gap-1 mt-2">
-                        <p className="label-sm text-muted-foreground">Reliability</p>
-                        <p className="text-sm font-bold text-card-foreground ml-auto">{s.reliabilityScore}%</p>
+                      <p className="label-sm text-muted-foreground mt-1">
+                        {s.role} · {getDeptLabel(s.department, s.customDepartment)}
+                      </p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-1">
+                          <p className="text-[10px] text-muted-foreground">Reliability</p>
+                          <p className="text-xs font-bold text-card-foreground">{s.reliabilityScore}%</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <p className="text-[10px] text-muted-foreground">Punctuality</p>
+                          <p className={`text-xs font-bold ${s.punctualityScore >= 90 ? "text-status-on-time" : s.punctualityScore >= 75 ? "text-status-late" : "text-destructive"}`}>
+                            {s.punctualityScore}%
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>

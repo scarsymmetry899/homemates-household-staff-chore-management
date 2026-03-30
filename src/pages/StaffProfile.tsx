@@ -98,16 +98,17 @@ const StaffProfile = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="absolute bottom-4 left-4 glass px-3.5 py-2 rounded-xl shadow-btn"
+            className="absolute bottom-4 left-4 flex gap-2"
           >
-            <span className="label-sm text-status-on-time">{s.reliabilityScore}% Reliability</span>
+            <span className="glass px-3 py-1.5 rounded-xl shadow-btn label-sm text-status-on-time">{s.reliabilityScore}% Reliable</span>
+            <span className={`glass px-3 py-1.5 rounded-xl shadow-btn label-sm ${s.punctualityScore >= 90 ? "text-status-on-time" : s.punctualityScore >= 75 ? "text-status-late" : "text-destructive"}`}>{s.punctualityScore}% Punctual</span>
           </motion.div>
         </motion.div>
       </div>
 
       <div className="px-5 space-y-6 -mt-2">
         <section className="space-y-3 pt-4">
-          <p className="label-sm text-muted-foreground">Household Staff</p>
+          <p className="label-sm text-muted-foreground">Homemaker Profile</p>
           <h1 className="font-display text-3xl text-foreground tracking-tight leading-tight">{s.name}</h1>
           <div className="flex gap-8">
             <div>
