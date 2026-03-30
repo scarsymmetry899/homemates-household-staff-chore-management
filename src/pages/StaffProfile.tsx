@@ -90,6 +90,17 @@ const StaffProfile = () => {
             <motion.button whileTap={{ scale: 0.95 }} className="glass-btn text-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
               <CalendarDays size={14} /> Schedule
             </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                removeStaff(s.id);
+                toast.success(`${s.name} removed from staff`);
+                navigate("/staff");
+              }}
+              className="glass-btn text-destructive label-sm px-4 py-3 rounded-2xl flex items-center gap-2"
+            >
+              <Trash2 size={14} />
+            </motion.button>
           </div>
         </section>
 
