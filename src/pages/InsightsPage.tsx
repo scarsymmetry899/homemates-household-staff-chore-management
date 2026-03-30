@@ -128,13 +128,13 @@ const InsightsPage = () => {
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-                <p className="label-sm text-status-late">Late Arrivals</p>
+               <p className="label-sm text-status-late">Tardy Check-ins</p>
                 <Clock size={16} className="text-status-late" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">
-                12 <span className="text-base text-muted-foreground font-sans">this month</span>
+                12 <span className="text-base text-muted-foreground font-sans">this cycle</span>
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Improving trend from last month.</p>
+              <p className="text-xs text-muted-foreground mt-1">Trending down — keep the momentum.</p>
             </PressableCard>
           </StaggerItem>
           <StaggerItem>
