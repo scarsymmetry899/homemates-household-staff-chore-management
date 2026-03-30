@@ -44,20 +44,20 @@ const StaffDirectory = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Registry & Oversight</p>
+          <p className="label-sm text-muted-foreground">Workforce Command Center</p>
           <h1 className="display-sm text-foreground">
-            Estate Staffing
+            Crew
             <br />
-            <span className="font-display italic text-secondary">Directory</span>
+            <span className="font-display italic text-secondary">Roster</span>
           </h1>
           <motion.button
             whileTap={{ scale: 0.95 }}
             className="mt-3 btn-estate text-primary-foreground label-sm px-6 py-3 rounded-2xl inline-flex items-center gap-2"
           >
-            <Sparkles size={14} /> Request Service
+            <Sparkles size={14} /> Deploy Help
           </motion.button>
           <p className="text-xs text-muted-foreground mt-2">
-            Updated: {new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
+            Last synced: {new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
           </p>
         </section>
 
