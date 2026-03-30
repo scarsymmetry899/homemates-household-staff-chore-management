@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Bell, Settings } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
-import avatarImg from "@/assets/staff/arthur-penhaligon.jpg";
+import logoImg from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
 const AppHeader = () => {
