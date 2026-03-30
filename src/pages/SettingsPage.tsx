@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight } from "lucide-react";
+import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut } from "lucide-react";
 import { PageTransition, AnimatedCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
 
@@ -10,6 +10,10 @@ interface SettingToggle {
   description: string;
   icon: typeof Bell;
   defaultOn: boolean;
+}
+
+interface SettingsPageProps {
+  onLogout: () => void;
 }
 
 const settingSections: { title: string; items: SettingToggle[] }[] = [
@@ -37,7 +41,7 @@ const settingSections: { title: string; items: SettingToggle[] }[] = [
   },
 ];
 
-const SettingsPage = () => {
+const SettingsPage = ({ onLogout }: SettingsPageProps) => {
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
     settingSections.forEach((s) => s.items.forEach((i) => (defaults[i.id] = i.defaultOn)));
@@ -81,7 +85,7 @@ const SettingsPage = () => {
                     onClick={() => handleToggle(item.id)}
                     className="p-4 flex items-center gap-4 cursor-pointer select-none"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
                       <Icon size={18} className="text-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -90,7 +94,7 @@ const SettingsPage = () => {
                     </div>
                     <div
                       className={`w-12 h-7 rounded-full p-0.5 transition-colors duration-200 ${
-                        isOn ? "bg-primary" : "bg-surface-container"
+                        isOn ? "bg-primary" : "bg-muted"
                       }`}
                     >
                       <motion.div
@@ -107,7 +111,7 @@ const SettingsPage = () => {
         ))}
 
         {/* About */}
-        <AnimatedCard delay={0.3} className="glass-card rounded-2xl p-5 space-y-2 mb-4">
+        <AnimatedCard delay={0.3} className="glass-card rounded-2xl p-5 space-y-2">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-card-foreground">HOMEMAKER</p>
@@ -116,6 +120,29 @@ const SettingsPage = () => {
             <ChevronRight size={16} className="text-muted-foreground" />
           </div>
         </AnimatedCard>
+
+        {/* Sign Out */}
+        <AnimatedCard delay={0.35}>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              toast.success("Signed out successfully");
+              onLogout();
+            }}
+            className="w-full glass-card rounded-2xl p-4 flex items-center gap-4 cursor-pointer border border-destructive/20"
+          >
+            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+              <LogOut size={18} className="text-destructive" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-semibold text-destructive">Sign Out</p>
+              <p className="text-xs text-muted-foreground">Log out of your account</p>
+            </div>
+            <ChevronRight size={16} className="text-destructive/50" />
+          </motion.button>
+        </AnimatedCard>
+
+        <div className="pb-4" />
       </PageTransition>
     </PullToRefresh>
   );
