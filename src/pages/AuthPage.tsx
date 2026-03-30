@@ -40,9 +40,8 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             src={logo}
             alt="Homemaker"
-            className="w-20 h-20 mx-auto rounded-2xl shadow-card object-contain"
+            className="w-32 h-32 mx-auto object-contain"
           />
-          <h1 className="font-display text-3xl text-foreground">Homemaker</h1>
           <p className="text-sm text-muted-foreground">Your household, simplified.</p>
         </div>
 
