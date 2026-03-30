@@ -13,6 +13,7 @@ import PayrollPage from "./pages/PayrollPage";
 import InsightsPage from "./pages/InsightsPage";
 import ExpensesPage from "./pages/ExpensesPage";
 import AlertsPage from "./pages/AlertsPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
