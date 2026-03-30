@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import AppHeader from "./AppHeader";
+import SmartCommandBox from "@/components/SmartCommandBox";
 
 const AppLayout = () => {
   const location = useLocation();
