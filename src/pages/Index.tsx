@@ -142,7 +142,7 @@ const Index = () => {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="font-display text-2xl text-foreground">{taskPct}%</span>
-                <span className="label-sm text-muted-foreground">Shipped</span>
+                <span className="label-sm text-muted-foreground">Done</span>
               </div>
             </div>
           </div>
