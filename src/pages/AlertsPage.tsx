@@ -37,11 +37,11 @@ const AlertsPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Monitoring & Response</p>
+          <p className="label-sm text-muted-foreground">Incident Response Hub</p>
           <h1 className="display-sm text-foreground">
-            Active
+            Live
             <br />
-            <span className="font-display italic text-secondary">Alerts</span>
+            <span className="font-display italic text-secondary">Flags</span>
           </h1>
         </section>
 
@@ -129,7 +129,7 @@ const AlertsPage = () => {
               <Shield size={20} className="text-status-on-time" />
             </div>
             <h3 className="headline-sm text-card-foreground">All Clear</h3>
-            <p className="text-sm text-muted-foreground">No active alerts. Estate operations are running smoothly.</p>
+            <p className="text-sm text-muted-foreground">Zero incidents. Your household is running like clockwork.</p>
           </motion.div>
         )}
 

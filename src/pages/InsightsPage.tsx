@@ -42,12 +42,12 @@ const InsightsPage = () => {
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
           <h1 className="display-sm text-foreground">
-            Attendance
+            Pulse
             <br />
-            <span className="font-display italic text-secondary">Overview</span>
+            <span className="font-display italic text-secondary">Analytics</span>
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Track staff attendance patterns and reliability.
+            Deep-dive into crew performance metrics & attendance cadence.
           </p>
         </section>
 
@@ -118,35 +118,35 @@ const InsightsPage = () => {
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-                <p className="label-sm text-status-on-time">Attendance Rate</p>
+               <p className="label-sm text-status-on-time">Punctuality Score</p>
                 <TrendingUp size={16} className="text-status-on-time" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">94.2%</p>
-              <p className="text-xs text-muted-foreground mt-1">Consistent across all staff.</p>
+              <p className="text-xs text-muted-foreground mt-1">Solid consistency across the crew.</p>
             </PressableCard>
           </StaggerItem>
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-                <p className="label-sm text-status-late">Late Arrivals</p>
+               <p className="label-sm text-status-late">Tardy Check-ins</p>
                 <Clock size={16} className="text-status-late" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">
-                12 <span className="text-base text-muted-foreground font-sans">this month</span>
+                12 <span className="text-base text-muted-foreground font-sans">this cycle</span>
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Improving trend from last month.</p>
+              <p className="text-xs text-muted-foreground mt-1">Trending down — keep the momentum.</p>
             </PressableCard>
           </StaggerItem>
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-                <p className="label-sm text-secondary">Currently On Duty</p>
+               <p className="label-sm text-secondary">Boots on Ground</p>
                 <Users size={16} className="text-secondary" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">
                 {onDuty} / {staff.length}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Active staff right now.</p>
+              <p className="text-xs text-muted-foreground mt-1">Active operatives right now.</p>
             </PressableCard>
           </StaggerItem>
         </StaggerContainer>

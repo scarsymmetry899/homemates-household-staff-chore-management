@@ -20,11 +20,11 @@ const PayrollPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Financial Oversight</p>
+          <p className="label-sm text-muted-foreground">Compensation Hub</p>
           <h1 className="display-sm text-foreground">
             Payroll
             <br />
-            <span className="font-display italic text-secondary">Ledger</span>
+            <span className="font-display italic text-secondary">Disbursement</span>
           </h1>
         </section>
 
@@ -33,7 +33,7 @@ const PayrollPage = () => {
             <p className="label-sm text-primary-foreground/60">This Month</p>
             <TrendingUp size={16} className="text-primary-foreground/60" />
           </div>
-          <p className="label-sm text-primary-foreground/50">Total Payroll</p>
+          <p className="label-sm text-primary-foreground/50">Net Disbursement</p>
           <p className="font-display text-3xl text-primary-foreground">
             ₹{totalPayroll.toLocaleString("en-IN")}
           </p>
@@ -51,7 +51,7 @@ const PayrollPage = () => {
 
         <StaggerContainer className="space-y-3 pb-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Staff Breakdown</h3>
+            <h3 className="headline-sm text-foreground">Crew Compensation</h3>
             <button
               onClick={() => toast.success("Export started", { description: "Payroll report generating..." })}
               className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl flex items-center gap-1"

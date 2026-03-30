@@ -8,11 +8,11 @@ import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRef
 import { toast } from "sonner";
 
 const statusLabel: Record<string, string> = {
-  "on-duty": "On-Duty",
-  late: "Late (20m)",
-  absent: "Absent",
-  "en-route": "En-Route",
-  "off-duty": "Off-Duty",
+  "on-duty": "Clocked In",
+  late: "Running Late",
+  absent: "No-Show",
+  "en-route": "Inbound",
+  "off-duty": "Off-Grid",
 };
 
 const statusStyle: Record<string, string> = {
@@ -44,35 +44,35 @@ const StaffDirectory = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Registry & Oversight</p>
+          <p className="label-sm text-muted-foreground">Workforce Command Center</p>
           <h1 className="display-sm text-foreground">
-            Estate Staffing
+            Crew
             <br />
-            <span className="font-display italic text-secondary">Directory</span>
+            <span className="font-display italic text-secondary">Roster</span>
           </h1>
           <motion.button
             whileTap={{ scale: 0.95 }}
             className="mt-3 btn-estate text-primary-foreground label-sm px-6 py-3 rounded-2xl inline-flex items-center gap-2"
           >
-            <Sparkles size={14} /> Request Service
+            <Sparkles size={14} /> Deploy Help
           </motion.button>
           <p className="text-xs text-muted-foreground mt-2">
-            Updated: {new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
+            Last synced: {new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
           </p>
         </section>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-muted-foreground">Total</p>
+            <p className="label-sm text-muted-foreground">Headcount</p>
             <p className="font-display text-2xl text-card-foreground mt-1">{staff.length}</p>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-on-time">On-Duty</p>
+            <p className="label-sm text-status-on-time">Active</p>
             <p className="font-display text-2xl text-card-foreground mt-1">{onDuty}</p>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-late">Late</p>
+            <p className="label-sm text-status-late">Flagged</p>
             <p className="font-display text-2xl text-status-late mt-1">{lateCount}</p>
           </motion.div>
         </div>

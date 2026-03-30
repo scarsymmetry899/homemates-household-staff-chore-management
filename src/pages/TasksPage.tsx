@@ -54,22 +54,22 @@ const TasksPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Operations & Workflow</p>
+          <p className="label-sm text-muted-foreground">Mission Control</p>
           <h1 className="display-sm text-foreground">
             Task
             <br />
-            <span className="font-display italic text-secondary">Engine</span>
+            <span className="font-display italic text-secondary">Pipeline</span>
           </h1>
         </section>
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-on-time">Completed</p>
+            <p className="label-sm text-status-on-time">Shipped</p>
             <p className="font-display text-2xl text-card-foreground mt-1">{doneCount}</p>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-late">Pending</p>
+            <p className="label-sm text-status-late">In Queue</p>
             <p className="font-display text-2xl text-card-foreground mt-1">{pendingCount}</p>
           </motion.div>
         </div>
@@ -95,7 +95,7 @@ const TasksPage = () => {
           onClick={() => setShowForm(!showForm)}
           className="w-full glass-card text-card-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
         >
-          <Plus size={16} /> Add Task
+          <Plus size={16} /> Queue a Task
         </motion.button>
 
         <AnimatePresence>

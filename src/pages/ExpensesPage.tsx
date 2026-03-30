@@ -47,11 +47,11 @@ const ExpensesPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Financial Tracking</p>
+          <p className="label-sm text-muted-foreground">Treasury & Outflows</p>
           <h1 className="display-sm text-foreground">
             Expense
             <br />
-            <span className="font-display italic text-secondary">Ledger</span>
+            <span className="font-display italic text-secondary">Tracker</span>
           </h1>
         </section>
 
@@ -66,7 +66,7 @@ const ExpensesPage = () => {
             <p className="label-sm text-primary-foreground/60">This Month</p>
             <TrendingUp size={16} className="text-primary-foreground/60" />
           </div>
-          <p className="label-sm text-primary-foreground/50">Monthly Burn Rate</p>
+          <p className="label-sm text-primary-foreground/50">Cash Burn Rate</p>
           <p className="font-display text-3xl text-primary-foreground">
             ₹{total.toLocaleString("en-IN")}
           </p>
@@ -99,7 +99,7 @@ const ExpensesPage = () => {
           onClick={() => setShowForm(!showForm)}
           className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
         >
-          <Plus size={16} /> Add Expense
+          <Plus size={16} /> Log an Expense
         </motion.button>
 
         {/* Add Expense Form */}
