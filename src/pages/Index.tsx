@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Droplets, TrendingUp, Clock, Bell } from "lucide-react";
+import { ArrowRight, TrendingUp, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppState } from "@/context/AppContext";
 import estateHallway from "@/assets/estate-hallway.jpg";
@@ -19,7 +19,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { staff, alerts } = useAppState();
   const today = new Date();
-  const dateStr = today.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const dateStr = today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   const activeAlerts = alerts.filter((a) => !a.dismissed);
   const totalTasks = staff.reduce((a, s) => a + s.assignments.length, 0);
@@ -34,20 +34,20 @@ const Index = () => {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-7">
-        {/* Morning Briefing */}
+        {/* Greeting */}
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Morning Briefing</p>
+          <p className="label-sm text-muted-foreground">{dateStr}</p>
           <h1 className="display-sm text-foreground">
-            The Estate at
+            Good Morning,
             <br />
-            <span className="italic">North Woods</span>
+            <span className="italic">Manager</span>
           </h1>
-          <p className="font-display text-secondary italic text-sm">{dateStr}</p>
           <motion.button
             whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/tasks")}
             className="mt-4 btn-estate text-primary-foreground label-sm px-6 py-3 rounded-2xl"
           >
-            Request Service
+            Assign Task
           </motion.button>
         </section>
 
@@ -72,43 +72,21 @@ const Index = () => {
           </AnimatedCard>
         )}
 
-        {/* Priority Alert */}
-        <AnimatedCard delay={0.1} className="glass-card rounded-2xl p-5 space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-status-late" />
-            <span className="label-sm text-status-late">High Priority</span>
-          </div>
-          <h3 className="headline-sm text-card-foreground">
-            HVAC Maintenance
-            <br />Overdue
-          </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            The climate control system in the West Wing is reporting filter saturation.
-            Immediate replacement recommended to prevent efficiency loss.
-          </p>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2 label-sm text-foreground mt-2 glass-btn px-4 py-2 rounded-xl"
-          >
-            Resolve Issue <ArrowRight size={14} />
-          </motion.button>
-        </AnimatedCard>
-
-        {/* Estate Status Banner */}
+        {/* Status Banner */}
         <AnimatedCard delay={0.15} className="relative rounded-2xl overflow-hidden h-36 shadow-card">
-          <img src={estateHallway} alt="Estate hallway" className="w-full h-full object-cover" />
+          <img src={estateHallway} alt="Home interior" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-primary/20 flex flex-col justify-end p-5">
-            <p className="label-sm text-primary-foreground/70">Estate Status</p>
-            <h3 className="font-display text-xl text-primary-foreground">Optimal Atmosphere</h3>
+            <p className="label-sm text-primary-foreground/70">Home Status</p>
+            <h3 className="font-display text-xl text-primary-foreground">All Systems Normal</h3>
           </div>
         </AnimatedCard>
 
-        {/* Personnel Tracking */}
+        {/* Staff On Duty */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Personnel Tracking</h3>
+            <h3 className="headline-sm text-foreground">Staff On Duty</h3>
             <button onClick={() => navigate("/staff")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
-              Full Directory
+              View All
             </button>
           </div>
           <StaggerContainer className="space-y-3">
@@ -124,7 +102,7 @@ const Index = () => {
                       <p className="label-sm text-muted-foreground">{s.role}</p>
                       <p className="font-display text-base text-card-foreground font-medium">{s.name}</p>
                       {s.arrivalTime && (
-                        <p className="text-xs text-muted-foreground mt-0.5">Arrival {s.arrivalTime}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Arrived {s.arrivalTime}</p>
                       )}
                     </div>
                     <span
@@ -147,9 +125,14 @@ const Index = () => {
           </StaggerContainer>
         </section>
 
-        {/* Estate Ops */}
+        {/* Task Progress */}
         <AnimatedCard delay={0.2} className="glass-card rounded-2xl p-6 space-y-4">
-          <h3 className="headline-sm text-card-foreground">Estate Ops</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="headline-sm text-card-foreground">Today's Tasks</h3>
+            <button onClick={() => navigate("/tasks")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
+              Manage
+            </button>
+          </div>
           <div className="flex items-center justify-center">
             <div className="relative w-32 h-32">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -167,41 +150,41 @@ const Index = () => {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="font-display text-2xl text-foreground">{taskPct}%</span>
-                <span className="label-sm text-muted-foreground">Complete</span>
+                <span className="label-sm text-muted-foreground">Done</span>
               </div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Daily Routine</span>
+            <span className="text-muted-foreground">Progress</span>
             <span className="text-card-foreground font-semibold">{doneTasks} / {totalTasks}</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            {totalTasks - doneTasks} items remaining for evening lockdown
+            {totalTasks - doneTasks} tasks remaining today
           </p>
         </AnimatedCard>
 
-        {/* Financial Snapshot */}
+        {/* Monthly Expenses */}
         <AnimatedCard delay={0.25} className="btn-estate rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="label-sm text-primary-foreground/60">Fiscal Forecast</p>
-              <h3 className="headline-sm text-primary-foreground mt-1">Monthly Snapshot</h3>
+              <p className="label-sm text-primary-foreground/60">This Month</p>
+              <h3 className="headline-sm text-primary-foreground mt-1">Expenses</h3>
             </div>
             <div className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center backdrop-blur-sm">
               <TrendingUp size={16} className="text-primary-foreground" />
             </div>
           </div>
-          <p className="label-sm text-primary-foreground/60">Projected Expenditure</p>
+          <p className="label-sm text-primary-foreground/60">Total Spent</p>
           <p className="font-display text-3xl text-primary-foreground">
             ₹24,850 <span className="text-sm text-primary-foreground/50">INR</span>
           </p>
           <div className="flex gap-8">
             <div>
-              <p className="label-sm text-primary-foreground/50">Staffing</p>
+              <p className="label-sm text-primary-foreground/50">Salaries</p>
               <p className="text-primary-foreground font-semibold">₹18.2k</p>
             </div>
             <div>
-              <p className="label-sm text-primary-foreground/50">Utilities</p>
+              <p className="label-sm text-primary-foreground/50">Household</p>
               <p className="text-primary-foreground font-semibold">₹4.1k</p>
             </div>
           </div>
@@ -210,43 +193,11 @@ const Index = () => {
             onClick={() => navigate("/expenses")}
             className="w-full bg-primary-foreground/10 text-primary-foreground label-sm py-3 rounded-xl mt-2 backdrop-blur-sm border border-primary-foreground/10"
           >
-            Detailed Ledger
+            View All Expenses
           </motion.button>
         </AnimatedCard>
 
-        {/* Estate Journal */}
-        <StaggerContainer className="space-y-4 pb-4">
-          <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Estate Journal</h3>
-            <button className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">View All</button>
-          </div>
-          <StaggerItem>
-            <div className="flex gap-4">
-              <div className="w-9 h-9 rounded-xl bg-secondary-container flex items-center justify-center shrink-0 mt-0.5 shadow-card">
-                <Droplets size={14} className="text-secondary-container-foreground" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-card-foreground">Provision Delivery Received</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Artisan supplies and pantry restock confirmed by Elena Moretti.
-                </p>
-              </div>
-            </div>
-          </StaggerItem>
-          <StaggerItem>
-            <div className="flex gap-4">
-              <div className="w-9 h-9 rounded-xl bg-surface-low flex items-center justify-center shrink-0 mt-0.5 shadow-card">
-                <Clock size={14} className="text-foreground" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-card-foreground">Shift Change: Security Tier 1</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Perimeter check complete. All access points secured and monitored.
-                </p>
-              </div>
-            </div>
-          </StaggerItem>
-        </StaggerContainer>
+        <div className="pb-4" />
       </PageTransition>
     </PullToRefresh>
   );

@@ -63,7 +63,7 @@ const ExpensesPage = () => {
           className="btn-estate rounded-2xl p-6 space-y-3"
         >
           <div className="flex items-center justify-between">
-            <p className="label-sm text-primary-foreground/60">October 2023</p>
+            <p className="label-sm text-primary-foreground/60">This Month</p>
             <TrendingUp size={16} className="text-primary-foreground/60" />
           </div>
           <p className="label-sm text-primary-foreground/50">Monthly Burn Rate</p>
