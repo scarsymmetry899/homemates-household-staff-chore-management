@@ -42,12 +42,12 @@ const InsightsPage = () => {
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
           <h1 className="display-sm text-foreground">
-            Attendance
+            Pulse
             <br />
-            <span className="font-display italic text-secondary">Overview</span>
+            <span className="font-display italic text-secondary">Analytics</span>
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Track staff attendance patterns and reliability.
+            Deep-dive into crew performance metrics & attendance cadence.
           </p>
         </section>
 
