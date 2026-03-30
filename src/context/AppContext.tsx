@@ -189,6 +189,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       ...member,
       id: `s${Date.now()}`,
       reliabilityScore: 100,
+      punctualityScore: 100,
       skills: [],
       assignments: [],
       attendance: [],
