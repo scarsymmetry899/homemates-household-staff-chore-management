@@ -52,7 +52,7 @@ const PayrollPage = () => {
 
         <StaggerContainer className="space-y-3 pb-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Staff Compensation</h3>
+            <h3 className="headline-sm text-foreground">Homemaker Compensation</h3>
             <button
               onClick={() => toast.success("Export started", { description: "Payroll report generating..." })}
               className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl flex items-center gap-1"
