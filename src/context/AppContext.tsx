@@ -38,7 +38,7 @@ interface AppState {
   addTask: (staffId: string, task: string) => void;
   removeStaff: (staffId: string) => void;
   deleteTask: (staffId: string, taskIndex: number) => void;
-  addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills">) => void;
+  addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => void;
   addDeduction: (staffId: string, amount: number, reason: string) => void;
 }
 
