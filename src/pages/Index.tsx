@@ -166,7 +166,7 @@ const Index = () => {
               <TrendingUp size={16} className="text-primary-foreground" />
             </div>
           </div>
-          <p className="label-sm text-primary-foreground/60">Total Outflow</p>
+          <p className="label-sm text-primary-foreground/60">Total Spent</p>
           <p className="font-display text-3xl text-primary-foreground">
             ₹24,850 <span className="text-sm text-primary-foreground/50">INR</span>
           </p>
