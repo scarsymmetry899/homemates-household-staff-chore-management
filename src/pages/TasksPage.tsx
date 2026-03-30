@@ -148,8 +148,12 @@ const TasksPage = () => {
             <StaggerItem key={`${task.staffId}-${task.taskIndex}-${task.task}`}>
               <SwipeableCard
                 onSwipeRight={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
+                onSwipeLeft={() => {
+                  deleteTask(task.staffId, task.taskIndex);
+                  toast.success("Task deleted", { description: task.task });
+                }}
                 rightLabel={task.done ? "Undo" : "Done"}
-                leftLabel="Reassign"
+                leftLabel="Delete"
               >
                 <PressableCard>
                   <div
