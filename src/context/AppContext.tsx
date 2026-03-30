@@ -35,7 +35,7 @@ interface AppState {
   updateStaffShift: (staffId: string, shiftStart: string, shiftEnd: string) => void;
   addExpense: (expense: Omit<Expense, "id">) => void;
   dismissAlert: (alertId: string) => void;
-  addTask: (staffId: string, task: string) => void;
+  addTask: (staffId: string, task: string, dueDate?: string) => void;
   removeStaff: (staffId: string) => void;
   deleteTask: (staffId: string, taskIndex: number) => void;
   addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => void;
@@ -162,10 +162,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, dismissed: true } : a)));
   }, []);
 
-  const addTask = useCallback((staffId: string, task: string) => {
+  const addTask = useCallback((staffId: string, task: string, dueDate?: string) => {
     setStaff((prev) =>
       prev.map((s) =>
-        s.id === staffId ? { ...s, assignments: [...s.assignments, { task, done: false }] } : s
+        s.id === staffId ? { ...s, assignments: [...s.assignments, { task, done: false, dueDate }] } : s
       )
     );
   }, []);

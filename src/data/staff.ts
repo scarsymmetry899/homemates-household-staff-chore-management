@@ -26,7 +26,7 @@ export interface StaffMember {
   arrivalTime?: string;
   shiftStart: string;
   shiftEnd: string;
-  assignments: { task: string; done: boolean }[];
+  assignments: { task: string; done: boolean; dueDate?: string }[];
   notes?: string;
   attendance: { date: string; type: string; detail: string }[];
   payroll: {
