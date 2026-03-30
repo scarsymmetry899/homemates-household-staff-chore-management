@@ -29,6 +29,9 @@ const InsightsPage = () => {
     "off-duty": "bg-surface-container",
   };
 
+  const today = new Date();
+  const monthStr = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
   const handleRefresh = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 800));
     toast.success("Insights refreshed");
@@ -41,10 +44,10 @@ const InsightsPage = () => {
           <h1 className="display-sm text-foreground">
             Attendance
             <br />
-            <span className="font-display italic text-secondary">Heatmap</span>
+            <span className="font-display italic text-secondary">Overview</span>
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Monitor staff consistency and ensure seamless service delivery across departments.
+            Track staff attendance patterns and reliability.
           </p>
         </section>
 
@@ -69,9 +72,11 @@ const InsightsPage = () => {
 
         <div className="flex items-center gap-3">
           <button className="glass-btn text-foreground label-sm px-4 py-2.5 rounded-xl flex items-center gap-2">
-            <Clock size={14} /> October 2023
+            <Clock size={14} /> {monthStr}
           </button>
-          <motion.button whileTap={{ scale: 0.95 }} className="btn-estate text-primary-foreground label-sm px-4 py-2.5 rounded-xl flex items-center gap-2">
+          <motion.button whileTap={{ scale: 0.95 }} className="btn-estate text-primary-foreground label-sm px-4 py-2.5 rounded-xl flex items-center gap-2"
+            onClick={() => toast.success("Export started", { description: "Attendance report will be ready shortly." })}
+          >
             ↓ Export
           </motion.button>
         </div>
@@ -81,8 +86,8 @@ const InsightsPage = () => {
           <div className="p-4 overflow-x-auto no-scrollbar">
             <div className="grid grid-cols-[1fr_repeat(7,1.75rem)] gap-1.5 items-center min-w-[340px]">
               <span className="label-sm text-muted-foreground">Staff</span>
-              {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                <span key={d} className="label-sm text-muted-foreground text-center">{d}</span>
+              {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+                <span key={i} className="label-sm text-muted-foreground text-center">{d}</span>
               ))}
               {heatmapStaff.map((s) => (
                 <div key={s.name} className="contents">
@@ -117,7 +122,7 @@ const InsightsPage = () => {
                 <TrendingUp size={16} className="text-status-on-time" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">94.2%</p>
-              <p className="text-xs text-muted-foreground mt-1">Consistent across all departments.</p>
+              <p className="text-xs text-muted-foreground mt-1">Consistent across all staff.</p>
             </PressableCard>
           </StaggerItem>
           <StaggerItem>
@@ -127,21 +132,21 @@ const InsightsPage = () => {
                 <Clock size={16} className="text-status-late" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">
-                12 <span className="text-base text-muted-foreground font-sans">incidents</span>
+                12 <span className="text-base text-muted-foreground font-sans">this month</span>
               </p>
-              <p className="text-xs text-muted-foreground mt-1">-4% vs September 2023.</p>
+              <p className="text-xs text-muted-foreground mt-1">Improving trend from last month.</p>
             </PressableCard>
           </StaggerItem>
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-                <p className="label-sm text-secondary">Staff On Duty</p>
+                <p className="label-sm text-secondary">Currently On Duty</p>
                 <Users size={16} className="text-secondary" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">
                 {onDuty} / {staff.length}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Current active rotation today.</p>
+              <p className="text-xs text-muted-foreground mt-1">Active staff right now.</p>
             </PressableCard>
           </StaggerItem>
         </StaggerContainer>

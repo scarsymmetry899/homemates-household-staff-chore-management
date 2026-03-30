@@ -30,7 +30,7 @@ const PayrollPage = () => {
 
         <AnimatedCard delay={0.1} className="btn-estate rounded-2xl p-6 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="label-sm text-primary-foreground/60">October 2023</p>
+            <p className="label-sm text-primary-foreground/60">This Month</p>
             <TrendingUp size={16} className="text-primary-foreground/60" />
           </div>
           <p className="label-sm text-primary-foreground/50">Total Payroll</p>
@@ -52,7 +52,10 @@ const PayrollPage = () => {
         <StaggerContainer className="space-y-3 pb-4">
           <div className="flex items-center justify-between">
             <h3 className="headline-sm text-foreground">Staff Breakdown</h3>
-            <button className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl flex items-center gap-1">
+            <button
+              onClick={() => toast.success("Export started", { description: "Payroll report generating..." })}
+              className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl flex items-center gap-1"
+            >
               <Download size={12} /> Export
             </button>
           </div>
