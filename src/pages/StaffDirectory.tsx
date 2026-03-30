@@ -103,7 +103,8 @@ const StaffDirectory = () => {
                   toast.success(`Calling ${s.name}...`);
                 }}
                 onSwipeLeft={() => {
-                  toast(`Sending message to ${s.name}...`);
+                  removeStaff(s.id);
+                  toast.success(`${s.name} removed from staff`);
                 }}
                 rightLabel="Call"
                 leftLabel="Message"
