@@ -13,6 +13,7 @@ const AppLayout = () => {
       <main className="flex-1 pb-24 overflow-x-hidden">
         <Outlet />
       </main>
+      <SmartCommandBox />
       <BottomNav />
     </div>
   );
