@@ -118,11 +118,11 @@ const InsightsPage = () => {
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-                <p className="label-sm text-status-on-time">Attendance Rate</p>
+               <p className="label-sm text-status-on-time">Punctuality Score</p>
                 <TrendingUp size={16} className="text-status-on-time" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">94.2%</p>
-              <p className="text-xs text-muted-foreground mt-1">Consistent across all staff.</p>
+              <p className="text-xs text-muted-foreground mt-1">Solid consistency across the crew.</p>
             </PressableCard>
           </StaggerItem>
           <StaggerItem>
