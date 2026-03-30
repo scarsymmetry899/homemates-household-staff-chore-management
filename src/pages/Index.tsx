@@ -120,9 +120,9 @@ const Index = () => {
         {/* Task Throughput */}
         <AnimatedCard delay={0.2} className="glass-card rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-card-foreground">Ops Throughput</h3>
+            <h3 className="headline-sm text-card-foreground">Today's Progress</h3>
             <button onClick={() => navigate("/tasks")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
-              Pipeline
+              All Tasks
             </button>
           </div>
           <div className="flex items-center justify-center">
