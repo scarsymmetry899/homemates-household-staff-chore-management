@@ -140,13 +140,13 @@ const InsightsPage = () => {
           <StaggerItem>
             <PressableCard className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between">
-                <p className="label-sm text-secondary">Currently On Duty</p>
+               <p className="label-sm text-secondary">Boots on Ground</p>
                 <Users size={16} className="text-secondary" />
               </div>
               <p className="font-display text-3xl text-card-foreground mt-2">
                 {onDuty} / {staff.length}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Active staff right now.</p>
+              <p className="text-xs text-muted-foreground mt-1">Active operatives right now.</p>
             </PressableCard>
           </StaggerItem>
         </StaggerContainer>

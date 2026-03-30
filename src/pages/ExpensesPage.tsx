@@ -99,7 +99,7 @@ const ExpensesPage = () => {
           onClick={() => setShowForm(!showForm)}
           className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
         >
-          <Plus size={16} /> Add Expense
+          <Plus size={16} /> Log an Expense
         </motion.button>
 
         {/* Add Expense Form */}

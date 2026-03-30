@@ -3,22 +3,23 @@ import { motion } from "framer-motion";
 import { ArrowRight, TrendingUp, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppState } from "@/context/AppContext";
-import estateHallway from "@/assets/estate-hallway.jpg";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
 
 const statusLabel: Record<string, string> = {
-  "on-duty": "On-Site",
-  late: "Late",
-  absent: "Absent",
-  "en-route": "En-Route",
-  "off-duty": "Off-Duty",
+  "on-duty": "Clocked In",
+  late: "Delayed",
+  absent: "No-Show",
+  "en-route": "Inbound",
+  "off-duty": "Off-Grid",
 };
 
 const Index = () => {
   const navigate = useNavigate();
   const { staff, alerts } = useAppState();
   const today = new Date();
+  const hour = today.getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const dateStr = today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   const activeAlerts = alerts.filter((a) => !a.dismissed);
@@ -28,7 +29,7 @@ const Index = () => {
 
   const handleRefresh = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 800));
-    toast.success("Dashboard refreshed", { description: "All data is up to date." });
+    toast.success("Dashboard synced", { description: "All modules refreshed." });
   }, []);
 
   return (
@@ -38,16 +39,16 @@ const Index = () => {
         <section className="space-y-2">
           <p className="label-sm text-muted-foreground">{dateStr}</p>
           <h1 className="display-sm text-foreground">
-            Good Morning,
+            {greeting},
             <br />
-            <span className="italic">Manager</span>
+            <span className="italic">Boss</span> ✨
           </h1>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/tasks")}
             className="mt-4 btn-estate text-primary-foreground label-sm px-6 py-3 rounded-2xl"
           >
-            Assign Task
+            Dispatch a Task
           </motion.button>
         </section>
 
@@ -63,7 +64,7 @@ const Index = () => {
                   <Bell size={18} className="text-status-absent" />
                 </div>
                 <div className="flex-1">
-                  <p className="label-sm text-status-absent">{activeAlerts.length} Active Alerts</p>
+                  <p className="label-sm text-status-absent">{activeAlerts.length} Flagged Incidents</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{activeAlerts[0].title}</p>
                 </div>
                 <ArrowRight size={16} className="text-muted-foreground" />
@@ -72,21 +73,12 @@ const Index = () => {
           </AnimatedCard>
         )}
 
-        {/* Status Banner */}
-        <AnimatedCard delay={0.15} className="relative rounded-2xl overflow-hidden h-36 shadow-card">
-          <img src={estateHallway} alt="Home interior" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-primary/20 flex flex-col justify-end p-5">
-            <p className="label-sm text-primary-foreground/70">Home Status</p>
-            <h3 className="font-display text-xl text-primary-foreground">All Systems Normal</h3>
-          </div>
-        </AnimatedCard>
-
-        {/* Staff On Duty */}
+        {/* Crew On Duty */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Staff On Duty</h3>
+            <h3 className="headline-sm text-foreground">Active Crew</h3>
             <button onClick={() => navigate("/staff")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
-              View All
+              Full Roster
             </button>
           </div>
           <StaggerContainer className="space-y-3">
@@ -102,7 +94,7 @@ const Index = () => {
                       <p className="label-sm text-muted-foreground">{s.role}</p>
                       <p className="font-display text-base text-card-foreground font-medium">{s.name}</p>
                       {s.arrivalTime && (
-                        <p className="text-xs text-muted-foreground mt-0.5">Arrived {s.arrivalTime}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Checked in at {s.arrivalTime}</p>
                       )}
                     </div>
                     <span
@@ -125,12 +117,12 @@ const Index = () => {
           </StaggerContainer>
         </section>
 
-        {/* Task Progress */}
+        {/* Task Throughput */}
         <AnimatedCard delay={0.2} className="glass-card rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-card-foreground">Today's Tasks</h3>
+            <h3 className="headline-sm text-card-foreground">Ops Throughput</h3>
             <button onClick={() => navigate("/tasks")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
-              Manage
+              Pipeline
             </button>
           </div>
           <div className="flex items-center justify-center">
@@ -150,41 +142,41 @@ const Index = () => {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="font-display text-2xl text-foreground">{taskPct}%</span>
-                <span className="label-sm text-muted-foreground">Done</span>
+                <span className="label-sm text-muted-foreground">Shipped</span>
               </div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progress</span>
+            <span className="text-muted-foreground">Completion Rate</span>
             <span className="text-card-foreground font-semibold">{doneTasks} / {totalTasks}</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            {totalTasks - doneTasks} tasks remaining today
+            {totalTasks - doneTasks} deliverables in the pipeline
           </p>
         </AnimatedCard>
 
-        {/* Monthly Expenses */}
+        {/* Monthly Burn */}
         <AnimatedCard delay={0.25} className="btn-estate rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="label-sm text-primary-foreground/60">This Month</p>
-              <h3 className="headline-sm text-primary-foreground mt-1">Expenses</h3>
+              <p className="label-sm text-primary-foreground/60">Monthly Cycle</p>
+              <h3 className="headline-sm text-primary-foreground mt-1">Burn Rate</h3>
             </div>
             <div className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center backdrop-blur-sm">
               <TrendingUp size={16} className="text-primary-foreground" />
             </div>
           </div>
-          <p className="label-sm text-primary-foreground/60">Total Spent</p>
+          <p className="label-sm text-primary-foreground/60">Total Outflow</p>
           <p className="font-display text-3xl text-primary-foreground">
             ₹24,850 <span className="text-sm text-primary-foreground/50">INR</span>
           </p>
           <div className="flex gap-8">
             <div>
-              <p className="label-sm text-primary-foreground/50">Salaries</p>
+              <p className="label-sm text-primary-foreground/50">Payroll</p>
               <p className="text-primary-foreground font-semibold">₹18.2k</p>
             </div>
             <div>
-              <p className="label-sm text-primary-foreground/50">Household</p>
+              <p className="label-sm text-primary-foreground/50">Ops & Misc</p>
               <p className="text-primary-foreground font-semibold">₹4.1k</p>
             </div>
           </div>
@@ -193,7 +185,7 @@ const Index = () => {
             onClick={() => navigate("/expenses")}
             className="w-full bg-primary-foreground/10 text-primary-foreground label-sm py-3 rounded-xl mt-2 backdrop-blur-sm border border-primary-foreground/10"
           >
-            View All Expenses
+            View Full Ledger
           </motion.button>
         </AnimatedCard>
 

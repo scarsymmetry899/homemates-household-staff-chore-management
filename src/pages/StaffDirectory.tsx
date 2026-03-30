@@ -72,7 +72,7 @@ const StaffDirectory = () => {
             <p className="font-display text-2xl text-card-foreground mt-1">{onDuty}</p>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-late">Late</p>
+            <p className="label-sm text-status-late">Flagged</p>
             <p className="font-display text-2xl text-status-late mt-1">{lateCount}</p>
           </motion.div>
         </div>

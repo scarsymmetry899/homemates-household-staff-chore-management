@@ -95,7 +95,7 @@ const TasksPage = () => {
           onClick={() => setShowForm(!showForm)}
           className="w-full glass-card text-card-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
         >
-          <Plus size={16} /> Add Task
+          <Plus size={16} /> Queue a Task
         </motion.button>
 
         <AnimatePresence>

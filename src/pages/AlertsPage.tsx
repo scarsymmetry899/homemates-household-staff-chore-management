@@ -129,7 +129,7 @@ const AlertsPage = () => {
               <Shield size={20} className="text-status-on-time" />
             </div>
             <h3 className="headline-sm text-card-foreground">All Clear</h3>
-            <p className="text-sm text-muted-foreground">No active alerts. Estate operations are running smoothly.</p>
+            <p className="text-sm text-muted-foreground">Zero incidents. Your household is running like clockwork.</p>
           </motion.div>
         )}
 
