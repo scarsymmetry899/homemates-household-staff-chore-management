@@ -31,6 +31,8 @@ interface AppState {
   addExpense: (expense: Omit<Expense, "id">) => void;
   dismissAlert: (alertId: string) => void;
   addTask: (staffId: string, task: string) => void;
+  removeStaff: (staffId: string) => void;
+  deleteTask: (staffId: string, taskIndex: number) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
