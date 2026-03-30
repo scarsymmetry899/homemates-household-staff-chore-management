@@ -25,7 +25,7 @@ const statusStyle: Record<string, string> = {
 
 const StaffDirectory = () => {
   const navigate = useNavigate();
-  const { staff } = useAppState();
+  const { staff, removeStaff } = useAppState();
   const [activeDept, setActiveDept] = useState<string>("All");
 
   const filtered = activeDept === "All"
