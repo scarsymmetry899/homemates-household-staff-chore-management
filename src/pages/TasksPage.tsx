@@ -69,7 +69,7 @@ const TasksPage = () => {
             <p className="font-display text-2xl text-card-foreground mt-1">{doneCount}</p>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-late">Pending</p>
+            <p className="label-sm text-status-late">In Queue</p>
             <p className="font-display text-2xl text-card-foreground mt-1">{pendingCount}</p>
           </motion.div>
         </div>
