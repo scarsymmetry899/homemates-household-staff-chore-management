@@ -1,27 +1,68 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
+import { toast } from "sonner";
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  updateProfile 
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import logo from "@/assets/logo.png";
 
-interface AuthPageProps {
-  onLogin: (name?: string) => void;
-}
-
-const AuthPage = ({ onLogin }: AuthPageProps) => {
+const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const name = isSignUp && fullName ? fullName : email.split("@")[0];
-    onLogin(name.charAt(0).toUpperCase() + name.slice(1));
+    setIsLoading(true);
+    
+    try {
+      if (isSignUp) {
+        if (!fullName.trim()) {
+          toast.error("Please enter your name");
+          setIsLoading(false);
+          return;
+        }
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: fullName });
+        localStorage.setItem("homemaker_owner_name", fullName);
+        toast.success("Account created successfully!");
+      } else {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const name = userCredential.user.displayName || email.split("@")[0];
+        localStorage.setItem("homemaker_owner_name", name);
+        toast.success("Welcome back!");
+      }
+    } catch (error: unknown) {
+      console.error(error);
+      toast.error((error as Error).message || "Failed to authenticate");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    onLogin("there");
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const name = result.user.displayName || "Owner";
+      localStorage.setItem("homemaker_owner_name", name);
+      toast.success("Signed in with Google!");
+    } catch (error: unknown) {
+      console.error(error);
+      toast.error((error as Error).message || "Failed to sign in with Google");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -47,7 +88,8 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleGoogleLogin}
-          className="w-full glass-card rounded-2xl py-3.5 px-4 flex items-center justify-center gap-3 cursor-pointer"
+          disabled={isLoading}
+          className="w-full glass-card rounded-2xl py-3.5 px-4 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
         >
           <svg width="20" height="20" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -106,9 +148,10 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             type="submit"
-            className="w-full btn-estate text-primary-foreground font-semibold py-3.5 rounded-2xl text-sm"
+            disabled={isLoading}
+            className="w-full btn-estate text-primary-foreground font-semibold py-3.5 rounded-2xl text-sm disabled:opacity-50"
           >
-            {isSignUp ? "Create Account" : "Sign In"}
+            {isLoading ? "Processing..." : isSignUp ? "Create Account" : "Sign In"}
           </motion.button>
         </form>
 

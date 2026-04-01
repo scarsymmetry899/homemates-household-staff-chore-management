@@ -113,7 +113,7 @@ export const SwipeableCard = ({
       : `hsla(150, 50%, 12%, ${Math.min(val / 120, 0.15)})`
   );
 
-  const handleDragEnd = (_: any, info: PanInfo) => {
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.x < -80 && onSwipeLeft) onSwipeLeft();
     if (info.offset.x > 80 && onSwipeRight) onSwipeRight();
   };
@@ -166,7 +166,7 @@ export const PullToRefresh = ({ children, className, onRefresh }: PullToRefreshP
   const spinRotation = useTransform(y, [0, 80], [0, 360]);
 
   const handleDragEnd = useCallback(
-    async (_: any, info: PanInfo) => {
+    async (_: unknown, info: PanInfo) => {
       if (info.offset.y > 70 && onRefresh && !isRefreshing) {
         setIsRefreshing(true);
         await onRefresh();

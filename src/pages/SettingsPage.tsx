@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil } from "lucide-react";
 import { PageTransition, AnimatedCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { useAppState } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 interface SettingToggle {
@@ -11,10 +12,6 @@ interface SettingToggle {
   description: string;
   icon: typeof Bell;
   defaultOn: boolean;
-}
-
-interface SettingsPageProps {
-  onLogout: () => void;
 }
 
 const settingSections: { title: string; items: SettingToggle[] }[] = [
@@ -42,8 +39,9 @@ const settingSections: { title: string; items: SettingToggle[] }[] = [
   },
 ];
 
-const SettingsPage = ({ onLogout }: SettingsPageProps) => {
+const SettingsPage = () => {
   const { ownerName, setOwnerName } = useAppState();
+  const { logout } = useAuth();
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
     settingSections.forEach((s) => s.items.forEach((i) => (defaults[i.id] = i.defaultOn)));
@@ -58,6 +56,12 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
       toast.success(next[id] ? "Enabled" : "Disabled", {
         description: settingSections.flatMap((s) => s.items).find((i) => i.id === id)?.label,
       });
+
+      if (id === "darkMode") {
+        if (next[id]) document.documentElement.classList.add("dark");
+        else document.documentElement.classList.remove("dark");
+      }
+
       return next;
     });
   };
@@ -158,15 +162,36 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
             </div>
             <ChevronRight size={16} className="text-muted-foreground" />
           </div>
+          <div className="pt-2 border-t border-border mt-3 flex justify-between items-center">
+            <button 
+              onClick={async () => {
+                const { seedDatabase } = await import('@/lib/seedDatabase');
+                toast.promise(seedDatabase(), {
+                  loading: 'Migrating mock data to Firebase...',
+                  success: 'Data migrated successfully!',
+                  error: 'Error seeding database'
+                });
+              }}
+              className="text-xs text-secondary underline"
+            >
+              Seed Database
+            </button>
+            <button 
+              onClick={() => window.location.href = "/nfc-terminal"}
+              className="label-sm px-3 py-1.5 rounded-lg btn-estate text-primary-foreground"
+            >
+              Launch NFC Terminal
+            </button>
+          </div>
         </AnimatedCard>
 
         {/* Sign Out */}
         <AnimatedCard delay={0.35}>
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={() => {
+            onClick={async () => {
+              await logout();
               toast.success("Signed out successfully");
-              onLogout();
             }}
             className="w-full glass-card rounded-2xl p-4 flex items-center gap-4 cursor-pointer border border-destructive/20"
           >

@@ -19,10 +19,10 @@ const TasksPage = () => {
   });
 
   const allTasks = staff.flatMap((s) =>
-    s.assignments.map((t, i) => ({
+    s.assignments.map((t) => ({
       ...t,
       staffId: s.id,
-      taskIndex: i,
+      taskId: t.id,
       staffName: s.name,
       staffRole: s.role,
       staffPhoto: s.photo,
@@ -37,8 +37,8 @@ const TasksPage = () => {
   const doneCount = allTasks.filter((t) => t.done).length;
   const pendingCount = allTasks.length - doneCount;
 
-  const handleToggle = (staffId: string, taskIndex: number, taskName: string, currentDone: boolean) => {
-    toggleTask(staffId, taskIndex);
+  const handleToggle = (staffId: string, taskId: string, taskName: string, currentDone: boolean) => {
+    toggleTask(staffId, taskId, currentDone);
     if (!currentDone) toast.success("Task completed", { description: taskName });
   };
 
@@ -48,7 +48,7 @@ const TasksPage = () => {
     const cleanTask = newTask.task.trim();
     const selectedMember = staff.find((s) => s.id === newTask.staffId);
 
-    addTask(newTask.staffId, cleanTask, newTask.dueDate || undefined);
+    addTask(newTask.staffId, cleanTask, newTask.dueDate || undefined, newTask.notifyTelegram);
     toast.success("Task added", {
       description: newTask.dueDate
         ? `${cleanTask} · Due ${new Date(newTask.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
@@ -194,11 +194,11 @@ const TasksPage = () => {
         {/* Task List */}
         <StaggerContainer className="space-y-3 pb-4">
           {filtered.map((task) => (
-            <StaggerItem key={`${task.staffId}-${task.taskIndex}-${task.task}-${task.dueDate || "na"}`}>
+            <StaggerItem key={`task-${task.taskId}`}>
               <SwipeableCard
-                onSwipeRight={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
+                onSwipeRight={() => handleToggle(task.staffId, task.taskId, task.task, task.done)}
                 onSwipeLeft={() => {
-                  deleteTask(task.staffId, task.taskIndex);
+                  deleteTask(task.taskId);
                   toast.success("Task deleted", { description: task.task });
                 }}
                 rightLabel={task.done ? "Undo" : "Done"}
@@ -206,7 +206,7 @@ const TasksPage = () => {
               >
                 <PressableCard>
                   <div
-                    onClick={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
+                    onClick={() => handleToggle(task.staffId, task.taskId, task.task, task.done)}
                     className="glass-card rounded-2xl p-4 flex items-start gap-3 cursor-pointer select-none"
                   >
                     <motion.div animate={{ scale: task.done ? [1, 1.3, 1] : 1 }} transition={{ duration: 0.3 }}>
@@ -238,7 +238,7 @@ const TasksPage = () => {
                       whileTap={{ scale: 0.9 }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteTask(task.staffId, task.taskIndex);
+                        deleteTask(task.taskId);
                         toast.success("Task deleted", { description: task.task });
                       }}
                       className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-1"

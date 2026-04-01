@@ -9,7 +9,7 @@ import { toast } from "sonner";
 const StaffProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { staff, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction } = useAppState();
+  const { staff, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction, updateTelegramChatId, sendTelegramMessage } = useAppState();
   const s = staff.find((s) => s.id === id);
 
   const [editingRole, setEditingRole] = useState(false);
@@ -20,6 +20,10 @@ const StaffProfile = () => {
   const [showDeductionForm, setShowDeductionForm] = useState(false);
   const [deductionAmount, setDeductionAmount] = useState("");
   const [deductionReason, setDeductionReason] = useState("");
+  const [editingTelegram, setEditingTelegram] = useState(false);
+  const [telegramInput, setTelegramInput] = useState("");
+  const [showTelegramCompose, setShowTelegramCompose] = useState(false);
+  const [telegramMessage, setTelegramMessage] = useState("");
 
   if (!s) {
     return (
@@ -29,10 +33,10 @@ const StaffProfile = () => {
     );
   }
 
-  const handleToggle = (i: number) => {
-    toggleTask(s.id, i);
-    if (!s.assignments[i].done) {
-      toast.success("Task completed", { description: s.assignments[i].task });
+  const handleToggle = (taskId: string, isDone: boolean, taskName: string) => {
+    toggleTask(s.id, taskId, isDone);
+    if (!isDone) {
+      toast.success("Task completed", { description: taskName });
     }
   };
 
@@ -62,8 +66,24 @@ const StaffProfile = () => {
   };
 
   const handleMessage = () => {
-    window.open(`https://t.me/${s.phone.replace(/[\s+]/g, "")}`, "_blank");
-    toast.success("Opening Telegram...");
+    if (!s.telegramChatId) {
+      toast.error("Please add a Telegram Chat ID first to use the bot.");
+      setEditingTelegram(true);
+      return;
+    }
+    setShowTelegramCompose(true);
+  };
+
+  const handleSendTelegram = () => {
+    if (!telegramMessage.trim()) return;
+    sendTelegramMessage(s.id, telegramMessage);
+    setTelegramMessage("");
+    setShowTelegramCompose(false);
+  };
+
+  const handleSaveTelegram = () => {
+    updateTelegramChatId(s.id, telegramInput.trim());
+    setEditingTelegram(false);
   };
 
   return (
@@ -170,13 +190,38 @@ const StaffProfile = () => {
             )}
           </div>
 
-          <div>
-            <p className="label-sm text-muted-foreground">Location</p>
-            <p className="text-sm text-card-foreground font-medium">{s.location}</p>
+          <div className="flex gap-8">
+            <div>
+              <p className="label-sm text-muted-foreground">Location</p>
+              <p className="text-sm text-card-foreground font-medium">{s.location}</p>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <p className="label-sm text-muted-foreground">Telegram Chat ID</p>
+                <button onClick={() => { setEditingTelegram(true); setTelegramInput(s.telegramChatId || ""); }} className="text-secondary">
+                  <Pencil size={10} />
+                </button>
+              </div>
+              {editingTelegram ? (
+                <div className="flex gap-1 mt-1">
+                  <input
+                    value={telegramInput}
+                    onChange={(e) => setTelegramInput(e.target.value)}
+                    placeholder="e.g. 123456789"
+                    className="bg-surface-low rounded-lg px-2 py-1 text-sm text-card-foreground border border-border/30 w-28"
+                    autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && handleSaveTelegram()}
+                  />
+                  <button onClick={handleSaveTelegram} className="label-sm text-secondary px-2">Save</button>
+                </div>
+              ) : (
+                <p className="text-sm text-card-foreground font-medium">{s.telegramChatId || <span className="text-muted-foreground text-xs italic">Not Set</span>}</p>
+              )}
+            </div>
           </div>
           <div className="flex gap-3 flex-wrap">
             <motion.button whileTap={{ scale: 0.95 }} onClick={handleMessage} className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
-              <MessageCircle size={14} /> Message
+              <MessageCircle size={14} /> Send Telegram
             </motion.button>
             <motion.button whileTap={{ scale: 0.95 }} className="glass-btn text-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
               <CalendarDays size={14} /> Schedule
@@ -193,6 +238,35 @@ const StaffProfile = () => {
               <Trash2 size={14} />
             </motion.button>
           </div>
+          
+          <AnimatePresence>
+            {showTelegramCompose && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden mb-4"
+              >
+                <div className="glass-card rounded-2xl p-4 bg-[#0088cc]/10 border border-[#0088cc]/20">
+                  <h3 className="label-sm text-[#0088cc] mb-2 flex items-center gap-2">
+                    <Send size={14} /> New Bot Message
+                  </h3>
+                  <textarea
+                    value={telegramMessage}
+                    onChange={(e) => setTelegramMessage(e.target.value)}
+                    placeholder="Type your message..."
+                    className="w-full bg-surface-low rounded-xl px-3 py-2 text-sm text-card-foreground outline-none border border-border/30 min-h-[80px]"
+                  />
+                  <div className="flex gap-2 mt-2 justify-end">
+                    <button onClick={() => setShowTelegramCompose(false)} className="label-sm text-muted-foreground px-3 py-1.5">Cancel</button>
+                    <button onClick={handleSendTelegram} className="label-sm bg-[#0088cc] text-white px-4 py-1.5 rounded-lg flex items-center gap-1.5 hover:opacity-90 transition-opacity">
+                      Send <Send size={12} />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
 
         {/* Assignments */}
@@ -202,12 +276,12 @@ const StaffProfile = () => {
             <span className="label-sm text-muted-foreground glass-btn px-2.5 py-1 rounded-lg">Today</span>
           </div>
           <div className="space-y-3">
-            {s.assignments.map((task, i) => (
-              <div key={i} className="flex items-center gap-3">
+            {s.assignments.map((task) => (
+              <div key={task.id} className="flex items-center gap-3">
                 <motion.label
                   whileTap={{ scale: 0.97 }}
                   className="flex items-center gap-3 cursor-pointer select-none flex-1"
-                  onClick={() => handleToggle(i)}
+                  onClick={() => handleToggle(task.id, task.done, task.task)}
                 >
                   <motion.div
                     animate={{ scale: task.done ? [1, 1.3, 1] : 1 }}
@@ -229,7 +303,7 @@ const StaffProfile = () => {
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => {
-                    deleteTask(s.id, i);
+                    deleteTask(task.id);
                     toast.success("Task deleted", { description: task.task });
                   }}
                   className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0"

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 type ViewMode = "daily" | "weekly" | "monthly";
 
 const InsightsPage = () => {
-  const { staff } = useAppState();
+  const { staff, updateAttendance } = useAppState();
   const [viewMode, setViewMode] = useState<ViewMode>("monthly");
   const onDuty = staff.filter((s) => s.status === "on-duty").length;
 
@@ -83,33 +83,45 @@ const InsightsPage = () => {
   // Generate attendance data for all homemakers
   const attendanceData = useMemo(
     () =>
-      staff.map((s, si) => ({
+      staff.map((s) => ({
+        id: s.id,
         name: s.name,
         photo: s.photo,
         role: s.role,
         days: Array.from({ length: columnHeaders.length }, (_, di) => {
-          const offset = viewMode === "monthly" ? selectedMonth : viewMode === "weekly" ? selectedWeek : selectedDay;
-          const seed = ((si * 31 + di + offset * 7) * 17 + 3) % 10;
-          if (seed < 6) return "present";
-          if (seed < 8) return "late";
-          return "absent";
+          let dateStr = "";
+          const now = new Date();
+          if (viewMode === "monthly") {
+            const d = new Date(now.getFullYear(), now.getMonth() - selectedMonth, di + 1);
+            dateStr = d.toLocaleDateString("en-CA");
+          } else if (viewMode === "weekly") {
+            const start = new Date(now);
+            start.setDate(start.getDate() - (selectedWeek * 7) - start.getDay() + 1 + di);
+            dateStr = start.toLocaleDateString("en-CA");
+          } else {
+            const d = new Date(now);
+            d.setDate(d.getDate() - selectedDay);
+            dateStr = d.toLocaleDateString("en-CA");
+          }
+          
+          const record = s.attendance.find(a => a.date === dateStr);
+          return { status: record?.type || "off-duty", date: dateStr };
         }),
       })),
     [staff, viewMode, columnHeaders.length, selectedMonth, selectedWeek, selectedDay]
   );
 
-  const [overrides, setOverrides] = useState<Record<string, string>>({});
-
   const getCellStatus = (staffName: string, dayIndex: number, originalStatus: string) => {
-    const key = `${viewMode}-${currentSelection}-${staffName}-${dayIndex}`;
-    return overrides[key] || originalStatus;
+    return originalStatus;
   };
 
-  const handleLongPress = (staffName: string, dayIndex: number, currentStatus: string) => {
-    const nextStatus = currentStatus === "present" ? "late" : currentStatus === "late" ? "absent" : "present";
-    const key = `${viewMode}-${currentSelection}-${staffName}-${dayIndex}`;
-    setOverrides((prev) => ({ ...prev, [key]: nextStatus }));
-    toast.success(`Attendance updated to ${nextStatus}`, { description: `${staffName} — ${columnHeaders[dayIndex]}` });
+  const handleLongPress = (staffId: string, staffName: string, dateStr: string, currentStatus: string) => {
+    const nextStatus = currentStatus === "present" ? "late" : currentStatus === "late" ? "absent" : currentStatus === "absent" ? "off-duty" : "present";
+    toast.promise(updateAttendance(staffId, dateStr, nextStatus), {
+      loading: 'Updating attendance...',
+      success: `Attendance marked as ${nextStatus}`,
+      error: 'Failed to update attendance'
+    });
   };
 
   const cellColor: Record<string, string> = {
@@ -242,7 +254,7 @@ const InsightsPage = () => {
                         </div>
                       </div>
                       {s.days.map((day, i) => {
-                        const status = getCellStatus(s.name, i, day);
+                        const status = getCellStatus(s.name, i, day.status);
                         let pressTimer: ReturnType<typeof setTimeout>;
                         return (
                           <motion.div
@@ -252,7 +264,7 @@ const InsightsPage = () => {
                             transition={{ delay: 0.1 + i * 0.01 }}
                             className={`w-6 h-6 rounded-lg ${cellColor[status]} cursor-pointer mx-auto`}
                             onPointerDown={() => {
-                              pressTimer = setTimeout(() => handleLongPress(s.name, i, status), 500);
+                              pressTimer = setTimeout(() => handleLongPress(s.id, s.name, day.date, status), 500);
                             }}
                             onPointerUp={() => clearTimeout(pressTimer)}
                             onPointerLeave={() => clearTimeout(pressTimer)}

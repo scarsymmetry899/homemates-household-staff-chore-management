@@ -67,7 +67,7 @@ const AlertsPage = () => {
         <AnimatePresence mode="popLayout">
           <StaggerContainer className="space-y-3">
             {activeAlerts.map((alert) => {
-              const cfg = typeConfig[alert.type];
+              const cfg = typeConfig[alert.type as keyof typeof typeConfig] || typeConfig["task"];
               const Icon = cfg.icon;
               return (
                 <StaggerItem key={alert.id}>
@@ -80,7 +80,7 @@ const AlertsPage = () => {
                     <motion.div
                       layout
                       exit={{ opacity: 0, x: -100, transition: { duration: 0.3 } }}
-                      className={`glass-card rounded-2xl overflow-hidden ${severityBorder[alert.severity]}`}
+                      className={`glass-card rounded-2xl overflow-hidden ${severityBorder[(alert.severity as keyof typeof severityBorder)] || severityBorder["low"]}`}
                     >
                       <div className="p-4 space-y-3">
                         <div className="flex items-start justify-between">
@@ -138,7 +138,7 @@ const AlertsPage = () => {
           <section className="space-y-3 pb-4">
             <h3 className="headline-sm text-foreground">Resolved</h3>
             {dismissedAlerts.map((alert) => {
-              const cfg = typeConfig[alert.type];
+              const cfg = typeConfig[alert.type as keyof typeof typeConfig] || typeConfig["task"];
               const Icon = cfg.icon;
               return (
                 <div key={alert.id} className="bg-surface-low rounded-2xl p-4 opacity-50">
