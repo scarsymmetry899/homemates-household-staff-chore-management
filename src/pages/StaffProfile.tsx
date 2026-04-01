@@ -1,15 +1,16 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, Send, CalendarDays, Shield, Pencil, Download, Trash2, Clock, MessageCircle, Camera, X } from "lucide-react";
+import { ArrowLeft, Bell, CalendarDays, Shield, Pencil, Download, Trash2, Clock, MessageCircle, Camera, X, Check, Send } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
+import { sendMessage as sendTelegram } from "@/lib/telegram";
 
 const StaffProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { staff, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction, updateStaffPhoto } = useAppState();
+  const { staff, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction, updateStaffPhoto, updateStaffTelegramId } = useAppState();
   const s = staff.find((s) => s.id === id);
 
   const [editingRole, setEditingRole] = useState(false);
@@ -21,6 +22,9 @@ const StaffProfile = () => {
   const [deductionAmount, setDeductionAmount] = useState("");
   const [deductionReason, setDeductionReason] = useState("");
   const [showSchedule, setShowSchedule] = useState(false);
+  const [editingTelegramId, setEditingTelegramId] = useState(false);
+  const [telegramIdInput, setTelegramIdInput] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
 
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,9 +68,26 @@ const StaffProfile = () => {
     setShowDeductionForm(false);
   };
 
-  const handleMessage = () => {
-    window.open(`https://t.me/${s.phone.replace(/[\s+]/g, "")}`, "_blank");
-    toast.success("Opening Telegram...");
+  const handleMessage = async () => {
+    if (s.telegramChatId) {
+      setSendingTest(true);
+      const ok = await sendTelegram(s.telegramChatId, `👋 Hello ${s.name.split(" ")[0]}! A message from your employer via Homemaker.`);
+      setSendingTest(false);
+      if (ok) toast.success(`Message sent to ${s.name} on Telegram`);
+      else toast.error("Telegram send failed", { description: "Check bot token and chat ID." });
+    } else {
+      window.open(`https://t.me/${s.phone.replace(/[\s+]/g, "")}`, "_blank");
+      toast.info("Opening Telegram", { description: "Set Chat ID below to send direct bot messages." });
+    }
+  };
+
+  const handleSaveTelegramId = () => {
+    const trimmed = telegramIdInput.trim();
+    if (trimmed) {
+      updateStaffTelegramId(s.id, trimmed);
+      toast.success("Telegram Chat ID saved", { description: `${s.name} will receive bot messages.` });
+    }
+    setEditingTelegramId(false);
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,9 +222,43 @@ const StaffProfile = () => {
             <p className="label-sm text-muted-foreground">Location</p>
             <p className="text-sm text-card-foreground font-medium">{s.location}</p>
           </div>
+
+          {/* Telegram Chat ID */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-1">
+              <Send size={12} className="text-muted-foreground" />
+              <p className="label-sm text-muted-foreground">Telegram Chat ID</p>
+              <button onClick={() => { setEditingTelegramId(true); setTelegramIdInput(s.telegramChatId || ""); }} className="text-secondary">
+                <Pencil size={10} />
+              </button>
+            </div>
+            {editingTelegramId ? (
+              <div className="flex gap-1 mt-1">
+                <input
+                  value={telegramIdInput}
+                  onChange={(e) => setTelegramIdInput(e.target.value)}
+                  placeholder="e.g. 123456789"
+                  className="bg-surface-low rounded-lg px-2 py-1 text-sm text-card-foreground border border-border/30 w-32"
+                  autoFocus
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveTelegramId()}
+                />
+                <button onClick={handleSaveTelegramId} className="w-7 h-7 glass-btn rounded-lg flex items-center justify-center text-status-on-time">
+                  <Check size={12} />
+                </button>
+                <button onClick={() => setEditingTelegramId(false)} className="w-7 h-7 glass-btn rounded-lg flex items-center justify-center text-muted-foreground">
+                  <X size={12} />
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-card-foreground font-medium">
+                {s.telegramChatId ? <span className="text-status-on-time">Connected · {s.telegramChatId}</span> : <span className="text-muted-foreground">Not set — tap ✏️ to add</span>}
+              </p>
+            )}
+          </div>
+
           <div className="flex gap-3 flex-wrap">
-            <motion.button whileTap={{ scale: 0.95 }} onClick={handleMessage} className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
-              <MessageCircle size={14} /> Message
+            <motion.button whileTap={{ scale: 0.95 }} onClick={handleMessage} disabled={sendingTest} className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2 disabled:opacity-60">
+              <MessageCircle size={14} /> {sendingTest ? "Sending…" : "Message"}
             </motion.button>
             <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowSchedule(true)} className="glass-btn text-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
               <CalendarDays size={14} /> Schedule

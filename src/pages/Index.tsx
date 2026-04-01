@@ -16,7 +16,7 @@ const statusLabel: Record<string, string> = {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { staff, alerts, ownerName, ownerLocation } = useAppState();
+  const { staff, alerts, expenses, ownerName, ownerLocation } = useAppState();
 
   // IST time
   const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
@@ -31,6 +31,13 @@ const Index = () => {
   const taskPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
   const absentCount = staff.filter((s) => s.status === "absent").length;
   const lateCount = staff.filter((s) => s.status === "late").length;
+
+  // Live expense totals
+  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const payrollTotal = staff.reduce((sum, s) => sum + s.payroll.netPay, 0);
+  const householdTotal = expenses
+    .filter((e) => e.category !== "Advances")
+    .reduce((sum, e) => sum + e.amount, 0);
 
   // Creative daily tagline based on status
   const tagline = useMemo(() => {
@@ -190,16 +197,16 @@ const Index = () => {
           </div>
           <p className="label-sm text-primary-foreground/60">Total Spent</p>
           <p className="font-display text-3xl text-primary-foreground">
-            ₹24,850 <span className="text-sm text-primary-foreground/50">INR</span>
+            ₹{(totalExpenses + payrollTotal).toLocaleString("en-IN")} <span className="text-sm text-primary-foreground/50">INR</span>
           </p>
           <div className="flex gap-8">
             <div>
               <p className="label-sm text-primary-foreground/50">Payroll</p>
-              <p className="text-primary-foreground font-semibold">₹18.2k</p>
+              <p className="text-primary-foreground font-semibold">₹{(payrollTotal / 1000).toFixed(1)}k</p>
             </div>
             <div>
               <p className="label-sm text-primary-foreground/50">Household</p>
-              <p className="text-primary-foreground font-semibold">₹4.1k</p>
+              <p className="text-primary-foreground font-semibold">₹{(householdTotal / 1000).toFixed(1)}k</p>
             </div>
           </div>
           <motion.button

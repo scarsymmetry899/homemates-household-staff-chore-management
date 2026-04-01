@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Circle, Clock, Plus, X, Trash2, CalendarDays, Send, AlertTriangle, RotateCcw } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Plus, X, Trash2, CalendarDays, Send, AlertTriangle, RotateCcw, ArrowRightLeft } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ interface TaskItem {
 }
 
 const TasksPage = () => {
-  const { staff, toggleTask, addTask, deleteTask, updateTaskDueDate } = useAppState();
+  const { staff, toggleTask, addTask, deleteTask, updateTaskDueDate, reassignTask } = useAppState();
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [showForm, setShowForm] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -28,6 +28,7 @@ const TasksPage = () => {
     dueDate: "",
     notifyTelegram: false,
   });
+  const [reassignPickerTask, setReassignPickerTask] = useState<TaskItem | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -170,28 +171,104 @@ const TasksPage = () => {
     </SwipeableCard>
   );
 
+  const handleExtendDeadline = (task: TaskItem, days: number) => {
+    const base = task.dueDate ? new Date(task.dueDate) : new Date();
+    base.setDate(base.getDate() + days);
+    updateTaskDueDate(task.staffId, task.taskIndex, base.toISOString().split("T")[0]);
+    toast.success(`Deadline extended by ${days} day${days > 1 ? "s" : ""}`, { description: task.task });
+  };
+
+  const handleReassignTask = (task: TaskItem, toStaffId: string) => {
+    reassignTask(task.staffId, task.taskIndex, toStaffId);
+    const toMember = staff.find((s) => s.id === toStaffId);
+    toast.success(`Reassigned to ${toMember?.name ?? "new assignee"}`, { description: task.task });
+    setReassignPickerTask(null);
+  };
+
   const OverdueTaskCard = ({ task }: { task: TaskItem }) => (
-    <div className="glass-card rounded-2xl p-4 flex items-start gap-3">
-      <AlertTriangle size={18} className="text-status-late shrink-0 mt-0.5" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <p className="text-sm font-medium text-card-foreground flex-1 truncate">{task.task}</p>
-          <span className="label-sm text-status-late bg-status-late/10 px-2 py-0.5 rounded-lg shrink-0">Overdue</span>
+    <div className="glass-card rounded-2xl p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <AlertTriangle size={18} className="text-status-late shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm font-medium text-card-foreground flex-1 truncate">{task.task}</p>
+            <span className="label-sm text-status-late bg-status-late/10 px-2 py-0.5 rounded-lg shrink-0">Overdue</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <img src={task.staffPhoto} alt={task.staffName} className="w-4 h-4 rounded-md object-cover" loading="lazy" />
+            <span className="text-xs text-muted-foreground">{task.staffName}</span>
+            {task.dueDate && (
+              <span className="text-xs text-destructive">· Due {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <img src={task.staffPhoto} alt={task.staffName} className="w-4 h-4 rounded-md object-cover" loading="lazy" />
-          <span className="text-xs text-muted-foreground">{task.staffName}</span>
-          {task.dueDate && (
-            <span className="text-xs text-destructive">· Due {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
-          )}
-        </div>
+      </div>
+      {/* Action row */}
+      <div className="flex gap-2 flex-wrap pl-7">
         <button
           onClick={() => handleCarryForward(task)}
-          className="mt-2 flex items-center gap-1.5 label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl"
+          className="flex items-center gap-1.5 label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl"
         >
-          <RotateCcw size={11} /> Carry Forward
+          <RotateCcw size={11} /> Today
+        </button>
+        <button
+          onClick={() => handleExtendDeadline(task, 7)}
+          className="flex items-center gap-1.5 label-sm text-muted-foreground glass-btn px-3 py-1.5 rounded-xl"
+        >
+          <CalendarDays size={11} /> +7 Days
+        </button>
+        <button
+          onClick={() => setReassignPickerTask(task)}
+          className="flex items-center gap-1.5 label-sm text-muted-foreground glass-btn px-3 py-1.5 rounded-xl"
+        >
+          <ArrowRightLeft size={11} /> Reassign
+        </button>
+        <button
+          onClick={() => {
+            deleteTask(task.staffId, task.taskIndex);
+            toast.success("Task removed", { description: task.task });
+          }}
+          className="flex items-center gap-1.5 label-sm text-destructive glass-btn px-3 py-1.5 rounded-xl"
+        >
+          <Trash2 size={11} /> Delete
         </button>
       </div>
+
+      {/* Inline reassign picker */}
+      <AnimatePresence>
+        {reassignPickerTask?.task === task.task && reassignPickerTask?.staffId === task.staffId && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden pl-7"
+          >
+            <p className="label-sm text-muted-foreground mb-2">Reassign to:</p>
+            <div className="space-y-1.5">
+              {staff.filter((s) => s.id !== task.staffId).map((s) => (
+                <motion.button
+                  key={s.id}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleReassignTask(task, s.id)}
+                  className="w-full flex items-center gap-2 glass rounded-xl px-3 py-2 text-left"
+                >
+                  <img src={s.photo} alt={s.name} className="w-7 h-7 rounded-lg object-cover" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-card-foreground truncate">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">{s.role}</p>
+                  </div>
+                  <span className={`label-sm px-2 py-0.5 rounded-lg text-[10px] ${s.status === "on-duty" ? "bg-status-on-time/10 text-status-on-time" : "bg-muted text-muted-foreground"}`}>
+                    {s.status}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+            <button onClick={() => setReassignPickerTask(null)} className="mt-2 label-sm text-muted-foreground flex items-center gap-1">
+              <X size={10} /> Cancel
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 
