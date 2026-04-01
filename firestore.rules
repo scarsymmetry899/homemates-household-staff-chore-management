@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Attendance logs: authenticated users can read/write
+    match /attendance_logs/{logId} {
+      allow read, write: if request.auth != null;
+    }
+    // Telegram updates: only server-side (Cloud Functions) writes
+    match /telegram_updates/{updateId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only Cloud Functions can write
+    }
+    // User profiles
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

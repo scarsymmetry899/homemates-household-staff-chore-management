@@ -63,7 +63,7 @@ const TasksPage = () => {
     if (!currentDone) toast.success("Task completed", { description: taskName });
   };
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (!newTask.staffId || !newTask.task.trim()) return;
 
     const cleanTask = newTask.task.trim();
@@ -77,9 +77,27 @@ const TasksPage = () => {
     });
 
     if (newTask.notifyTelegram && selectedMember) {
-      toast.info("Telegram dispatch queued", {
-        description: `This task will auto-send to ${selectedMember.name} once Telegram API is connected.`,
-      });
+      if (selectedMember.telegramChatId) {
+        const { sendMessage } = await import("@/lib/telegram");
+        const dueStr = newTask.dueDate
+          ? ` · Due: ${new Date(newTask.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`
+          : "";
+        const sent = await sendMessage(
+          selectedMember.telegramChatId,
+          `📋 <b>New Task Assigned</b>\n\nHi ${selectedMember.name.split(" ")[0]}! You have a new task:\n<b>${cleanTask}</b>${dueStr}\n\nPlease acknowledge when done. — Homemaker`
+        );
+        if (sent) {
+          toast.success("Telegram notified", { description: `Message sent to ${selectedMember.name}` });
+        } else {
+          toast.warning("Telegram not reachable", {
+            description: "Check your bot token in .env.local",
+          });
+        }
+      } else {
+        toast.info("No Telegram ID", {
+          description: `Set ${selectedMember.name}'s Telegram Chat ID in their profile first.`,
+        });
+      }
     }
 
     setNewTask({ staffId: "", task: "", dueDate: "", notifyTelegram: false });
