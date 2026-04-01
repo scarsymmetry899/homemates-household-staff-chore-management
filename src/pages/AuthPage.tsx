@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, User, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { signInWithGoogle, signInWithEmail, createAccount, isFirebaseConfigured } from "@/lib/firebase";
+import {
+  signInWithGoogle,
+  signInWithEmail,
+  createAccount,
+  checkRedirectResult,
+  isFirebaseConfigured,
+} from "@/lib/firebase";
 import { toast } from "sonner";
 
 interface AuthPageProps {
@@ -17,24 +23,42 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Handle Google redirect result on page load (after signInWithRedirect returns)
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+    let cancelled = false;
+    checkRedirectResult().then(({ user, error }) => {
+      if (cancelled) return;
+      if (user) {
+        const name = user.displayName || user.email?.split("@")[0] || "there";
+        onLogin(name.charAt(0).toUpperCase() + name.slice(1));
+      } else if (error) {
+        // Only surface if it's a real error (not just "no redirect result")
+        if (error.code !== "unknown" && error.code !== "") {
+          toast.error(error.message);
+        }
+      }
+    });
+    return () => { cancelled = true; };
+  }, [onLogin]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       if (isFirebaseConfigured) {
-        // Real Firebase Auth
         let result;
         if (isSignUp) {
-          if (!fullName.trim()) { toast.error("Please enter your name"); setLoading(false); return; }
+          if (!fullName.trim()) { toast.error("Please enter your name"); return; }
           result = await createAccount(email, password, fullName.trim());
         } else {
           result = await signInWithEmail(email, password);
         }
-        if (result) {
-          const name = result.displayName || email.split("@")[0];
+        if (result.user) {
+          const name = result.user.displayName || email.split("@")[0];
           onLogin(name.charAt(0).toUpperCase() + name.slice(1));
-        } else {
-          toast.error(isSignUp ? "Could not create account" : "Invalid email or password");
+        } else if (result.error) {
+          toast.error(result.error.message);
         }
       } else {
         // Fallback: local auth (no Firebase keys set)
@@ -50,21 +74,30 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
     setLoading(true);
     try {
       if (isFirebaseConfigured) {
-        const result = await signInWithGoogle();
-        if (result) {
-          const name = result.displayName || result.email?.split("@")[0] || "there";
+        const { user, error } = await signInWithGoogle();
+        if (user) {
+          const name = user.displayName || user.email?.split("@")[0] || "there";
           onLogin(name.charAt(0).toUpperCase() + name.slice(1));
-        } else {
-          toast.error("Google sign-in failed. Please try again.");
+        } else if (error) {
+          // null error + null user = redirect in progress (page navigating away)
+          toast.error(error.message, {
+            description: error.code === "auth/unauthorized-domain"
+              ? "Open Firebase Console → Authentication → Settings → Authorized Domains and add this domain."
+              : undefined,
+            duration: 8000,
+          });
+          setLoading(false);
         }
+        // If both null → redirect is happening, keep loading spinner while page navigates
       } else {
-        // Fallback when Firebase not configured
         onLogin("there");
         toast.info("Firebase not configured", {
-          description: "Using local auth. Add VITE_FIREBASE_* keys to enable Google sign-in.",
+          description: "Add VITE_FIREBASE_* keys to .env.local to enable Google sign-in.",
         });
+        setLoading(false);
       }
-    } finally {
+    } catch {
+      toast.error("Unexpected error during Google sign-in. Please try again.");
       setLoading(false);
     }
   };
