@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Clock, Users, Calendar, ChevronDown } from "lucide-react";
+import { TrendingUp, Clock, Users, Calendar, ChevronDown, Download } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 type ViewMode = "daily" | "weekly" | "monthly";
 
 const InsightsPage = () => {
-  const { staff } = useAppState();
+  const { staff, expenses, alerts } = useAppState();
   const [viewMode, setViewMode] = useState<ViewMode>("monthly");
   const onDuty = staff.filter((s) => s.status === "on-duty").length;
 
@@ -124,6 +124,58 @@ const InsightsPage = () => {
     toast.success("Insights refreshed");
   }, []);
 
+  const handleExport = () => {
+    const now = new Date();
+    const lines: string[] = [
+      "═══════════════════════════════════════",
+      "  HOMEMATES — HOUSEHOLD REPORT",
+      `  Generated: ${now.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}`,
+      "═══════════════════════════════════════",
+      "",
+      "━━━ STAFF SUMMARY ━━━",
+      `Total Homemakers: ${staff.length}`,
+      `On Duty: ${staff.filter((s) => s.status === "on-duty").length}`,
+      `Late: ${staff.filter((s) => s.status === "late").length}`,
+      `Absent: ${staff.filter((s) => s.status === "absent").length}`,
+      "",
+      "━━━ ATTENDANCE & PERFORMANCE ━━━",
+      ...staff.map((s) =>
+        `${s.name} (${s.role})\n  Punctuality: ${s.punctualityScore}% | Reliability: ${s.reliabilityScore}% | Status: ${s.status}`
+      ),
+      "",
+      "━━━ TASK COMPLETION ━━━",
+      ...staff.map((s) => {
+        const total = s.assignments.length;
+        const done = s.assignments.filter((t) => t.done).length;
+        return `${s.name}: ${done}/${total} tasks completed`;
+      }),
+      "",
+      "━━━ EXPENSE BREAKDOWN ━━━",
+      `Total Expenses: ₹${expenses.reduce((a, e) => a + e.amount, 0).toLocaleString("en-IN")}`,
+      ...Object.entries(
+        expenses.reduce<Record<string, number>>((acc, e) => { acc[e.category] = (acc[e.category] || 0) + e.amount; return acc; }, {})
+      ).map(([cat, amt]) => `  ${cat}: ₹${amt.toLocaleString("en-IN")}`),
+      "",
+      "━━━ ACTIVE ALERTS ━━━",
+      ...alerts.filter((a) => !a.dismissed).map((a) => `[${a.severity.toUpperCase()}] ${a.title}`),
+      "",
+      "═══════════════════════════════════════",
+      "  END OF REPORT",
+      "═══════════════════════════════════════",
+    ];
+    const content = lines.join("\n");
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `homemates-report-${now.toISOString().split("T")[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Report exported!", { description: "Check your downloads folder" });
+  };
+
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
@@ -137,6 +189,15 @@ const InsightsPage = () => {
             Track your homemakers' attendance, punctuality & reliability at a glance.
           </p>
         </section>
+
+        {/* Export Report Button */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={handleExport}
+          className="w-full glass-btn text-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
+        >
+          <Download size={16} /> Export Monthly Report
+        </motion.button>
 
         {/* View Mode Toggle */}
         <div className="flex gap-2">
@@ -213,8 +274,8 @@ const InsightsPage = () => {
         <AnimatedCard delay={0.1} className="glass-card rounded-2xl overflow-hidden">
           <div
             className="touch-pan-x"
-            onPointerDownCapture={(e) => e.stopPropagation()}
-            onTouchStartCapture={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
           >
             <ScrollArea className="w-full">
               <div className="p-4">

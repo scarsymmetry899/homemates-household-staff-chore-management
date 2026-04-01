@@ -1,14 +1,25 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Circle, Clock, Plus, X, Trash2, CalendarDays, Send } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Plus, X, Trash2, CalendarDays, Send, AlertTriangle, RotateCcw } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
 
-type TaskFilter = "all" | "pending" | "done";
+type TaskFilter = "all" | "pending" | "done" | "bydate";
+
+interface TaskItem {
+  task: string;
+  done: boolean;
+  dueDate?: string;
+  staffId: string;
+  taskIndex: number;
+  staffName: string;
+  staffRole: string;
+  staffPhoto: string;
+}
 
 const TasksPage = () => {
-  const { staff, toggleTask, addTask, deleteTask } = useAppState();
+  const { staff, toggleTask, addTask, deleteTask, updateTaskDueDate } = useAppState();
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [showForm, setShowForm] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -18,7 +29,9 @@ const TasksPage = () => {
     notifyTelegram: false,
   });
 
-  const allTasks = staff.flatMap((s) =>
+  const today = new Date().toISOString().split("T")[0];
+
+  const allTasks: TaskItem[] = staff.flatMap((s) =>
     s.assignments.map((t, i) => ({
       ...t,
       staffId: s.id,
@@ -29,13 +42,21 @@ const TasksPage = () => {
     }))
   );
 
-  const filtered =
+  const filtered: TaskItem[] =
     filter === "all" ? allTasks
     : filter === "done" ? allTasks.filter((t) => t.done)
-    : allTasks.filter((t) => !t.done);
+    : filter === "pending" ? allTasks.filter((t) => !t.done)
+    : allTasks; // bydate handled separately
 
   const doneCount = allTasks.filter((t) => t.done).length;
   const pendingCount = allTasks.length - doneCount;
+
+  // By-date buckets (only pending tasks)
+  const pendingTasks = allTasks.filter((t) => !t.done);
+  const overdueTasks = pendingTasks.filter((t) => t.dueDate && t.dueDate < today);
+  const todayTasks = pendingTasks.filter((t) => t.dueDate === today);
+  const upcomingTasks = pendingTasks.filter((t) => t.dueDate && t.dueDate > today);
+  const nodateTasks = pendingTasks.filter((t) => !t.dueDate);
 
   const handleToggle = (staffId: string, taskIndex: number, taskName: string, currentDone: boolean) => {
     toggleTask(staffId, taskIndex);
@@ -70,6 +91,92 @@ const TasksPage = () => {
     toast.success("Tasks refreshed");
   }, []);
 
+  const handleCarryForward = (task: TaskItem) => {
+    updateTaskDueDate(task.staffId, task.taskIndex, today);
+    toast.success("Task carried forward to today", { description: task.task });
+  };
+
+  const TaskCard = ({ task }: { task: TaskItem }) => (
+    <SwipeableCard
+      onSwipeRight={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
+      onSwipeLeft={() => {
+        deleteTask(task.staffId, task.taskIndex);
+        toast.success("Task deleted", { description: task.task });
+      }}
+      rightLabel={task.done ? "Undo" : "Done"}
+      leftLabel="Delete"
+    >
+      <PressableCard>
+        <div
+          onClick={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
+          className="glass-card rounded-2xl p-4 flex items-start gap-3 cursor-pointer select-none"
+        >
+          <motion.div animate={{ scale: task.done ? [1, 1.3, 1] : 1 }} transition={{ duration: 0.3 }}>
+            {task.done ? (
+              <CheckCircle2 size={20} className="text-status-on-time shrink-0 mt-0.5" />
+            ) : (
+              <Circle size={20} className="text-surface-container shrink-0 mt-0.5" />
+            )}
+          </motion.div>
+          <div className="flex-1 min-w-0">
+            <p className={`text-sm font-medium transition-all ${task.done ? "text-muted-foreground line-through" : "text-card-foreground"}`}>
+              {task.task}
+            </p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <img src={task.staffPhoto} alt={task.staffName} className="w-5 h-5 rounded-lg object-cover" loading="lazy" />
+              <span className="text-xs text-muted-foreground">{task.staffName}</span>
+              <span className="text-xs text-muted-foreground">·</span>
+              <span className="text-xs text-muted-foreground">{task.staffRole}</span>
+            </div>
+            {task.dueDate && (
+              <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
+                <CalendarDays size={12} />
+                Due {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+              </div>
+            )}
+          </div>
+          {!task.done && <Clock size={14} className="text-status-late shrink-0 mt-1" />}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteTask(task.staffId, task.taskIndex);
+              toast.success("Task deleted", { description: task.task });
+            }}
+            className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-1"
+          >
+            <Trash2 size={13} />
+          </motion.button>
+        </div>
+      </PressableCard>
+    </SwipeableCard>
+  );
+
+  const OverdueTaskCard = ({ task }: { task: TaskItem }) => (
+    <div className="glass-card rounded-2xl p-4 flex items-start gap-3">
+      <AlertTriangle size={18} className="text-status-late shrink-0 mt-0.5" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-sm font-medium text-card-foreground flex-1 truncate">{task.task}</p>
+          <span className="label-sm text-status-late bg-status-late/10 px-2 py-0.5 rounded-lg shrink-0">Overdue</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <img src={task.staffPhoto} alt={task.staffName} className="w-4 h-4 rounded-md object-cover" loading="lazy" />
+          <span className="text-xs text-muted-foreground">{task.staffName}</span>
+          {task.dueDate && (
+            <span className="text-xs text-destructive">· Due {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+          )}
+        </div>
+        <button
+          onClick={() => handleCarryForward(task)}
+          className="mt-2 flex items-center gap-1.5 label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl"
+        >
+          <RotateCcw size={11} /> Carry Forward
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
@@ -95,16 +202,16 @@ const TasksPage = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-2">
-          {(["all", "pending", "done"] as TaskFilter[]).map((f) => (
+        <div className="flex gap-2 flex-wrap">
+          {(["all", "pending", "done", "bydate"] as TaskFilter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`label-sm px-5 py-2.5 rounded-xl capitalize transition-all ${
+              className={`label-sm px-4 py-2.5 rounded-xl capitalize transition-all ${
                 filter === f ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
               }`}
             >
-              {f}
+              {f === "bydate" ? "By Date" : f}
             </button>
           ))}
         </div>
@@ -191,66 +298,88 @@ const TasksPage = () => {
           )}
         </AnimatePresence>
 
-        {/* Task List */}
-        <StaggerContainer className="space-y-3 pb-4">
-          {filtered.map((task) => (
-            <StaggerItem key={`${task.staffId}-${task.taskIndex}-${task.task}-${task.dueDate || "na"}`}>
-              <SwipeableCard
-                onSwipeRight={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
-                onSwipeLeft={() => {
-                  deleteTask(task.staffId, task.taskIndex);
-                  toast.success("Task deleted", { description: task.task });
-                }}
-                rightLabel={task.done ? "Undo" : "Done"}
-                leftLabel="Delete"
-              >
-                <PressableCard>
-                  <div
-                    onClick={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
-                    className="glass-card rounded-2xl p-4 flex items-start gap-3 cursor-pointer select-none"
-                  >
-                    <motion.div animate={{ scale: task.done ? [1, 1.3, 1] : 1 }} transition={{ duration: 0.3 }}>
-                      {task.done ? (
-                        <CheckCircle2 size={20} className="text-status-on-time shrink-0 mt-0.5" />
-                      ) : (
-                        <Circle size={20} className="text-surface-container shrink-0 mt-0.5" />
-                      )}
-                    </motion.div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium transition-all ${task.done ? "text-muted-foreground line-through" : "text-card-foreground"}`}>
-                        {task.task}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <img src={task.staffPhoto} alt={task.staffName} className="w-5 h-5 rounded-lg object-cover" loading="lazy" />
-                        <span className="text-xs text-muted-foreground">{task.staffName}</span>
-                        <span className="text-xs text-muted-foreground">·</span>
-                        <span className="text-xs text-muted-foreground">{task.staffRole}</span>
-                      </div>
-                      {task.dueDate && (
-                        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
-                          <CalendarDays size={12} />
-                          Due {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                        </div>
-                      )}
-                    </div>
-                    {!task.done && <Clock size={14} className="text-status-late shrink-0 mt-1" />}
-                    <motion.button
-                      whileTap={{ scale: 0.9 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteTask(task.staffId, task.taskIndex);
-                        toast.success("Task deleted", { description: task.task });
-                      }}
-                      className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-1"
-                    >
-                      <Trash2 size={13} />
-                    </motion.button>
-                  </div>
-                </PressableCard>
-              </SwipeableCard>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
+        {/* By Date View */}
+        {filter === "bydate" ? (
+          <div className="space-y-6 pb-4">
+            {overdueTasks.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle size={14} className="text-status-late" />
+                  <h3 className="label-sm text-status-late">Overdue ({overdueTasks.length})</h3>
+                </div>
+                <div className="space-y-2">
+                  {overdueTasks.map((task) => (
+                    <OverdueTaskCard key={`${task.staffId}-${task.taskIndex}`} task={task} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {todayTasks.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <CalendarDays size={14} className="text-secondary" />
+                  <h3 className="label-sm text-secondary">Due Today ({todayTasks.length})</h3>
+                </div>
+                <StaggerContainer className="space-y-2">
+                  {todayTasks.map((task) => (
+                    <StaggerItem key={`${task.staffId}-${task.taskIndex}`}>
+                      <TaskCard task={task} />
+                    </StaggerItem>
+                  ))}
+                </StaggerContainer>
+              </section>
+            )}
+
+            {upcomingTasks.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Clock size={14} className="text-status-on-time" />
+                  <h3 className="label-sm text-status-on-time">Upcoming ({upcomingTasks.length})</h3>
+                </div>
+                <StaggerContainer className="space-y-2">
+                  {upcomingTasks.map((task) => (
+                    <StaggerItem key={`${task.staffId}-${task.taskIndex}`}>
+                      <TaskCard task={task} />
+                    </StaggerItem>
+                  ))}
+                </StaggerContainer>
+              </section>
+            )}
+
+            {nodateTasks.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Circle size={14} className="text-muted-foreground" />
+                  <h3 className="label-sm text-muted-foreground">No Due Date ({nodateTasks.length})</h3>
+                </div>
+                <StaggerContainer className="space-y-2">
+                  {nodateTasks.map((task) => (
+                    <StaggerItem key={`${task.staffId}-${task.taskIndex}`}>
+                      <TaskCard task={task} />
+                    </StaggerItem>
+                  ))}
+                </StaggerContainer>
+              </section>
+            )}
+
+            {pendingTasks.length === 0 && (
+              <div className="text-center py-10 text-muted-foreground">
+                <CheckCircle2 size={32} className="mx-auto mb-3 text-status-on-time/50" />
+                <p className="text-sm">All tasks completed!</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Regular Task List */
+          <StaggerContainer className="space-y-3 pb-4">
+            {filtered.map((task) => (
+              <StaggerItem key={`${task.staffId}-${task.taskIndex}-${task.task}-${task.dueDate || "na"}`}>
+                <TaskCard task={task} />
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        )}
       </PageTransition>
     </PullToRefresh>
   );

@@ -43,16 +43,20 @@ const settingSections: { title: string; items: SettingToggle[] }[] = [
 ];
 
 const SettingsPage = ({ onLogout }: SettingsPageProps) => {
-  const { ownerName, setOwnerName } = useAppState();
+  const { ownerName, setOwnerName, isDarkMode, setDarkMode } = useAppState();
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
     settingSections.forEach((s) => s.items.forEach((i) => (defaults[i.id] = i.defaultOn)));
+    defaults.darkMode = isDarkMode;
     return defaults;
   });
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(ownerName);
 
   const handleToggle = (id: string) => {
+    if (id === "darkMode") {
+      setDarkMode(!toggles.darkMode);
+    }
     setToggles((prev) => {
       const next = { ...prev, [id]: !prev[id] };
       toast.success(next[id] ? "Enabled" : "Disabled", {

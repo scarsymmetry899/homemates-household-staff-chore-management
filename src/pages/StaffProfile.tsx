@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, Send, CalendarDays, Shield, Pencil, Download, Trash2, Clock, MessageCircle } from "lucide-react";
+import { ArrowLeft, Bell, Send, CalendarDays, Shield, Pencil, Download, Trash2, Clock, MessageCircle, Camera, X } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 const StaffProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { staff, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction } = useAppState();
+  const { staff, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction, updateStaffPhoto } = useAppState();
   const s = staff.find((s) => s.id === id);
 
   const [editingRole, setEditingRole] = useState(false);
@@ -20,6 +20,9 @@ const StaffProfile = () => {
   const [showDeductionForm, setShowDeductionForm] = useState(false);
   const [deductionAmount, setDeductionAmount] = useState("");
   const [deductionReason, setDeductionReason] = useState("");
+  const [showSchedule, setShowSchedule] = useState(false);
+
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   if (!s) {
     return (
@@ -66,6 +69,14 @@ const StaffProfile = () => {
     toast.success("Opening Telegram...");
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    updateStaffPhoto(s.id, objectUrl);
+    toast.success("Photo updated");
+  };
+
   return (
     <PageTransition>
       {/* Profile Header */}
@@ -74,9 +85,25 @@ const StaffProfile = () => {
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="h-56 bg-secondary-container overflow-hidden"
+          className="h-56 bg-secondary-container overflow-hidden relative"
         >
           <img src={s.photo} alt={s.name} className="w-full h-full object-cover" />
+
+          {/* Camera overlay button */}
+          <button
+            onClick={() => photoInputRef.current?.click()}
+            className="absolute bottom-4 right-4 w-9 h-9 rounded-xl glass flex items-center justify-center shadow-btn z-10"
+          >
+            <Camera size={16} className="text-foreground" />
+          </button>
+          <input
+            type="file"
+            accept="image/*"
+            ref={photoInputRef}
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
+
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-4">
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -178,7 +205,7 @@ const StaffProfile = () => {
             <motion.button whileTap={{ scale: 0.95 }} onClick={handleMessage} className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
               <MessageCircle size={14} /> Message
             </motion.button>
-            <motion.button whileTap={{ scale: 0.95 }} className="glass-btn text-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowSchedule(true)} className="glass-btn text-foreground label-sm px-5 py-3 rounded-2xl flex items-center gap-2">
               <CalendarDays size={14} /> Schedule
             </motion.button>
             <motion.button
@@ -351,6 +378,122 @@ const StaffProfile = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Schedule Modal */}
+      <AnimatePresence>
+        {showSchedule && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={() => setShowSchedule(false)}
+            />
+            {/* Bottom sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 glass-card rounded-t-3xl overflow-hidden"
+              style={{ maxHeight: "70vh" }}
+            >
+              <div className="overflow-y-auto" style={{ maxHeight: "70vh" }}>
+                {/* Handle bar */}
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="w-10 h-1 rounded-full bg-border/50" />
+                </div>
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border/20">
+                  <h2 className="headline-sm text-card-foreground">Schedule & Timeline</h2>
+                  <button
+                    onClick={() => setShowSchedule(false)}
+                    className="w-8 h-8 rounded-xl glass-btn flex items-center justify-center"
+                  >
+                    <X size={16} className="text-muted-foreground" />
+                  </button>
+                </div>
+
+                <div className="px-6 py-5 space-y-6">
+                  {/* Section 1: Shift */}
+                  <section className="space-y-3">
+                    <p className="label-sm text-muted-foreground">Shift</p>
+                    <div className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
+                        <Clock size={18} className="text-secondary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-card-foreground">
+                          {s.shiftStart} → {s.shiftEnd}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Daily shift schedule</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Section 2: Today's Assignments */}
+                  <section className="space-y-3">
+                    <p className="label-sm text-muted-foreground">Today's Assignments</p>
+                    <div className="space-y-2">
+                      {s.assignments.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No assignments today.</p>
+                      ) : (
+                        s.assignments.map((task, i) => (
+                          <div key={i} className="flex items-center gap-3 glass-card rounded-xl p-3">
+                            <div
+                              className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
+                                task.done ? "btn-estate" : "glass-btn"
+                              }`}
+                            >
+                              {task.done && (
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary-foreground))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </div>
+                            <span className={`text-sm flex-1 ${task.done ? "text-muted-foreground line-through" : "text-card-foreground"}`}>
+                              {task.task}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </section>
+
+                  {/* Section 3: Recent Attendance */}
+                  <section className="space-y-3 pb-6">
+                    <p className="label-sm text-muted-foreground">Recent Attendance</p>
+                    <div className="space-y-2">
+                      {s.attendance.slice(0, 3).map((entry, i) => (
+                        <div key={i} className="glass-card rounded-xl p-3 flex items-start gap-3">
+                          <div
+                            className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${
+                              entry.type === "check-in" || entry.type === "on-site"
+                                ? "bg-status-on-time"
+                                : entry.type === "late"
+                                ? "bg-status-late"
+                                : entry.type === "leave"
+                                ? "bg-secondary"
+                                : "bg-status-absent"
+                            }`}
+                          />
+                          <div>
+                            <p className="label-sm text-muted-foreground">{entry.date}</p>
+                            <p className="text-sm text-card-foreground mt-0.5 whitespace-pre-line">{entry.detail}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </PageTransition>
   );
 };

@@ -61,12 +61,16 @@ const StaffDirectory = () => {
       toast.error("Please fill in name, role, and phone number");
       return;
     }
+    if (newStaff.department === "Other" && !customDeptName.trim()) {
+      toast.error("Please enter a custom category name");
+      return;
+    }
     addStaff({
       name: newStaff.name,
       role: newStaff.role,
       phone: newStaff.phone,
       department: newStaff.department,
-      customDepartment: newStaff.department === "Other" ? customDeptName : undefined,
+      ...(newStaff.department === "Other" ? { customDepartment: customDeptName.trim() } : {}),
       salary: Number(newStaff.salary) || 0,
       status: "off-duty",
       tenure: newStaff.tenure || "New",

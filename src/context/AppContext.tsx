@@ -28,18 +28,26 @@ interface AppState {
   alerts: Alert[];
   ownerName: string;
   ownerLocation: string;
+  isDarkMode: boolean;
   setOwnerName: (name: string) => void;
+  setDarkMode: (v: boolean) => void;
   toggleTask: (staffId: string, taskIndex: number) => void;
   updateStaffStatus: (staffId: string, status: StaffStatus) => void;
   updateStaffRole: (staffId: string, role: string) => void;
   updateStaffShift: (staffId: string, shiftStart: string, shiftEnd: string) => void;
   addExpense: (expense: Omit<Expense, "id">) => void;
+  editExpense: (id: string, updates: Partial<Omit<Expense, "id">>) => void;
+  deleteExpense: (id: string) => void;
   dismissAlert: (alertId: string) => void;
   addTask: (staffId: string, task: string, dueDate?: string) => void;
   removeStaff: (staffId: string) => void;
   deleteTask: (staffId: string, taskIndex: number) => void;
   addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => void;
   addDeduction: (staffId: string, amount: number, reason: string) => void;
+  updateStaffPhoto: (staffId: string, photoUrl: string) => void;
+  updateTaskDueDate: (staffId: string, taskIndex: number, newDueDate: string) => void;
+  addAlert: (alert: Omit<Alert, "id" | "dismissed">) => void;
+  updateStaffTelegramId: (staffId: string, telegramChatId: string) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -101,10 +109,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return localStorage.getItem("homemaker_owner_name") || "Boss";
   });
   const [ownerLocation, setOwnerLocation] = useState<string>("Fetching location...");
+  const [isDarkMode, setIsDarkModeState] = useState<boolean>(() => {
+    return localStorage.getItem("homemaker_dark_mode") === "true";
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
 
   const setOwnerName = useCallback((name: string) => {
     setOwnerNameState(name);
     localStorage.setItem("homemaker_owner_name", name);
+  }, []);
+
+  const setDarkMode = useCallback((v: boolean) => {
+    setIsDarkModeState(v);
+    localStorage.setItem("homemaker_dark_mode", String(v));
   }, []);
 
   // Fetch GPS location
@@ -156,6 +176,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addExpense = useCallback((expense: Omit<Expense, "id">) => {
     setExpenses((prev) => [{ ...expense, id: `e${Date.now()}` }, ...prev]);
+  }, []);
+
+  const editExpense = useCallback((id: string, updates: Partial<Omit<Expense, "id">>) => {
+    setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+  }, []);
+
+  const deleteExpense = useCallback((id: string) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
   }, []);
 
   const dismissAlert = useCallback((alertId: string) => {
@@ -220,12 +248,40 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
   }, []);
 
+  const updateStaffPhoto = useCallback((staffId: string, photoUrl: string) => {
+    setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, photo: photoUrl } : s)));
+  }, []);
+
+  const updateTaskDueDate = useCallback((staffId: string, taskIndex: number, newDueDate: string) => {
+    setStaff((prev) =>
+      prev.map((s) =>
+        s.id === staffId
+          ? {
+              ...s,
+              assignments: s.assignments.map((t, i) =>
+                i === taskIndex ? { ...t, dueDate: newDueDate } : t
+              ),
+            }
+          : s
+      )
+    );
+  }, []);
+
+  const addAlert = useCallback((alert: Omit<Alert, "id" | "dismissed">) => {
+    setAlerts((prev) => [{ ...alert, id: `a${Date.now()}`, dismissed: false }, ...prev]);
+  }, []);
+
+  const updateStaffTelegramId = useCallback((staffId: string, telegramChatId: string) => {
+    setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, telegramChatId } : s)));
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
-        staff, expenses, alerts, ownerName, ownerLocation,
-        setOwnerName, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
-        addExpense, dismissAlert, addTask, removeStaff, deleteTask, addStaff, addDeduction,
+        staff, expenses, alerts, ownerName, ownerLocation, isDarkMode,
+        setOwnerName, setDarkMode, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
+        addExpense, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
+        addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
       }}
     >
       {children}
