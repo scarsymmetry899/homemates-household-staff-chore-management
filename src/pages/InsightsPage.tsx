@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import * as XLSX from "xlsx";
 import { motion } from "framer-motion";
 import { TrendingUp, Clock, Users, Calendar, ChevronDown, Download } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
@@ -88,6 +89,17 @@ const InsightsPage = () => {
         photo: s.photo,
         role: s.role,
         days: Array.from({ length: columnHeaders.length }, (_, di) => {
+          // For today in daily view — use real live status
+          if (viewMode === "daily" && selectedDay === 0) {
+            const statusMap: Record<string, string> = {
+              "on-duty": "present",
+              "en-route": "present",
+              late: "late",
+              absent: "absent",
+              "off-duty": "off-duty",
+            };
+            return statusMap[s.status] ?? "present";
+          }
           const offset = viewMode === "monthly" ? selectedMonth : viewMode === "weekly" ? selectedWeek : selectedDay;
           const seed = ((si * 31 + di + offset * 7) * 17 + 3) % 10;
           if (seed < 6) return "present";
@@ -126,54 +138,85 @@ const InsightsPage = () => {
 
   const handleExport = () => {
     const now = new Date();
-    const lines: string[] = [
-      "═══════════════════════════════════════",
-      "  HOMEMATES — HOUSEHOLD REPORT",
-      `  Generated: ${now.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}`,
-      "═══════════════════════════════════════",
-      "",
-      "━━━ STAFF SUMMARY ━━━",
-      `Total Homemakers: ${staff.length}`,
-      `On Duty: ${staff.filter((s) => s.status === "on-duty").length}`,
-      `Late: ${staff.filter((s) => s.status === "late").length}`,
-      `Absent: ${staff.filter((s) => s.status === "absent").length}`,
-      "",
-      "━━━ ATTENDANCE & PERFORMANCE ━━━",
-      ...staff.map((s) =>
-        `${s.name} (${s.role})\n  Punctuality: ${s.punctualityScore}% | Reliability: ${s.reliabilityScore}% | Status: ${s.status}`
-      ),
-      "",
-      "━━━ TASK COMPLETION ━━━",
-      ...staff.map((s) => {
-        const total = s.assignments.length;
-        const done = s.assignments.filter((t) => t.done).length;
-        return `${s.name}: ${done}/${total} tasks completed`;
-      }),
-      "",
-      "━━━ EXPENSE BREAKDOWN ━━━",
-      `Total Expenses: ₹${expenses.reduce((a, e) => a + e.amount, 0).toLocaleString("en-IN")}`,
-      ...Object.entries(
-        expenses.reduce<Record<string, number>>((acc, e) => { acc[e.category] = (acc[e.category] || 0) + e.amount; return acc; }, {})
-      ).map(([cat, amt]) => `  ${cat}: ₹${amt.toLocaleString("en-IN")}`),
-      "",
-      "━━━ ACTIVE ALERTS ━━━",
-      ...alerts.filter((a) => !a.dismissed).map((a) => `[${a.severity.toUpperCase()}] ${a.title}`),
-      "",
-      "═══════════════════════════════════════",
-      "  END OF REPORT",
-      "═══════════════════════════════════════",
+    const dateStr = now.toISOString().split("T")[0];
+    const generatedLabel = now.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+    const wb = XLSX.utils.book_new();
+
+    // ── Sheet 1: Summary ──
+    const expenseByCategory = expenses.reduce<Record<string, number>>((acc, e) => {
+      acc[e.category] = (acc[e.category] || 0) + e.amount;
+      return acc;
+    }, {});
+    const summaryData: (string | number)[][] = [
+      ["HOMEMAKER — HOUSEHOLD REPORT", ""],
+      ["Generated", generatedLabel],
+      ["", ""],
+      ["STAFF", ""],
+      ["Total Homemakers", staff.length],
+      ["On Duty", staff.filter((s) => s.status === "on-duty").length],
+      ["Late", staff.filter((s) => s.status === "late").length],
+      ["Absent", staff.filter((s) => s.status === "absent").length],
+      ["", ""],
+      ["EXPENSES BY CATEGORY", ""],
+      ...Object.entries(expenseByCategory).map(([cat, amt]) => [cat, amt]),
+      ["Total Expenses (₹)", expenses.reduce((a, e) => a + e.amount, 0)],
+      ["", ""],
+      ["Active Alerts", alerts.filter((a) => !a.dismissed).length],
     ];
-    const content = lines.join("\n");
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `homemates-report-${now.toISOString().split("T")[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Report exported!", { description: "Check your downloads folder" });
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    summarySheet["!cols"] = [{ wch: 30 }, { wch: 22 }];
+    XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+
+    // ── Sheet 2: Staff ──
+    const staffData: (string | number)[][] = [
+      ["Name", "Role", "Department", "Status", "Shift Start", "Shift End", "Punctuality %", "Reliability %"],
+      ...staff.map((s) => [
+        s.name,
+        s.role,
+        s.department ?? "",
+        s.status,
+        s.shiftStart ?? "",
+        s.shiftEnd ?? "",
+        s.punctualityScore,
+        s.reliabilityScore,
+      ]),
+    ];
+    const staffSheet = XLSX.utils.aoa_to_sheet(staffData);
+    staffSheet["!cols"] = [
+      { wch: 22 }, { wch: 16 }, { wch: 14 }, { wch: 12 },
+      { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 13 },
+    ];
+    XLSX.utils.book_append_sheet(wb, staffSheet, "Staff");
+
+    // ── Sheet 3: Tasks ──
+    const tasksRows: (string | number)[][] = [["Staff Name", "Role", "Task", "Status"]];
+    staff.forEach((s) => {
+      s.assignments.forEach((t) => {
+        tasksRows.push([s.name, s.role, t.task, t.done ? "Completed" : "Pending"]);
+      });
+    });
+    const tasksSheet = XLSX.utils.aoa_to_sheet(tasksRows);
+    tasksSheet["!cols"] = [{ wch: 22 }, { wch: 16 }, { wch: 40 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, tasksSheet, "Tasks");
+
+    // ── Sheet 4: Expenses ──
+    const expensesData: (string | number)[][] = [
+      ["Date", "Category", "Amount (₹)", "Description", "Staff Member"],
+      ...expenses.map((e) => [
+        e.date ?? "",
+        e.category,
+        e.amount,
+        e.description ?? "",
+        e.staffName ?? "",
+      ]),
+    ];
+    const expensesSheet = XLSX.utils.aoa_to_sheet(expensesData);
+    expensesSheet["!cols"] = [{ wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 40 }, { wch: 22 }];
+    XLSX.utils.book_append_sheet(wb, expensesSheet, "Expenses");
+
+    XLSX.writeFile(wb, `homemates-report-${dateStr}.xlsx`);
+    toast.success("Report exported as Excel!", { description: "Check your downloads folder" });
   };
 
   return (
@@ -196,7 +239,7 @@ const InsightsPage = () => {
           onClick={handleExport}
           className="w-full glass-btn text-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
         >
-          <Download size={16} /> Export Monthly Report
+          <Download size={16} /> Export Excel Report
         </motion.button>
 
         {/* View Mode Toggle */}

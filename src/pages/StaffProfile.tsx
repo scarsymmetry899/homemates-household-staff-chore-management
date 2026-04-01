@@ -13,6 +13,7 @@ const StaffProfile = () => {
   const { staff, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction, updateStaffPhoto, updateStaffTelegramId } = useAppState();
   const s = staff.find((s) => s.id === id);
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingRole, setEditingRole] = useState(false);
   const [roleInput, setRoleInput] = useState("");
   const [editingShift, setEditingShift] = useState(false);
@@ -265,11 +266,7 @@ const StaffProfile = () => {
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                removeStaff(s.id);
-                toast.success(`${s.name} removed from staff`);
-                navigate("/staff");
-              }}
+              onClick={() => setShowDeleteConfirm(true)}
               className="glass-btn text-destructive label-sm px-4 py-3 rounded-2xl flex items-center gap-2"
             >
               <Trash2 size={14} />
@@ -433,6 +430,55 @@ const StaffProfile = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center pb-8 px-5"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 60, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm glass-card rounded-2xl p-6 space-y-4"
+            >
+              <div className="text-center space-y-2">
+                <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto">
+                  <Trash2 size={22} className="text-destructive" />
+                </div>
+                <h3 className="headline-sm text-card-foreground">Remove Staff Member?</h3>
+                <p className="text-sm text-muted-foreground">
+                  This will permanently remove <strong>{s.name}</strong> from your team along with all their tasks and records. This cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 glass-btn text-foreground label-sm py-3 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    removeStaff(s.id);
+                    toast.success(`${s.name} removed from staff`);
+                    navigate("/staff");
+                  }}
+                  className="flex-1 bg-destructive text-white label-sm py-3 rounded-xl font-semibold"
+                >
+                  Remove
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Schedule Modal */}
       <AnimatePresence>

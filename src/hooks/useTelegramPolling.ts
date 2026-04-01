@@ -14,6 +14,7 @@ const BOT_COMMANDS = [
   { command: "checkin", description: "Check in a staff member: /checkin Name" },
   { command: "mark_late", description: "Mark staff late: /mark_late Name" },
   { command: "mark_absent", description: "Mark staff absent: /mark_absent Name" },
+  { command: "mark_present", description: "Mark staff present/on-duty: /mark_present Name" },
   { command: "on_duty", description: "Mark staff on duty: /on_duty Name" },
   { command: "add_task", description: "Add task: /add_task Name | task description" },
   { command: "help", description: "Show all available commands" },
@@ -142,6 +143,16 @@ export function useTelegramPolling(enabled: boolean) {
           return `🔴 ${member.name} marked as <b>absent</b>.`;
         }
 
+        case "/mark_present": {
+          if (!argStr) return "Usage: /mark_present Name";
+          const member = findStaff(argStr);
+          if (!member) return `⚠️ Staff member "${argStr}" not found.`;
+          updateStaffStatus(member.id, "on-duty");
+          markAttendance(member.id, "check-in", "Marked present via Telegram command");
+          toast.success(`[Telegram] ${member.name} → on-duty`);
+          return `🟢 ${member.name} marked as <b>present / on-duty</b>.`;
+        }
+
         case "/on_duty": {
           if (!argStr) return "Usage: /on_duty Name";
           const member = findStaff(argStr);
@@ -178,17 +189,24 @@ export function useTelegramPolling(enabled: boolean) {
     (text: string): string | null => {
       const lower = text.toLowerCase().trim();
 
-      // "mark [name] late/absent/on duty/on-duty/off duty"
-      const statusMatch = lower.match(
-        /\bmark\s+(\w+)\s+(late|absent|on[\s-]duty|off[\s-]duty)\b/i
-      );
+      // "mark [name] late/absent/on duty/on-duty/off duty" or "mark STATUS NAME"
+      // Try "mark NAME STATUS" first, then "mark STATUS NAME"
+      const statusMatch =
+        lower.match(/\bmark\s+(\w+)\s+(late|absent|present|on[\s-]duty|off[\s-]duty)\b/i) ||
+        lower.match(/\bmark\s+(late|absent|present|on[\s-]duty|off[\s-]duty)\s+(\w+)\b/i);
+
       if (statusMatch) {
-        const member = findStaff(statusMatch[1]);
+        // Determine which group is name and which is status based on match pattern
+        const isNameFirst = /\bmark\s+\w+\s+(late|absent|present|on[\s-]duty|off[\s-]duty)\b/i.test(lower);
+        const nameWord = isNameFirst ? statusMatch[1] : statusMatch[2];
+        const rawStatusWord = isNameFirst ? statusMatch[2] : statusMatch[1];
+        const member = findStaff(nameWord);
         if (member) {
-          const rawStatus = statusMatch[2].toLowerCase().replace(/\s+/, "-");
+          const rawStatus = rawStatusWord.toLowerCase().replace(/\s+/, "-");
           const statusMap: Record<string, StaffStatus> = {
             late: "late",
             absent: "absent",
+            present: "on-duty",
             "on-duty": "on-duty",
             "off-duty": "off-duty",
           };
@@ -196,8 +214,9 @@ export function useTelegramPolling(enabled: boolean) {
           updateStaffStatus(member.id, status);
           if (status === "late") markAttendance(member.id, "late", "Marked late via Telegram command");
           if (status === "absent") markAttendance(member.id, "leave", "Marked absent via Telegram command");
+          if (status === "on-duty") markAttendance(member.id, "check-in", "Marked present via Telegram command");
           toast.success(`[Telegram] ${member.name} → ${status}`);
-          return `✅ ${member.name} marked as ${status}`;
+          return `✅ ${member.name} marked as ${status === "on-duty" ? "present/on-duty" : status}`;
         }
       }
 

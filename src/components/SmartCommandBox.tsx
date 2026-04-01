@@ -12,6 +12,7 @@ import {
   isGeminiConfigured,
   type GeminiAction,
 } from "@/lib/gemini";
+import { sendMessage as sendTelegram } from "@/lib/telegram";
 
 interface ChatMessage {
   id: string;
@@ -27,6 +28,29 @@ interface ParsedAction {
   description: string;
   execute: () => void;
 }
+
+// ─────────────────────────────────────────────────────────────
+// Chip type definitions
+// ─────────────────────────────────────────────────────────────
+
+type GuidedType = "mark_late" | "mark_absent" | "mark_present" | "add_task";
+
+interface ChipQuery {
+  label: string;
+  icon: string;
+  query: string;
+}
+interface ChipGuided {
+  label: string;
+  icon: string;
+  guided: { type: GuidedType; label: string };
+}
+interface ChipPrefill {
+  label: string;
+  icon: string;
+  prefill: string;
+}
+type Chip = ChipQuery | ChipGuided | ChipPrefill;
 
 // ─────────────────────────────────────────────────────────────
 // Regex-based fallback (used when Gemini is not configured)
@@ -62,6 +86,10 @@ const SmartCommandBox = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [guidedCmd, setGuidedCmd] = useState<{
+    type: GuidedType;
+    label: string;
+  } | null>(null);
 
   // Chat history for Gemini multi-turn
   const geminiHistoryRef = useRef<{ role: "user" | "model"; parts: string }[]>([]);
@@ -138,6 +166,74 @@ const SmartCommandBox = () => {
       }
     },
     [staff, addTask, addExpense, updateStaffStatus, markAttendance]
+  );
+
+  // ── Guided command completion ─────────────────────────────
+  const handleGuidedComplete = useCallback(
+    async (input: string) => {
+      if (!guidedCmd) return;
+      const { type, label } = guidedCmd;
+      setGuidedCmd(null);
+
+      const member = staff.find(
+        (s) =>
+          s.name.toLowerCase().includes(input.toLowerCase()) ||
+          s.name.split(" ")[0].toLowerCase() === input.toLowerCase().trim()
+      );
+
+      if (!member) {
+        pushMessage([{
+          id: `a-${Date.now()}`,
+          role: "assistant",
+          content: `⚠️ Couldn't find a staff member named "${input}". Try again with the full or first name.`,
+          isQuery: true,
+        }]);
+        return;
+      }
+
+      let resultText = "";
+      let telegramCmd = "";
+
+      switch (type) {
+        case "mark_late":
+          updateStaffStatus(member.id, "late");
+          markAttendance(member.id, "late", "Marked late via Smart Command");
+          resultText = `✅ ${member.name} has been marked as late.`;
+          telegramCmd = `/mark_late ${member.name.split(" ")[0]}`;
+          break;
+        case "mark_absent":
+          updateStaffStatus(member.id, "absent");
+          markAttendance(member.id, "leave", "Marked absent via Smart Command");
+          resultText = `✅ ${member.name} has been marked as absent.`;
+          telegramCmd = `/mark_absent ${member.name.split(" ")[0]}`;
+          break;
+        case "mark_present":
+          updateStaffStatus(member.id, "on-duty");
+          markAttendance(member.id, "check-in", "Marked present via Smart Command");
+          resultText = `✅ ${member.name} is now on duty.`;
+          telegramCmd = `/mark_present ${member.name.split(" ")[0]}`;
+          break;
+        case "add_task":
+          // input here is the task description — we need staff name first
+          // This case is handled differently (two-step)
+          break;
+      }
+
+      if (resultText) {
+        toast.success(label);
+        const ownerChatId = localStorage.getItem("homemaker_owner_telegram_chat_id");
+        if (ownerChatId && telegramCmd) {
+          sendTelegram(ownerChatId, `📱 Action from Homemaker app:\n${telegramCmd} — executed ✅`).catch(() => {});
+        }
+        pushMessage([{
+          id: `a-${Date.now()}`,
+          role: "assistant",
+          content: resultText,
+          isQuery: true,
+        }]);
+      }
+    },
+    [guidedCmd, staff, updateStaffStatus, markAttendance, pushMessage]
   );
 
   // ── Gemini send path ──────────────────────────────────────
@@ -354,12 +450,17 @@ const SmartCommandBox = () => {
     setInput("");
     scrollToBottom();
 
+    if (guidedCmd) {
+      await handleGuidedComplete(trimmed);
+      return;
+    }
+
     if (isGeminiConfigured) {
       await handleGeminiSend(trimmed);
     } else {
       handleRegexSend(trimmed);
     }
-  }, [input, isThinking, handleGeminiSend, handleRegexSend, scrollToBottom]);
+  }, [input, isThinking, guidedCmd, handleGuidedComplete, handleGeminiSend, handleRegexSend, scrollToBottom]);
 
   const handleConfirm = useCallback((msgId: string, confirmed: boolean) => {
     const msg = messages.find((m) => m.id === msgId);
@@ -372,6 +473,18 @@ const SmartCommandBox = () => {
       })
     );
   }, [messages]);
+
+  // Quick-action chips definition
+  const chips: Chip[] = [
+    { label: "Who's on duty?", icon: "👥", query: "Who is on duty?" },
+    { label: "Pending tasks", icon: "📋", query: "Show all pending tasks" },
+    { label: "Show expenses", icon: "💰", query: "Show expenses" },
+    { label: "Staff status", icon: "📊", query: "Show all staff status" },
+    { label: "Mark late", icon: "⏰", guided: { type: "mark_late", label: "Mark Late" } },
+    { label: "Mark absent", icon: "🔴", guided: { type: "mark_absent", label: "Mark Absent" } },
+    { label: "Mark present", icon: "🟢", guided: { type: "mark_present", label: "Mark Present" } },
+    { label: "Add a task →", icon: "➕", prefill: "Add task " },
+  ];
 
   return (
     <>
@@ -413,7 +526,13 @@ const SmartCommandBox = () => {
                   </span>
                 )}
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-muted-foreground p-1">
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  if (guidedCmd) setGuidedCmd(null);
+                }}
+                className="text-muted-foreground p-1"
+              >
                 <X size={16} />
               </button>
             </div>
@@ -431,19 +550,12 @@ const SmartCommandBox = () => {
                     {isGeminiConfigured ? "Powered by Gemini AI — ask anything or tap a quick action" : "Tap a quick action or type a command"}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { label: "Who's on duty?", icon: "👥", query: "Who is on duty?" },
-                      { label: "Pending tasks", icon: "📋", query: "Show all pending tasks" },
-                      { label: "Show expenses", icon: "💰", query: "Show expenses" },
-                      { label: "Staff status", icon: "📊", query: "Show all staff status" },
-                      { label: "Add a task →", icon: "➕", prefill: "Add task " },
-                      { label: "Mark late →", icon: "⏰", prefill: "Mark " },
-                    ].map((chip) => (
+                    {chips.map((chip) => (
                       <motion.button
                         key={chip.label}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => {
-                          if (chip.query) {
+                          if ("query" in chip && chip.query) {
                             const userMsg: ChatMessage = { id: `u-${Date.now()}`, role: "user", content: chip.query };
                             setMessages([userMsg]);
                             scrollToBottom();
@@ -452,7 +564,20 @@ const SmartCommandBox = () => {
                             } else {
                               handleRegexSend(chip.query);
                             }
-                          } else if (chip.prefill) {
+                          } else if ("guided" in chip && chip.guided) {
+                            const guidedData = chip.guided as { type: GuidedType; label: string };
+                            setGuidedCmd(guidedData);
+                            const staffNames = staff.map((s) => s.name.split(" ")[0]).join(", ");
+                            const assistantMsg: ChatMessage = {
+                              id: `a-${Date.now()}`,
+                              role: "assistant",
+                              content: `${guidedData.label}: Which staff member?\n\nAvailable: ${staffNames}\n\nType their name:`,
+                              isQuery: true,
+                            };
+                            setMessages([assistantMsg]);
+                            scrollToBottom();
+                            setTimeout(() => inputRef.current?.focus(), 50);
+                          } else if ("prefill" in chip && chip.prefill) {
                             setInput(chip.prefill);
                             setTimeout(() => inputRef.current?.focus(), 50);
                           }
@@ -537,7 +662,7 @@ const SmartCommandBox = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                placeholder={isGeminiConfigured ? "Ask anything about your staff…" : "Type a command…"}
+                placeholder={guidedCmd ? `Type a staff name…` : isGeminiConfigured ? "Ask anything about your staff…" : "Type a command…"}
                 className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none px-2 py-2"
                 disabled={isThinking}
               />

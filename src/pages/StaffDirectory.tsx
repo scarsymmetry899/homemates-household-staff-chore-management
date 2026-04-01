@@ -27,6 +27,7 @@ const StaffDirectory = () => {
   const navigate = useNavigate();
   const { staff, removeStaff, addStaff } = useAppState();
   const [activeDept, setActiveDept] = useState<string>("All");
+  const [statusFilter, setStatusFilter] = useState<"" | "on-duty" | "late" | "absent">("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [customDeptName, setCustomDeptName] = useState("");
   const [newStaff, setNewStaff] = useState({
@@ -37,19 +38,20 @@ const StaffDirectory = () => {
     salary: "",
     location: "",
     tenure: "",
-    shiftStart: "08:00 AM",
-    shiftEnd: "05:00 PM",
+    startDate: "",
+    shiftStart: "08:00",
+    shiftEnd: "17:00",
   });
 
-  const filtered = activeDept === "All"
-    ? staff
-    : staff.filter((s) => {
-        if (activeDept === "Other") return s.department === "Other";
-        return s.department === activeDept;
-      });
+  const filtered = staff.filter((s) => {
+    const deptMatch = activeDept === "All" ? true : activeDept === "Other" ? s.department === "Other" : s.department === activeDept;
+    const statusMatch = statusFilter === "" ? true : s.status === statusFilter;
+    return deptMatch && statusMatch;
+  });
 
   const onDuty = staff.filter((s) => s.status === "on-duty").length;
   const lateCount = staff.filter((s) => s.status === "late").length;
+  const absentCount = staff.filter((s) => s.status === "absent").length;
 
   const handleRefresh = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 800));
@@ -65,6 +67,14 @@ const StaffDirectory = () => {
       toast.error("Please enter a custom category name");
       return;
     }
+
+    // Compute tenure from startDate if provided
+    let tenure = newStaff.tenure || "New";
+    if (newStaff.startDate) {
+      const d = new Date(newStaff.startDate);
+      tenure = `Since ${d.toLocaleDateString("en-IN", { month: "short", year: "numeric" })}`;
+    }
+
     addStaff({
       name: newStaff.name,
       role: newStaff.role,
@@ -73,14 +83,14 @@ const StaffDirectory = () => {
       ...(newStaff.department === "Other" ? { customDepartment: customDeptName.trim() } : {}),
       salary: Number(newStaff.salary) || 0,
       status: "off-duty",
-      tenure: newStaff.tenure || "New",
+      tenure,
       location: newStaff.location || "Not assigned",
       photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(newStaff.name)}&background=567C8D&color=fff&size=200`,
       shiftStart: newStaff.shiftStart,
       shiftEnd: newStaff.shiftEnd,
     });
     toast.success(`${newStaff.name} added to the team!`);
-    setNewStaff({ name: "", role: "", phone: "", department: "Hospitality", salary: "", location: "", tenure: "", shiftStart: "08:00 AM", shiftEnd: "05:00 PM" });
+    setNewStaff({ name: "", role: "", phone: "", department: "Hospitality", salary: "", location: "", tenure: "", startDate: "", shiftStart: "08:00", shiftEnd: "17:00" });
     setCustomDeptName("");
     setShowAddForm(false);
   };
@@ -163,11 +173,34 @@ const StaffDirectory = () => {
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
                 <input placeholder="Location / Area" value={newStaff.location} onChange={(e) => setNewStaff({ ...newStaff, location: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
-                <div className="flex gap-2">
-                  <input placeholder="Shift Start (e.g. 08:00 AM)" value={newStaff.shiftStart} onChange={(e) => setNewStaff({ ...newStaff, shiftStart: e.target.value })}
-                    className="flex-1 bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
-                  <input placeholder="Shift End (e.g. 05:00 PM)" value={newStaff.shiftEnd} onChange={(e) => setNewStaff({ ...newStaff, shiftEnd: e.target.value })}
-                    className="flex-1 bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Start Date</p>
+                  <input
+                    type="date"
+                    value={newStaff.startDate}
+                    onChange={(e) => setNewStaff({ ...newStaff, startDate: e.target.value })}
+                    className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Shift Start</p>
+                    <input
+                      type="time"
+                      value={newStaff.shiftStart}
+                      onChange={(e) => setNewStaff({ ...newStaff, shiftStart: e.target.value })}
+                      className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Shift End</p>
+                    <input
+                      type="time"
+                      value={newStaff.shiftEnd}
+                      onChange={(e) => setNewStaff({ ...newStaff, shiftEnd: e.target.value })}
+                      className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
+                    />
+                  </div>
                 </div>
                 <motion.button whileTap={{ scale: 0.95 }} onClick={handleAddStaff}
                   className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl">
@@ -179,18 +212,48 @@ const StaffDirectory = () => {
         </AnimatePresence>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-muted-foreground">Headcount</p>
-            <p className="font-display text-2xl text-card-foreground mt-1">{staff.length}</p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-on-time">Active</p>
-            <p className="font-display text-2xl text-card-foreground mt-1">{onDuty}</p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-late">Flagged</p>
-            <p className="font-display text-2xl text-status-late mt-1">{lateCount}</p>
+        <div className="space-y-2">
+          <div className="grid grid-cols-3 gap-3">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              onClick={() => setStatusFilter("")}
+              className={`glass-card rounded-2xl p-4 cursor-pointer transition-all ${statusFilter === "" ? "ring-2 ring-secondary" : ""}`}
+            >
+              <p className="label-sm text-muted-foreground">Headcount</p>
+              <p className="font-display text-2xl text-card-foreground mt-1">{staff.length}</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              onClick={() => setStatusFilter(statusFilter === "on-duty" ? "" : "on-duty")}
+              className={`glass-card rounded-2xl p-4 cursor-pointer transition-all ${statusFilter === "on-duty" ? "ring-2 ring-status-on-time" : ""}`}
+            >
+              <p className="label-sm text-status-on-time">Active</p>
+              <p className="font-display text-2xl text-card-foreground mt-1">{onDuty}</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              onClick={() => setStatusFilter(statusFilter === "late" ? "" : "late")}
+              className={`glass-card rounded-2xl p-4 cursor-pointer transition-all ${statusFilter === "late" ? "ring-2 ring-status-late" : ""}`}
+            >
+              <p className="label-sm text-status-late">Flagged</p>
+              <p className="font-display text-2xl text-status-late mt-1">{lateCount}</p>
+            </motion.div>
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            onClick={() => setStatusFilter(statusFilter === "absent" ? "" : "absent")}
+            className={`glass-card rounded-2xl p-4 cursor-pointer transition-all flex items-center justify-between ${statusFilter === "absent" ? "ring-2 ring-destructive" : ""}`}
+          >
+            <p className="label-sm text-destructive">Absent</p>
+            <p className="font-display text-2xl text-destructive">{absentCount}</p>
           </motion.div>
         </div>
 
@@ -205,6 +268,29 @@ const StaffDirectory = () => {
               }`}
             >
               {dept === "All" ? "All Roles" : dept}
+            </button>
+          ))}
+        </div>
+
+        {/* Status Filter Chips */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+          {(
+            [
+              { label: "All", value: "" as const },
+              { label: "On Duty", value: "on-duty" as const, dot: "bg-status-on-time" },
+              { label: "Late", value: "late" as const, dot: "bg-status-late" },
+              { label: "Absent", value: "absent" as const, dot: "bg-destructive" },
+            ] as { label: string; value: "" | "on-duty" | "late" | "absent"; dot?: string }[]
+          ).map(({ label, value, dot }) => (
+            <button
+              key={label}
+              onClick={() => setStatusFilter(statusFilter === value ? "" : value)}
+              className={`label-sm whitespace-nowrap px-3 py-1.5 rounded-xl transition-all inline-flex items-center gap-1.5 ${
+                statusFilter === value ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
+              }`}
+            >
+              {dot && <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />}
+              {label}
             </button>
           ))}
         </div>

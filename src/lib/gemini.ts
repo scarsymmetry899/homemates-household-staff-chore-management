@@ -153,7 +153,8 @@ export async function scanReceiptWithGemini(file: File): Promise<ReceiptItem[]> 
     const visionModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const base64 = await fileToBase64(file);
-    const mimeType = file.type as "image/jpeg" | "image/png" | "image/webp" | "image/heic";
+    const supportedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+    const mimeType = (supportedTypes.includes(file.type) ? file.type : "image/jpeg") as "image/jpeg" | "image/png" | "image/webp" | "image/heic";
 
     const prompt = `You are analyzing a receipt or bill image for a household management app.
 Extract ALL line items from this receipt and categorize each one.
@@ -184,9 +185,13 @@ Rules:
     ]);
 
     const text = result.response.text().trim();
-    // Extract JSON array from response (handle if model wraps it)
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
+    // Strip markdown code fences if present (```json [...] ``` or ``` [...] ```)
+    const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+    const jsonMatch = stripped.match(/\[[\s\S]*\]/) || text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.warn("Receipt scan: no JSON array found in response:", text.substring(0, 200));
+      return [];
+    }
     const parsed = JSON.parse(jsonMatch[0]) as ReceiptItem[];
     return parsed.filter(
       (item) =>
