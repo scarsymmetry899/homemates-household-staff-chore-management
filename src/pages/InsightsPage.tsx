@@ -110,6 +110,20 @@ const InsightsPage = () => {
     [staff, viewMode, columnHeaders.length, selectedMonth, selectedWeek, selectedDay]
   );
 
+  // Which column index corresponds to today (for highlighting)
+  const todayColumnIndex = useMemo(() => {
+    const now = new Date();
+    if (viewMode === "daily" && selectedDay === 0) return 0;
+    if (viewMode === "weekly" && selectedWeek === 0) {
+      const day = now.getDay(); // 0=Sun, 1=Mon...
+      return day === 0 ? 6 : day - 1; // convert to Mon-first (Mon=0...Sun=6)
+    }
+    if (viewMode === "monthly" && selectedMonth === 0) {
+      return now.getDate() - 1; // 0-indexed day of current month
+    }
+    return -1; // no highlight for past periods
+  }, [viewMode, selectedDay, selectedWeek, selectedMonth]);
+
   const [overrides, setOverrides] = useState<Record<string, string>>({});
 
   const getCellStatus = (staffName: string, dayIndex: number, originalStatus: string) => {
@@ -331,8 +345,13 @@ const InsightsPage = () => {
                 >
                   <span className="label-sm text-muted-foreground sticky left-0 z-10 bg-card/95 backdrop-blur-sm px-2 py-1 rounded-md">Homemakers</span>
                   {columnHeaders.map((d, i) => (
-                    <span key={i} className="label-sm text-muted-foreground text-center text-[10px]">
+                    <span key={i} className={`label-sm text-center text-[10px] flex flex-col items-center gap-0.5 ${
+                      i === todayColumnIndex ? "text-secondary font-bold" : "text-muted-foreground"
+                    }`}>
                       {d}
+                      {i === todayColumnIndex && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-secondary block" />
+                      )}
                     </span>
                   ))}
 
@@ -354,7 +373,9 @@ const InsightsPage = () => {
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.1 + i * 0.01 }}
-                            className={`w-6 h-6 rounded-lg ${cellColor[status]} cursor-pointer mx-auto`}
+                            className={`w-6 h-6 rounded-lg ${cellColor[status]} cursor-pointer mx-auto transition-shadow ${
+                              i === todayColumnIndex ? "ring-2 ring-secondary/60 ring-offset-1 ring-offset-card" : ""
+                            }`}
                             onPointerDown={() => {
                               pressTimer = setTimeout(() => handleLongPress(s.name, i, status), 500);
                             }}

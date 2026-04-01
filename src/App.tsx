@@ -5,7 +5,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/context/AppContext";
+import { AnimatePresence } from "framer-motion";
 import AppLayout from "./components/layout/AppLayout";
+import OnboardingTour from "@/components/OnboardingTour";
 import AuthPage from "./pages/AuthPage";
 import Index from "./pages/Index";
 import StaffDirectory from "./pages/StaffDirectory";
@@ -54,6 +56,14 @@ const App = () => {
     return localStorage.getItem("homemaker_auth") === "true";
   });
   const [authChecked, setAuthChecked] = useState(!isFirebaseConfigured);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return localStorage.getItem("homemaker_onboarding_done") !== "true";
+  });
+
+  const handleOnboardingDone = () => {
+    localStorage.setItem("homemaker_onboarding_done", "true");
+    setShowOnboarding(false);
+  };
 
   // Listen to Firebase auth state if Firebase is configured
   useEffect(() => {
@@ -112,6 +122,11 @@ const App = () => {
           <Toaster />
           <Sonner />
           <AppInner onLogout={handleLogout} />
+          <AnimatePresence>
+            {showOnboarding && (
+              <OnboardingTour onDone={handleOnboardingDone} />
+            )}
+          </AnimatePresence>
         </AppProvider>
       </TooltipProvider>
     </QueryClientProvider>
