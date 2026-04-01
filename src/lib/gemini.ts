@@ -122,3 +122,81 @@ export function parseGeminiActions(text: string): GeminiAction[] {
 export function stripActionTags(text: string): string {
   return text.replace(/<action>[\s\S]*?<\/action>/g, "").trim();
 }
+
+// ─────────────────────────────────────────────────────────────
+// Receipt scanning via Gemini Vision
+// ─────────────────────────────────────────────────────────────
+
+export interface ReceiptItem {
+  description: string;
+  amount: number;
+  category: "Fuel" | "Groceries" | "Repairs" | "Advances" | "Household";
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Strip the data URL prefix (data:image/...;base64,)
+      resolve(result.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function scanReceiptWithGemini(file: File): Promise<ReceiptItem[]> {
+  if (!API_KEY) return [];
+  try {
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const visionModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const base64 = await fileToBase64(file);
+    const mimeType = file.type as "image/jpeg" | "image/png" | "image/webp" | "image/heic";
+
+    const prompt = `You are analyzing a receipt or bill image for a household management app.
+Extract ALL line items from this receipt and categorize each one.
+
+Categories available:
+- Groceries: food, vegetables, dairy, beverages, pantry items
+- Fuel: petrol, diesel, CNG, gas station
+- Repairs: plumbing, electrical, maintenance, hardware, tools
+- Advances: salary advance, cash advance, loan
+- Household: cleaning supplies, home decor, kitchenware, garden, misc household
+
+Return ONLY a valid JSON array (no markdown, no explanation) in this exact format:
+[
+  {"description": "item description", "amount": 250, "category": "Groceries"},
+  {"description": "another item", "amount": 1200, "category": "Fuel"}
+]
+
+Rules:
+- Amounts must be numbers (no ₹ symbol)
+- If you see a total line, include it as a single entry only if there are no individual items
+- Round amounts to nearest integer
+- If the image is not a receipt, return []
+- Maximum 10 items`;
+
+    const result = await visionModel.generateContent([
+      prompt,
+      { inlineData: { data: base64, mimeType } },
+    ]);
+
+    const text = result.response.text().trim();
+    // Extract JSON array from response (handle if model wraps it)
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return [];
+    const parsed = JSON.parse(jsonMatch[0]) as ReceiptItem[];
+    return parsed.filter(
+      (item) =>
+        item.description &&
+        typeof item.amount === "number" &&
+        item.amount > 0 &&
+        ["Fuel", "Groceries", "Repairs", "Advances", "Household"].includes(item.category)
+    );
+  } catch (e) {
+    console.error("Receipt scan error:", e);
+    return [];
+  }
+}

@@ -59,15 +59,7 @@ function findStaffInText(text: string, staff: StaffMember[]): StaffMember | unde
 
 const SmartCommandBox = () => {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: isGeminiConfigured
-        ? "Hi! I'm your AI home assistant powered by Gemini. Ask me anything about your staff, tasks, or expenses in plain English! ✨"
-        : "Hi! I'm your home assistant. Try:\n• \"Who is on duty?\"\n• \"Elena's tasks\"\n• \"Add task mop floors for Julian\"\n• \"Mark Marcus late\"\n• \"Show expenses\"",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
 
@@ -428,6 +420,53 @@ const SmartCommandBox = () => {
 
             {/* Messages */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {/* Welcome chip grid — shown only when no messages yet */}
+              {messages.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-3"
+                >
+                  <p className="text-xs text-muted-foreground text-center pt-1">
+                    {isGeminiConfigured ? "Powered by Gemini AI — ask anything or tap a quick action" : "Tap a quick action or type a command"}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Who's on duty?", icon: "👥", query: "Who is on duty?" },
+                      { label: "Pending tasks", icon: "📋", query: "Show all pending tasks" },
+                      { label: "Show expenses", icon: "💰", query: "Show expenses" },
+                      { label: "Staff status", icon: "📊", query: "Show all staff status" },
+                      { label: "Add a task →", icon: "➕", prefill: "Add task " },
+                      { label: "Mark late →", icon: "⏰", prefill: "Mark " },
+                    ].map((chip) => (
+                      <motion.button
+                        key={chip.label}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          if (chip.query) {
+                            const userMsg: ChatMessage = { id: `u-${Date.now()}`, role: "user", content: chip.query };
+                            setMessages([userMsg]);
+                            scrollToBottom();
+                            if (isGeminiConfigured) {
+                              handleGeminiSend(chip.query);
+                            } else {
+                              handleRegexSend(chip.query);
+                            }
+                          } else if (chip.prefill) {
+                            setInput(chip.prefill);
+                            setTimeout(() => inputRef.current?.focus(), 50);
+                          }
+                        }}
+                        className="flex items-center gap-2 bg-muted/50 hover:bg-muted rounded-xl px-3 py-2.5 text-left transition-colors"
+                      >
+                        <span className="text-base leading-none">{chip.icon}</span>
+                        <span className="text-xs text-foreground font-medium leading-tight">{chip.label}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
               {messages.map((m) => (
                 <motion.div
                   key={m.id}

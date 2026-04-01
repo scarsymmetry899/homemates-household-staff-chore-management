@@ -47,6 +47,27 @@ export async function sendMessage(chatId: number | string, text: string): Promis
   }
 }
 
+export interface TgBotCommand {
+  command: string;
+  description: string;
+}
+
+export async function setMyCommands(commands: TgBotCommand[]): Promise<boolean> {
+  if (!BOT_TOKEN) return false;
+  try {
+    const res = await fetch(`${BASE_URL}/setMyCommands`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commands }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.ok === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function getUpdates(offset?: number): Promise<TgUpdate[]> {
   if (!BOT_TOKEN) return [];
   try {

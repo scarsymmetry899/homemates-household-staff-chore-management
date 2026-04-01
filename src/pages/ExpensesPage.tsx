@@ -4,6 +4,7 @@ import { X, Plus, Fuel, ShoppingCart, Wrench, Banknote, Home as HomeIcon, Trendi
 import { useAppState, type Expense } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
+import { scanReceiptWithGemini, isGeminiConfigured } from "@/lib/gemini";
 
 const categoryConfig: Record<Expense["category"], { icon: typeof Fuel; color: string; bgColor: string }> = {
   Fuel: { icon: Fuel, color: "text-status-late", bgColor: "bg-status-late/10" },
@@ -93,25 +94,28 @@ const ExpensesPage = () => {
   const handleParseReceipt = async () => {
     if (!scanFile) return;
     setScanParsing(true);
-    await new Promise((r) => setTimeout(r, 2200));
-
-    const count = (scanFile.size % 3) + 2;
-    const descriptions = ["Grocery items", "Fuel refill", "Household supplies", "Advance payment", "Repair materials"];
-    const items: ScanItem[] = Array.from({ length: count }, (_, i) => {
-      const charCode = scanFile.name.charCodeAt(i % scanFile.name.length);
-      const rawAmount = 200 + (charCode * 17) % 2800;
-      const amount = Math.round(rawAmount / 50) * 50;
-      return {
-        id: `scan-${Date.now()}-${i}`,
-        category: categoryList[i % categoryList.length],
-        amount,
-        description: descriptions[i % descriptions.length],
-        approved: null,
-      };
-    });
-
-    setScanItems(items);
-    setScanParsing(false);
+    try {
+      if (isGeminiConfigured) {
+        const receiptItems = await scanReceiptWithGemini(scanFile);
+        if (receiptItems.length === 0) {
+          toast.error("Couldn't extract items from this receipt. Try a clearer image.");
+          setScanParsing(false);
+          return;
+        }
+        const items: ScanItem[] = receiptItems.map((item, i) => ({
+          id: `scan-${Date.now()}-${i}`,
+          category: item.category,
+          amount: item.amount,
+          description: item.description,
+          approved: null,
+        }));
+        setScanItems(items);
+      } else {
+        toast.error("Gemini AI is not configured. Add VITE_GEMINI_API_KEY to enable receipt scanning.");
+      }
+    } finally {
+      setScanParsing(false);
+    }
   };
 
   const handleScanApprove = (id: string, approved: boolean) => {
