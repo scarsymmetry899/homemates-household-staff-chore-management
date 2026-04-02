@@ -35,6 +35,7 @@ export interface StaffMember {
     netPay: number;
     month: string;
   };
+  telegramChatId?: string;
 }
 
 export const staffMembers: StaffMember[] = [

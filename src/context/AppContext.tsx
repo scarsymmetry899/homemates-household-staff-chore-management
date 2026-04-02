@@ -17,6 +17,8 @@ export interface Alert {
   title: string;
   description: string;
   staffName?: string;
+  staffId?: string;
+  taskName?: string;
   time: string;
   dismissed: boolean;
   actions: string[];
@@ -28,18 +30,29 @@ interface AppState {
   alerts: Alert[];
   ownerName: string;
   ownerLocation: string;
+  isDarkMode: boolean;
   setOwnerName: (name: string) => void;
+  setDarkMode: (v: boolean) => void;
   toggleTask: (staffId: string, taskIndex: number) => void;
   updateStaffStatus: (staffId: string, status: StaffStatus) => void;
   updateStaffRole: (staffId: string, role: string) => void;
   updateStaffShift: (staffId: string, shiftStart: string, shiftEnd: string) => void;
   addExpense: (expense: Omit<Expense, "id">) => void;
+  editExpense: (id: string, updates: Partial<Omit<Expense, "id">>) => void;
+  deleteExpense: (id: string) => void;
   dismissAlert: (alertId: string) => void;
   addTask: (staffId: string, task: string, dueDate?: string) => void;
   removeStaff: (staffId: string) => void;
   deleteTask: (staffId: string, taskIndex: number) => void;
   addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => void;
   addDeduction: (staffId: string, amount: number, reason: string) => void;
+  updateStaffPhoto: (staffId: string, photoUrl: string) => void;
+  updateTaskDueDate: (staffId: string, taskIndex: number, newDueDate: string) => void;
+  addAlert: (alert: Omit<Alert, "id" | "dismissed">) => void;
+  updateStaffTelegramId: (staffId: string, telegramChatId: string) => void;
+  markAttendance: (staffId: string, type: string, detail: string) => void;
+  reassignTask: (fromStaffId: string, taskIndex: number, toStaffId: string) => void;
+  extendTaskDeadlineByName: (staffId: string, taskName: string, days?: number) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -60,28 +73,28 @@ const initialAlerts: Alert[] = [
     id: "a1", type: "attendance", severity: "high",
     title: "Cook hasn't checked in by 9:10 AM",
     description: "Sienna Brooks (Cook) has not recorded any check-in for today. Shift was scheduled at 07:00 AM.",
-    staffName: "Sienna Brooks", time: "9:10 AM", dismissed: false,
+    staffName: "Sienna Brooks", staffId: "4", time: "9:10 AM", dismissed: false,
     actions: ["Mark Leave", "Mark Late", "Ignore"],
   },
   {
     id: "a2", type: "attendance", severity: "medium",
     title: "Chauffeur arrived 25 minutes late",
     description: "Marcus Thorne (Chauffeur) checked in at 08:25 AM. Shift start was 08:00 AM, exceeding the 15-minute grace buffer.",
-    staffName: "Marcus Thorne", time: "8:25 AM", dismissed: false,
+    staffName: "Marcus Thorne", staffId: "2", time: "8:25 AM", dismissed: false,
     actions: ["Apply Late Penalty", "Waive", "Note"],
   },
   {
     id: "a3", type: "task", severity: "medium",
-    title: "Task missed: Silver polishing — Elena Moretti",
+    title: "Task missed: Supervise silver polishing — Elena Moretti",
     description: "Supervise silver polishing was assigned to Elena Moretti (Housekeeper) for morning shift and hasn't been completed.",
-    staffName: "Elena Moretti", time: "11:30 AM", dismissed: false,
+    staffName: "Elena Moretti", staffId: "1", taskName: "Supervise silver polishing", time: "11:30 AM", dismissed: false,
     actions: ["Reassign", "Extend Deadline", "Dismiss"],
   },
   {
     id: "a4", type: "expense", severity: "low",
     title: "Fuel expenses up 18% this month",
     description: "Chauffeur fuel expenses (Marcus Thorne) have increased from ₹1,800 last month to ₹2,150. Review recommended.",
-    staffName: "Marcus Thorne", time: "Weekly Insight", dismissed: false,
+    staffName: "Marcus Thorne", staffId: "2", time: "Weekly Insight", dismissed: false,
     actions: ["Review Details", "Acknowledge"],
   },
   {
@@ -89,7 +102,7 @@ const initialAlerts: Alert[] = [
     title: "Perimeter sensor triggered - East Wall",
     description: "Motion sensor at the east boundary wall triggered at 2:45 AM. No staff check-in recorded in that zone.",
     time: "2:45 AM", dismissed: false,
-    actions: ["Dispatch Security", "Review CCTV", "False Alarm"],
+    actions: ["Investigate", "Mark Safe", "Dismiss"],
   },
 ];
 
@@ -101,10 +114,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return localStorage.getItem("homemaker_owner_name") || "Boss";
   });
   const [ownerLocation, setOwnerLocation] = useState<string>("Fetching location...");
+  const [isDarkMode, setIsDarkModeState] = useState<boolean>(() => {
+    return localStorage.getItem("homemaker_dark_mode") === "true";
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
 
   const setOwnerName = useCallback((name: string) => {
     setOwnerNameState(name);
     localStorage.setItem("homemaker_owner_name", name);
+  }, []);
+
+  const setDarkMode = useCallback((v: boolean) => {
+    setIsDarkModeState(v);
+    localStorage.setItem("homemaker_dark_mode", String(v));
   }, []);
 
   // Fetch GPS location
@@ -156,6 +181,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addExpense = useCallback((expense: Omit<Expense, "id">) => {
     setExpenses((prev) => [{ ...expense, id: `e${Date.now()}` }, ...prev]);
+  }, []);
+
+  const editExpense = useCallback((id: string, updates: Partial<Omit<Expense, "id">>) => {
+    setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+  }, []);
+
+  const deleteExpense = useCallback((id: string) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
   }, []);
 
   const dismissAlert = useCallback((alertId: string) => {
@@ -220,12 +253,91 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
   }, []);
 
+  const updateStaffPhoto = useCallback((staffId: string, photoUrl: string) => {
+    setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, photo: photoUrl } : s)));
+  }, []);
+
+  const updateTaskDueDate = useCallback((staffId: string, taskIndex: number, newDueDate: string) => {
+    setStaff((prev) =>
+      prev.map((s) =>
+        s.id === staffId
+          ? {
+              ...s,
+              assignments: s.assignments.map((t, i) =>
+                i === taskIndex ? { ...t, dueDate: newDueDate } : t
+              ),
+            }
+          : s
+      )
+    );
+  }, []);
+
+  const addAlert = useCallback((alert: Omit<Alert, "id" | "dismissed">) => {
+    setAlerts((prev) => [{ ...alert, id: `a${Date.now()}`, dismissed: false }, ...prev]);
+  }, []);
+
+  const updateStaffTelegramId = useCallback((staffId: string, telegramChatId: string) => {
+    setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, telegramChatId } : s)));
+  }, []);
+
+  const markAttendance = useCallback((staffId: string, type: string, detail: string) => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+    const dateStr = `Today, ${timeStr}`;
+    setStaff((prev) =>
+      prev.map((s) =>
+        s.id === staffId
+          ? { ...s, attendance: [{ date: dateStr, type, detail }, ...s.attendance] }
+          : s
+      )
+    );
+  }, []);
+
+  const reassignTask = useCallback((fromStaffId: string, taskIndex: number, toStaffId: string) => {
+    setStaff((prev) => {
+      const fromStaff = prev.find((s) => s.id === fromStaffId);
+      if (!fromStaff) return prev;
+      const task = fromStaff.assignments[taskIndex];
+      if (!task) return prev;
+      return prev.map((s) => {
+        if (s.id === fromStaffId) {
+          return { ...s, assignments: s.assignments.filter((_, i) => i !== taskIndex) };
+        }
+        if (s.id === toStaffId) {
+          return { ...s, assignments: [...s.assignments, { ...task, done: false }] };
+        }
+        return s;
+      });
+    });
+  }, []);
+
+  const extendTaskDeadlineByName = useCallback((staffId: string, taskName: string, days = 7) => {
+    setStaff((prev) =>
+      prev.map((s) => {
+        if (s.id !== staffId) return s;
+        return {
+          ...s,
+          assignments: s.assignments.map((t) => {
+            if (t.task === taskName) {
+              const base = t.dueDate ? new Date(t.dueDate) : new Date();
+              base.setDate(base.getDate() + days);
+              return { ...t, dueDate: base.toISOString().split("T")[0] };
+            }
+            return t;
+          }),
+        };
+      })
+    );
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
-        staff, expenses, alerts, ownerName, ownerLocation,
-        setOwnerName, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
-        addExpense, dismissAlert, addTask, removeStaff, deleteTask, addStaff, addDeduction,
+        staff, expenses, alerts, ownerName, ownerLocation, isDarkMode,
+        setOwnerName, setDarkMode, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
+        addExpense, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
+        addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
+        markAttendance, reassignTask, extendTaskDeadlineByName,
       }}
     >
       {children}
