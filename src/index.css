@@ -75,6 +75,50 @@
     --sidebar-border: 206 20% 82%;
     --sidebar-ring: 197 24% 45%;
   }
+
+  .dark {
+    --background: 207 35% 12%;
+    --foreground: 24 29% 90%;
+    --card: 207 30% 16%;
+    --card-foreground: 24 29% 88%;
+    --popover: 207 30% 16%;
+    --popover-foreground: 24 29% 88%;
+    --primary: 197 24% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-container: 197 24% 45%;
+    --secondary: 197 24% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-container: 207 25% 22%;
+    --secondary-container-foreground: 24 29% 88%;
+    --muted: 207 25% 22%;
+    --muted-foreground: 207 20% 62%;
+    --accent: 207 25% 22%;
+    --accent-foreground: 24 29% 88%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 207 20% 22%;
+    --input: 207 20% 18%;
+    --ring: 197 24% 45%;
+    --surface: 207 35% 12%;
+    --surface-container-low: 207 30% 14%;
+    --surface-container-lowest: 207 35% 10%;
+    --surface-container: 207 25% 18%;
+    --surface-container-high: 207 22% 22%;
+    --surface-container-highest: 207 20% 26%;
+    --shadow-ambient: 0px 20px 40px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0px 4px 16px rgba(0, 0, 0, 0.25);
+    --shadow-glass: 0px 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+    --shadow-btn: 0px 4px 14px rgba(0, 0, 0, 0.35), 0px 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-btn-hover: 0px 8px 24px rgba(0, 0, 0, 0.45), 0px 2px 6px rgba(0, 0, 0, 0.3);
+    --sidebar-background: 207 30% 16%;
+    --sidebar-foreground: 24 29% 88%;
+    --sidebar-primary: 197 24% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 207 25% 22%;
+    --sidebar-accent-foreground: 24 29% 88%;
+    --sidebar-border: 207 20% 22%;
+    --sidebar-ring: 197 24% 45%;
+  }
 }
 
 @layer base {
@@ -228,5 +272,24 @@
     background: hsla(0, 0%, 100%, 0.8);
     backdrop-filter: blur(12px);
     border: 1px solid hsla(0, 0%, 100%, 0.5);
+  }
+
+  .dark .glass {
+    background: hsla(207, 35%, 20%, 0.75);
+    border: 1px solid hsla(197, 24%, 45%, 0.2);
+  }
+  .dark .glass-card {
+    background: hsla(207, 35%, 18%, 0.75);
+    border: 1px solid hsla(197, 24%, 45%, 0.15);
+    box-shadow: var(--shadow-glass);
+  }
+  .dark .glass-btn {
+    background: hsla(207, 30%, 22%, 0.75);
+    border: 1px solid hsla(197, 24%, 45%, 0.2);
+    box-shadow: var(--shadow-btn);
+  }
+  .dark .pull-indicator {
+    background: hsla(207, 35%, 20%, 0.85);
+    border: 1px solid hsla(197, 24%, 45%, 0.2);
   }
 }

@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
+import * as XLSX from "xlsx";
 import { motion } from "framer-motion";
-import { TrendingUp, Clock, Users, Calendar, ChevronDown } from "lucide-react";
+import { TrendingUp, Clock, Users, Calendar, ChevronDown, Download } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 type ViewMode = "daily" | "weekly" | "monthly";
 
 const InsightsPage = () => {
-  const { staff } = useAppState();
+  const { staff, expenses, alerts } = useAppState();
   const [viewMode, setViewMode] = useState<ViewMode>("monthly");
   const onDuty = staff.filter((s) => s.status === "on-duty").length;
 
@@ -88,6 +89,17 @@ const InsightsPage = () => {
         photo: s.photo,
         role: s.role,
         days: Array.from({ length: columnHeaders.length }, (_, di) => {
+          // For today in daily view — use real live status
+          if (viewMode === "daily" && selectedDay === 0) {
+            const statusMap: Record<string, string> = {
+              "on-duty": "present",
+              "en-route": "present",
+              late: "late",
+              absent: "absent",
+              "off-duty": "off-duty",
+            };
+            return statusMap[s.status] ?? "present";
+          }
           const offset = viewMode === "monthly" ? selectedMonth : viewMode === "weekly" ? selectedWeek : selectedDay;
           const seed = ((si * 31 + di + offset * 7) * 17 + 3) % 10;
           if (seed < 6) return "present";
@@ -97,6 +109,20 @@ const InsightsPage = () => {
       })),
     [staff, viewMode, columnHeaders.length, selectedMonth, selectedWeek, selectedDay]
   );
+
+  // Which column index corresponds to today (for highlighting)
+  const todayColumnIndex = useMemo(() => {
+    const now = new Date();
+    if (viewMode === "daily" && selectedDay === 0) return 0;
+    if (viewMode === "weekly" && selectedWeek === 0) {
+      const day = now.getDay(); // 0=Sun, 1=Mon...
+      return day === 0 ? 6 : day - 1; // convert to Mon-first (Mon=0...Sun=6)
+    }
+    if (viewMode === "monthly" && selectedMonth === 0) {
+      return now.getDate() - 1; // 0-indexed day of current month
+    }
+    return -1; // no highlight for past periods
+  }, [viewMode, selectedDay, selectedWeek, selectedMonth]);
 
   const [overrides, setOverrides] = useState<Record<string, string>>({});
 
@@ -124,6 +150,89 @@ const InsightsPage = () => {
     toast.success("Insights refreshed");
   }, []);
 
+  const handleExport = () => {
+    const now = new Date();
+    const dateStr = now.toISOString().split("T")[0];
+    const generatedLabel = now.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+    const wb = XLSX.utils.book_new();
+
+    // ── Sheet 1: Summary ──
+    const expenseByCategory = expenses.reduce<Record<string, number>>((acc, e) => {
+      acc[e.category] = (acc[e.category] || 0) + e.amount;
+      return acc;
+    }, {});
+    const summaryData: (string | number)[][] = [
+      ["HOMEMAKER — HOUSEHOLD REPORT", ""],
+      ["Generated", generatedLabel],
+      ["", ""],
+      ["STAFF", ""],
+      ["Total Homemakers", staff.length],
+      ["On Duty", staff.filter((s) => s.status === "on-duty").length],
+      ["Late", staff.filter((s) => s.status === "late").length],
+      ["Absent", staff.filter((s) => s.status === "absent").length],
+      ["", ""],
+      ["EXPENSES BY CATEGORY", ""],
+      ...Object.entries(expenseByCategory).map(([cat, amt]) => [cat, amt]),
+      ["Total Expenses (₹)", expenses.reduce((a, e) => a + e.amount, 0)],
+      ["", ""],
+      ["Active Alerts", alerts.filter((a) => !a.dismissed).length],
+    ];
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    summarySheet["!cols"] = [{ wch: 30 }, { wch: 22 }];
+    XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+
+    // ── Sheet 2: Staff ──
+    const staffData: (string | number)[][] = [
+      ["Name", "Role", "Department", "Status", "Shift Start", "Shift End", "Punctuality %", "Reliability %"],
+      ...staff.map((s) => [
+        s.name,
+        s.role,
+        s.department ?? "",
+        s.status,
+        s.shiftStart ?? "",
+        s.shiftEnd ?? "",
+        s.punctualityScore,
+        s.reliabilityScore,
+      ]),
+    ];
+    const staffSheet = XLSX.utils.aoa_to_sheet(staffData);
+    staffSheet["!cols"] = [
+      { wch: 22 }, { wch: 16 }, { wch: 14 }, { wch: 12 },
+      { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 13 },
+    ];
+    XLSX.utils.book_append_sheet(wb, staffSheet, "Staff");
+
+    // ── Sheet 3: Tasks ──
+    const tasksRows: (string | number)[][] = [["Staff Name", "Role", "Task", "Status"]];
+    staff.forEach((s) => {
+      s.assignments.forEach((t) => {
+        tasksRows.push([s.name, s.role, t.task, t.done ? "Completed" : "Pending"]);
+      });
+    });
+    const tasksSheet = XLSX.utils.aoa_to_sheet(tasksRows);
+    tasksSheet["!cols"] = [{ wch: 22 }, { wch: 16 }, { wch: 40 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, tasksSheet, "Tasks");
+
+    // ── Sheet 4: Expenses ──
+    const expensesData: (string | number)[][] = [
+      ["Date", "Category", "Amount (₹)", "Description", "Staff Member"],
+      ...expenses.map((e) => [
+        e.date ?? "",
+        e.category,
+        e.amount,
+        e.description ?? "",
+        e.staffName ?? "",
+      ]),
+    ];
+    const expensesSheet = XLSX.utils.aoa_to_sheet(expensesData);
+    expensesSheet["!cols"] = [{ wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 40 }, { wch: 22 }];
+    XLSX.utils.book_append_sheet(wb, expensesSheet, "Expenses");
+
+    XLSX.writeFile(wb, `homemates-report-${dateStr}.xlsx`);
+    toast.success("Report exported as Excel!", { description: "Check your downloads folder" });
+  };
+
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
@@ -137,6 +246,15 @@ const InsightsPage = () => {
             Track your homemakers' attendance, punctuality & reliability at a glance.
           </p>
         </section>
+
+        {/* Export Report Button */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={handleExport}
+          className="w-full glass-btn text-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
+        >
+          <Download size={16} /> Export Excel Report
+        </motion.button>
 
         {/* View Mode Toggle */}
         <div className="flex gap-2">
@@ -213,8 +331,8 @@ const InsightsPage = () => {
         <AnimatedCard delay={0.1} className="glass-card rounded-2xl overflow-hidden">
           <div
             className="touch-pan-x"
-            onPointerDownCapture={(e) => e.stopPropagation()}
-            onTouchStartCapture={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
           >
             <ScrollArea className="w-full">
               <div className="p-4">
@@ -227,8 +345,13 @@ const InsightsPage = () => {
                 >
                   <span className="label-sm text-muted-foreground sticky left-0 z-10 bg-card/95 backdrop-blur-sm px-2 py-1 rounded-md">Homemakers</span>
                   {columnHeaders.map((d, i) => (
-                    <span key={i} className="label-sm text-muted-foreground text-center text-[10px]">
+                    <span key={i} className={`label-sm text-center text-[10px] flex flex-col items-center gap-0.5 ${
+                      i === todayColumnIndex ? "text-secondary font-bold" : "text-muted-foreground"
+                    }`}>
                       {d}
+                      {i === todayColumnIndex && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-secondary block" />
+                      )}
                     </span>
                   ))}
 
@@ -250,7 +373,9 @@ const InsightsPage = () => {
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.1 + i * 0.01 }}
-                            className={`w-6 h-6 rounded-lg ${cellColor[status]} cursor-pointer mx-auto`}
+                            className={`w-6 h-6 rounded-lg ${cellColor[status]} cursor-pointer mx-auto transition-shadow ${
+                              i === todayColumnIndex ? "ring-2 ring-secondary/60 ring-offset-1 ring-offset-card" : ""
+                            }`}
                             onPointerDown={() => {
                               pressTimer = setTimeout(() => handleLongPress(s.name, i, status), 500);
                             }}
