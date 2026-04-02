@@ -142,7 +142,7 @@ export const SwipeableCard = ({
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.15}
-        style={{ x }}
+        style={{ x, touchAction: "pan-y" }}
         onDragEnd={handleDragEnd}
         whileTap={{ scale: 0.98 }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
@@ -197,7 +197,7 @@ export const PullToRefresh = ({ children, className, onRefresh }: PullToRefreshP
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={0.3}
-        style={{ y }}
+        style={{ y, touchAction: "pan-x" }}
         onDragEnd={handleDragEnd}
         dragDirectionLock
       >

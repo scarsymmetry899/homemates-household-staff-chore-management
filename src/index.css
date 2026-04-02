@@ -126,8 +126,23 @@
     @apply border-border;
   }
 
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  #root {
+    height: 100%;
   }
 
   h1, h2, h3, h4, h5, h6 {

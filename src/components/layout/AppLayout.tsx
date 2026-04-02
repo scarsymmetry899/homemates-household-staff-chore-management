@@ -8,9 +8,9 @@ const AppLayout = () => {
   const isStaffProfile = location.pathname.startsWith("/staff/");
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col max-w-md mx-auto relative overflow-x-hidden">
+    <div className="h-[100dvh] bg-background flex flex-col max-w-md mx-auto relative overflow-hidden">
       {!isStaffProfile && <AppHeader />}
-      <main className="flex-1 pb-24 overflow-x-hidden">
+      <main className="flex-1 pb-24 overflow-y-auto overflow-x-hidden overscroll-none" style={{ WebkitOverflowScrolling: 'touch' }}>
         <Outlet />
       </main>
       <SmartCommandBox />
