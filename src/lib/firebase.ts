@@ -7,13 +7,23 @@
 //   VITE_FIREBASE_MESSAGING_SENDER_ID=...
 //   VITE_FIREBASE_APP_ID=...
 
+// Strip markdown links, quotes, and whitespace that users sometimes accidentally include
+function clean(val: string | undefined): string | undefined {
+  if (!val) return val;
+  return val
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [text](url) → text
+    .replace(/^["'\s]+|["'\s]+$/g, '')        // strip surrounding quotes/spaces
+    .split('\n')[0]                             // take first line only
+    .trim() || undefined;
+}
+
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string | undefined,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string | undefined,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID as string | undefined,
+  apiKey: clean(import.meta.env.VITE_FIREBASE_API_KEY),
+  authDomain: clean(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
+  projectId: clean(import.meta.env.VITE_FIREBASE_PROJECT_ID),
+  storageBucket: clean(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
+  messagingSenderId: clean(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
+  appId: clean(import.meta.env.VITE_FIREBASE_APP_ID),
 };
 
 export const isFirebaseConfigured = !!firebaseConfig.apiKey && !!firebaseConfig.projectId;
