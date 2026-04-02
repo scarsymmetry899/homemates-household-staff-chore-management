@@ -126,15 +126,17 @@ const TasksPage = () => {
       leftLabel="Delete"
     >
       <PressableCard>
-        <div
-          onClick={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
-          className="glass-card rounded-2xl p-4 flex items-start gap-3 cursor-pointer select-none"
-        >
-          <motion.div animate={{ scale: task.done ? [1, 1.3, 1] : 1 }} transition={{ duration: 0.3 }}>
+        <div className="glass-card rounded-2xl p-4 flex items-start gap-3 select-none">
+          <motion.div
+            animate={{ scale: task.done ? [1, 1.3, 1] : 1 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
+            className="cursor-pointer touch-manipulation p-1 -m-1 shrink-0 mt-0.5"
+          >
             {task.done ? (
-              <CheckCircle2 size={20} className="text-status-on-time shrink-0 mt-0.5" />
+              <CheckCircle2 size={20} className="text-status-on-time" />
             ) : (
-              <Circle size={20} className="text-surface-container shrink-0 mt-0.5" />
+              <Circle size={20} className="text-surface-container" />
             )}
           </motion.div>
           <div className="flex-1 min-w-0">
