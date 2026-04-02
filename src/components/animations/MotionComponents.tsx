@@ -142,7 +142,7 @@ export const SwipeableCard = ({
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.15}
-        style={{ x, touchAction: "pan-y" }}
+        style={{ x }}
         onDragEnd={handleDragEnd}
         whileTap={{ scale: 0.98 }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
@@ -159,50 +159,7 @@ interface PullToRefreshProps extends Props {
   onRefresh?: () => void | Promise<void>;
 }
 
-export const PullToRefresh = ({ children, className, onRefresh }: PullToRefreshProps) => {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const y = useMotionValue(0);
-  const pullProgress = useTransform(y, [0, 80], [0, 1]);
-  const spinRotation = useTransform(y, [0, 80], [0, 360]);
-
-  const handleDragEnd = useCallback(
-    async (_: any, info: PanInfo) => {
-      if (info.offset.y > 70 && onRefresh && !isRefreshing) {
-        setIsRefreshing(true);
-        await onRefresh();
-        setTimeout(() => setIsRefreshing(false), 600);
-      }
-    },
-    [onRefresh, isRefreshing]
-  );
-
-  return (
-    <div className={`relative overflow-hidden ${className || ""}`}>
-      {/* Pull indicator */}
-      <motion.div
-        style={{ opacity: pullProgress, y: useTransform(y, [0, 80], [-40, 0]) }}
-        className="absolute top-0 left-0 right-0 flex justify-center py-3 z-10"
-      >
-        <motion.div
-          style={{ rotate: isRefreshing ? undefined : spinRotation }}
-          animate={isRefreshing ? { rotate: 360 } : undefined}
-          transition={isRefreshing ? { repeat: Infinity, duration: 0.8, ease: "linear" } : undefined}
-          className="w-8 h-8 rounded-full pull-indicator flex items-center justify-center shadow-btn"
-        >
-          <RefreshCw size={14} className="text-foreground" />
-        </motion.div>
-      </motion.div>
-
-      <motion.div
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.3}
-        style={{ y, touchAction: "pan-x" }}
-        onDragEnd={handleDragEnd}
-        dragDirectionLock
-      >
-        {children}
-      </motion.div>
-    </div>
-  );
-};
+// PullToRefresh disabled — drag="y" was intercepting vertical scroll on mobile
+export const PullToRefresh = ({ children, className }: PullToRefreshProps) => (
+  <div className={className}>{children}</div>
+);

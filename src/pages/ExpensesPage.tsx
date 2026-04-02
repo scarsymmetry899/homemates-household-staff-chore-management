@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Fuel, ShoppingCart, Wrench, Banknote, Home as HomeIcon, TrendingUp, Camera, Check, Pencil } from "lucide-react";
 import { useAppState, type Expense } from "@/context/AppContext";
-import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
+import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
 import { scanReceiptWithGemini, isGeminiConfigured } from "@/lib/gemini";
 
@@ -477,15 +477,6 @@ const ExpensesPage = () => {
             const Icon = cfg.icon;
             return (
               <StaggerItem key={expense.id}>
-                <SwipeableCard
-                  leftLabel="Delete"
-                  rightLabel="Edit"
-                  onSwipeLeft={() => {
-                    deleteExpense(expense.id);
-                    toast.success("Expense deleted");
-                  }}
-                  onSwipeRight={() => openEditModal(expense)}
-                >
                   <PressableCard className="glass-card rounded-2xl p-4 flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-xl ${cfg.bgColor} flex items-center justify-center shrink-0`}>
                       <Icon size={18} className={cfg.color} />
@@ -507,7 +498,6 @@ const ExpensesPage = () => {
                       ₹{expense.amount.toLocaleString("en-IN")}
                     </p>
                   </PressableCard>
-                </SwipeableCard>
               </StaggerItem>
             );
           })}

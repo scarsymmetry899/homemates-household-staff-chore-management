@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Circle, Clock, Plus, X, Trash2, CalendarDays, Send, AlertTriangle, RotateCcw, ArrowRightLeft } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
-import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
+import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
 
 type TaskFilter = "all" | "pending" | "done" | "bydate";
@@ -116,15 +116,6 @@ const TasksPage = () => {
   };
 
   const TaskCard = ({ task }: { task: TaskItem }) => (
-    <SwipeableCard
-      onSwipeRight={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
-      onSwipeLeft={() => {
-        deleteTask(task.staffId, task.taskIndex);
-        toast.success("Task deleted", { description: task.task });
-      }}
-      rightLabel={task.done ? "Undo" : "Done"}
-      leftLabel="Delete"
-    >
       <PressableCard>
         <div className="glass-card rounded-2xl p-4 flex items-start gap-3 select-none">
           <motion.div
@@ -170,7 +161,6 @@ const TasksPage = () => {
           </motion.button>
         </div>
       </PressableCard>
-    </SwipeableCard>
   );
 
   const handleExtendDeadline = (task: TaskItem, days: number) => {
@@ -275,7 +265,6 @@ const TasksPage = () => {
   );
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
           <p className="label-sm text-muted-foreground">Mission Control</p>
@@ -478,7 +467,6 @@ const TasksPage = () => {
           </StaggerContainer>
         )}
       </PageTransition>
-    </PullToRefresh>
   );
 };
 

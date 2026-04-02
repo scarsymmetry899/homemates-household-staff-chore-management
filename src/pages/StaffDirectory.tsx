@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Phone, MessageCircle, Eye, Plus, X, Camera, UserPlus } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { departments, type Department } from "@/data/staff";
-import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
+import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
 
 const statusLabel: Record<string, string> = {
@@ -106,7 +106,6 @@ const StaffDirectory = () => {
   };
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
           <p className="label-sm text-muted-foreground">Your Household Heroes</p>
@@ -299,17 +298,6 @@ const StaffDirectory = () => {
         <StaggerContainer className="space-y-4 pb-4">
           {filtered.map((s) => (
             <StaggerItem key={s.id}>
-              <SwipeableCard
-                onSwipeRight={() => {
-                  toast.success(`Calling ${s.name}...`);
-                }}
-                onSwipeLeft={() => {
-                  removeStaff(s.id);
-                  toast.success(`${s.name} removed from staff`);
-                }}
-                rightLabel="Call"
-                leftLabel="Remove"
-              >
                 <PressableCard className="glass-card rounded-2xl overflow-hidden">
                   <div className="flex gap-4 p-5">
                     <img src={s.photo} alt={s.name} className="w-20 h-20 rounded-2xl object-cover shadow-card" loading="lazy" />
@@ -360,12 +348,10 @@ const StaffDirectory = () => {
                     </button>
                   </div>
                 </PressableCard>
-              </SwipeableCard>
             </StaggerItem>
           ))}
         </StaggerContainer>
       </PageTransition>
-    </PullToRefresh>
   );
 };
 

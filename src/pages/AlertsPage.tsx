@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, Clock, Shield, Receipt, Bell, X, Users } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
-import { PageTransition, StaggerContainer, StaggerItem, PullToRefresh, SwipeableCard } from "@/components/animations/MotionComponents";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Alert } from "@/context/AppContext";
@@ -163,7 +163,6 @@ const AlertsPage = () => {
     : [];
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
           <p className="label-sm text-muted-foreground">Incident Response Hub</p>
@@ -258,12 +257,6 @@ const AlertsPage = () => {
               const Icon = cfg.icon;
               return (
                 <StaggerItem key={alert.id}>
-                  <SwipeableCard
-                    onSwipeLeft={() => handleAction(alert, "Dismiss")}
-                    leftLabel="Dismiss"
-                    rightLabel="Resolve"
-                    onSwipeRight={() => handleAction(alert, alert.actions[0])}
-                  >
                     <motion.div
                       layout
                       exit={{ opacity: 0, x: -100, transition: { duration: 0.3 } }}
@@ -303,7 +296,6 @@ const AlertsPage = () => {
                         </div>
                       </div>
                     </motion.div>
-                  </SwipeableCard>
                 </StaggerItem>
               );
             })}
@@ -339,7 +331,6 @@ const AlertsPage = () => {
           </section>
         )}
       </PageTransition>
-    </PullToRefresh>
   );
 };
 
