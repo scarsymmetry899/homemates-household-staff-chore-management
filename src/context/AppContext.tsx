@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { staffMembers as initialStaff, type StaffMember, type StaffStatus } from "@/data/staff";
 
 export interface Expense {
@@ -53,6 +53,8 @@ interface AppState {
   markAttendance: (staffId: string, type: string, detail: string) => void;
   reassignTask: (fromStaffId: string, taskIndex: number, toStaffId: string) => void;
   extendTaskDeadlineByName: (staffId: string, taskName: string, days?: number) => void;
+  updatePunctualityScore: (staffId: string, delta: number) => void;
+  updateReliabilityScore: (staffId: string, delta: number) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -330,6 +332,98 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
   }, []);
 
+  const updatePunctualityScore = useCallback((staffId: string, delta: number) => {
+    setStaff((prev) =>
+      prev.map((s) =>
+        s.id === staffId
+          ? {
+              ...s,
+              punctualityScore: Math.max(0, Math.min(100, +(s.punctualityScore + delta).toFixed(1))),
+            }
+          : s
+      )
+    );
+  }, []);
+
+  const updateReliabilityScore = useCallback((staffId: string, delta: number) => {
+    setStaff((prev) =>
+      prev.map((s) =>
+        s.id === staffId
+          ? {
+              ...s,
+              reliabilityScore: Math.max(0, Math.min(100, +(s.reliabilityScore + delta).toFixed(1))),
+            }
+          : s
+      )
+    );
+  }, []);
+
+  // Midnight sweep: auto-checkout anyone still on duty + raise a Live Flag.
+  // Uses a ref to read the latest staff snapshot without restarting the timer.
+  const staffRef = useRef(staff);
+  useEffect(() => {
+    staffRef.current = staff;
+  }, [staff]);
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const sweep = () => {
+      const stillOnDuty = staffRef.current.filter(
+        (s) => s.status === "on-duty" || s.status === "late"
+      );
+      if (stillOnDuty.length === 0) return;
+
+      setStaff((prev) =>
+        prev.map((s) =>
+          s.status === "on-duty" || s.status === "late"
+            ? {
+                ...s,
+                status: "off-duty" as StaffStatus,
+                attendance: [
+                  {
+                    date: "End of day, 11:59 PM",
+                    type: "auto-checkout",
+                    detail: "Auto-checkout: did not tap out before end of day",
+                  },
+                  ...s.attendance,
+                ],
+              }
+            : s
+        )
+      );
+
+      setAlerts((prev) => [
+        ...stillOnDuty.map((s, idx) => ({
+          id: `auto-${Date.now()}-${idx}`,
+          type: "attendance" as const,
+          severity: "medium" as const,
+          title: `${s.name} forgot to check out`,
+          description: `${s.name} (${s.role}) was still on duty at midnight and has been auto-checked out for the day.`,
+          staffName: s.name,
+          staffId: s.id,
+          time: "12:00 AM",
+          dismissed: false,
+          actions: ["Acknowledge", "Investigate"],
+        })),
+        ...prev,
+      ]);
+    };
+
+    const schedule = () => {
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 0, 0);
+      timeoutId = setTimeout(() => {
+        sweep();
+        schedule();
+      }, nextMidnight.getTime() - now.getTime());
+    };
+
+    schedule();
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -338,6 +432,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         addExpense, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
         markAttendance, reassignTask, extendTaskDeadlineByName,
+        updatePunctualityScore, updateReliabilityScore,
       }}
     >
       {children}
