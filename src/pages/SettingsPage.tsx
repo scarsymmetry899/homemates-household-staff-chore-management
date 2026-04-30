@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil, Wifi, MessageCircle, Check, X, Nfc, Send } from "lucide-react";
 import { PageTransition, AnimatedCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { useAppState } from "@/context/AppContext";
-import { useNfcAttendance } from "@/hooks/useNfcAttendance";
 import { isNfcSupported, writeNfcTag } from "@/lib/nfc";
 import { toast } from "sonner";
 
@@ -45,12 +44,11 @@ const settingSections: { title: string; items: SettingToggle[] }[] = [
 ];
 
 const SettingsPage = ({ onLogout }: SettingsPageProps) => {
-  const { ownerName, setOwnerName, isDarkMode, setDarkMode, staff } = useAppState();
+  const { ownerName, setOwnerName, isDarkMode, setDarkMode, staff, nfcEnabled, setNfcEnabled } = useAppState();
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
     settingSections.forEach((s) => s.items.forEach((i) => (defaults[i.id] = i.defaultOn)));
     defaults.darkMode = isDarkMode;
-    defaults.nfcEnabled = false;
     return defaults;
   });
   const [editingName, setEditingName] = useState(false);
@@ -67,28 +65,28 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
   const [nfcWriteStaffId, setNfcWriteStaffId] = useState<string | null>(null);
   const [writingNfc, setWritingNfc] = useState(false);
 
-  // NFC attendance scanning
-  const { scanning, error: nfcError, lastEvent, isSupported: nfcSupported } = useNfcAttendance(
-    toggles.nfcEnabled && nfcSupported
-  );
+  // NFC support detection (the actual scanning runs globally from AppInner)
+  const nfcSupported = isNfcSupported();
 
   const handleToggle = (id: string) => {
+    if (id === "nfcEnabled") {
+      const next = !nfcEnabled;
+      if (next && !nfcSupported) {
+        toast.error("NFC not supported", { description: "Use Chrome on Android for NFC." });
+        return;
+      }
+      setNfcEnabled(next);
+      toast.success(next ? "NFC Scanning Active" : "NFC Scanning Stopped");
+      return;
+    }
     if (id === "darkMode") {
       setDarkMode(!toggles.darkMode);
     }
     setToggles((prev) => {
       const next = { ...prev, [id]: !prev[id] };
-      if (id !== "nfcEnabled") {
-        toast.success(next[id] ? "Enabled" : "Disabled", {
-          description: settingSections.flatMap((s) => s.items).find((i) => i.id === id)?.label,
-        });
-      } else {
-        if (next.nfcEnabled && !nfcSupported) {
-          toast.error("NFC not supported", { description: "Use Chrome on Android for NFC." });
-          return prev;
-        }
-        toast.success(next.nfcEnabled ? "NFC Scanning Active" : "NFC Scanning Stopped");
-      }
+      toast.success(next[id] ? "Enabled" : "Disabled", {
+        description: settingSections.flatMap((s) => s.items).find((i) => i.id === id)?.label,
+      });
       return next;
     });
   };
@@ -272,12 +270,12 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-card-foreground">NFC Scanning</p>
                 <p className="text-xs text-muted-foreground">
-                  {nfcSupported ? (scanning ? "Active — tap a tag to log attendance" : "Tap to enable") : "Requires Chrome on Android"}
+                  {nfcSupported ? (nfcEnabled ? "Active — tap a tag from any screen" : "Tap to enable") : "Requires Chrome on Android"}
                 </p>
               </div>
-              <div className={`w-12 h-7 rounded-full p-0.5 transition-colors duration-200 ${toggles.nfcEnabled ? "bg-primary" : "bg-muted"}`}>
+              <div className={`w-12 h-7 rounded-full p-0.5 transition-colors duration-200 ${nfcEnabled ? "bg-primary" : "bg-muted"}`}>
                 <motion.div
-                  animate={{ x: toggles.nfcEnabled ? 20 : 0 }}
+                  animate={{ x: nfcEnabled ? 20 : 0 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   className="w-6 h-6 rounded-full bg-primary-foreground shadow-card"
                 />
@@ -285,28 +283,15 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
             </motion.div>
 
             {/* Scanning status */}
-            {scanning && (
+            {nfcEnabled && nfcSupported && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 bg-status-on-time/10 rounded-xl px-3 py-2">
                 <motion.div
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ repeat: Infinity, duration: 1.5 }}
                   className="w-2 h-2 rounded-full bg-status-on-time"
                 />
-                <span className="text-xs text-status-on-time font-semibold">Scanning for NFC tags…</span>
+                <span className="text-xs text-status-on-time font-semibold">Listening for taps app-wide</span>
               </motion.div>
-            )}
-
-            {nfcError && (
-              <div className="bg-destructive/10 rounded-xl px-3 py-2 text-xs text-destructive">{nfcError}</div>
-            )}
-
-            {lastEvent && (
-              <div className="glass rounded-xl px-3 py-2 text-xs space-y-0.5">
-                <p className="font-semibold text-card-foreground">Last NFC Event</p>
-                <p className="text-muted-foreground">
-                  {lastEvent.staffName} · {lastEvent.eventType} · {lastEvent.timestamp.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
-                </p>
-              </div>
             )}
 
             <div className="border-t border-border/20" />

@@ -31,8 +31,10 @@ interface AppState {
   ownerName: string;
   ownerLocation: string;
   isDarkMode: boolean;
+  nfcEnabled: boolean;
   setOwnerName: (name: string) => void;
   setDarkMode: (v: boolean) => void;
+  setNfcEnabled: (v: boolean) => void;
   toggleTask: (staffId: string, taskIndex: number) => void;
   updateStaffStatus: (staffId: string, status: StaffStatus) => void;
   updateStaffRole: (staffId: string, role: string) => void;
@@ -119,6 +121,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isDarkMode, setIsDarkModeState] = useState<boolean>(() => {
     return localStorage.getItem("homemaker_dark_mode") === "true";
   });
+  const [nfcEnabled, setNfcEnabledState] = useState<boolean>(() => {
+    return localStorage.getItem("homemaker_nfc_enabled") === "true";
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -132,6 +137,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const setDarkMode = useCallback((v: boolean) => {
     setIsDarkModeState(v);
     localStorage.setItem("homemaker_dark_mode", String(v));
+  }, []);
+
+  const setNfcEnabled = useCallback((v: boolean) => {
+    setNfcEnabledState(v);
+    localStorage.setItem("homemaker_nfc_enabled", String(v));
   }, []);
 
   // Fetch GPS location
@@ -427,8 +437,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AppContext.Provider
       value={{
-        staff, expenses, alerts, ownerName, ownerLocation, isDarkMode,
-        setOwnerName, setDarkMode, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
+        staff, expenses, alerts, ownerName, ownerLocation, isDarkMode, nfcEnabled,
+        setOwnerName, setDarkMode, setNfcEnabled, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
         addExpense, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
         markAttendance, reassignTask, extendTaskDeadlineByName,

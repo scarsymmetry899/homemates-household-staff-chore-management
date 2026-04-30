@@ -21,6 +21,9 @@ import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import { onAuthStateChange, isFirebaseConfigured, signOutFirebase } from "@/lib/firebase";
 import { useTelegramPolling } from "@/hooks/useTelegramPolling";
+import { useNfcAttendance } from "@/hooks/useNfcAttendance";
+import { useAppState } from "@/context/AppContext";
+import NfcConfirmation from "@/components/NfcConfirmation";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
@@ -31,23 +34,31 @@ function AppInner({ onLogout }: { onLogout: () => void }) {
   const telegramEnabled = !!import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
   useTelegramPolling(telegramEnabled);
 
+  // Global NFC scanning — works on any screen, not just Settings.
+  // Toggled from Settings via AppContext's nfcEnabled.
+  const { nfcEnabled, staff } = useAppState();
+  const { lastEvent } = useNfcAttendance(nfcEnabled);
+
   return (
-    <HashRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Index />} />
-          <Route path="/staff" element={<StaffDirectory />} />
-          <Route path="/staff/:id" element={<StaffProfile />} />
-          <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/payroll" element={<PayrollPage />} />
-          <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/expenses" element={<ExpensesPage />} />
-          <Route path="/alerts" element={<AlertsPage />} />
-          <Route path="/settings" element={<SettingsPage onLogout={onLogout} />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </HashRouter>
+    <>
+      <NfcConfirmation event={lastEvent} staff={staff} />
+      <HashRouter>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/staff" element={<StaffDirectory />} />
+            <Route path="/staff/:id" element={<StaffProfile />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/payroll" element={<PayrollPage />} />
+            <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/expenses" element={<ExpensesPage />} />
+            <Route path="/alerts" element={<AlertsPage />} />
+            <Route path="/settings" element={<SettingsPage onLogout={onLogout} />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </HashRouter>
+    </>
   );
 }
 
