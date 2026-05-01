@@ -379,4 +379,38 @@ location.reload();
 
 ---
 
+## Phase 2 Roadmap — NFC Expansion
+
+The Phase 1 NFC work delivers shift-aware attendance: tap-in, tap-out, late/early-leave detection, score auto-updates, full-screen confirmation overlay, app-wide global scanning, midnight auto-checkout, and a Test Mode panel for tag-free simulation. Once the basic attendance flow has been in real-world use for a few weeks and the kinks are out, the following ideas are queued for Phase 2.
+
+### Tier 1 — High value, recommended
+
+**Task Completion Tags.** Stick small NFC stickers on the physical objects tied to recurring tasks: the kitchen counter for "Counter Cleaned," the vacuum for "Living Room Vacuumed," the bin for "Trash Out." A staff member taps their personal tag, then the task tag — the app marks the assignment complete with a timestamp and a location proof (the task tag's name). This solves the "did Sienna actually clean the kitchen, or just tick the box?" trust gap, because completing the task physically requires being at that spot. Build complexity is medium: new "Task Location Tag" data model, new programming flow that distinguishes task tags from staff tags, scan handler that recognises both and pairs them within a 30-second window. Most of the existing infrastructure is reusable.
+
+**Room/Zone Presence Tags.** One tag per major room — kitchen, gym, garage, study, garden shed. Staff tap their personal tag against the room's tag when entering a zone for work. The app updates their `location` field in real time, so the home dashboard can show "Marcus is in the garage right now" instead of just "Marcus is on duty somewhere." Useful for figuring out who's nearest when a delivery arrives, knowing who was in a room when something went missing, and time-on-task reports ("Sienna spent 3.5 hours in the kitchen today, 1.5 in the pantry"). Build complexity is low — the `location` field already exists in `StaffMember`; this is a new "Zone Tag" type and a small extension to the scan handler.
+
+### Tier 2 — Useful but conditional
+
+**Vendor / Delivery Tap-In.** A single "Vendor Sign-In" tag at the main gate. When a milk delivery, courier, plumber, etc. arrives, the gatekeeper (Arthur, in the current setup) taps the vendor tag, then a small visitor-type tag ("Milkman," "Amazon," "Plumber"). The app logs vendor entries with timestamps without needing them to be permanent staff. Useful for a paper trail of who came to the house and when. Build complexity is medium: new "vendor visitor" mini-data-model, new scan path. Worth it only if vendor logging becomes a felt need.
+
+**Vehicle Log for the Chauffeur.** Tags on the steering wheel of each vehicle. Marcus taps his own tag, then the vehicle tag at the start of a trip and again at the end. The app logs trips automatically — start/end times, which car was used, total kilometres driven that day. Especially useful for fuel reimbursement and for separating work vs personal vehicle usage. Build complexity is medium-high: new trip data model, vehicle entity, mileage estimation. Worth it only if vehicle/fuel tracking becomes a felt need.
+
+### Tier 3 — Considered and de-prioritised
+
+**Inventory / supplies tags.** Sounds great in theory ("tap the detergent shelf when refilled"), but household supplies don't refill at predictable cadences and the proliferation of tags would outweigh the value. App-based reminders work better.
+
+**Expense receipt linking.** A "tap to attach this expense to..." flow doesn't save real time vs just typing in the app. The data entry is the bottleneck, not the linking.
+
+**Payroll signoff.** Payroll review requires actually looking at numbers. NFC adds nothing.
+
+**Emergency / panic tag.** Romantic idea — staff in trouble taps SOS, alert fires — but in practice, by the time someone is in trouble enough to need an SOS, an actual phone or wall button is more reliable. Skip.
+
+### Open questions to resolve before building
+
+- For task completion: should the flow be two-tap (staff tag + task tag), auto-pick staff from the last NFC scan within 60 seconds, or tap-task-tag-then-pick-staff-from-screen?
+- Should task tags only complete tasks assigned to the tapping staff, or any task that exists at that location?
+- Where should physical tags live in the home — carried by staff (lanyards, ID badges) or fixed on a "punch card board" near the entrance? Each has trade-offs around theft, loss, and convenience.
+
+---
+
 *Built with React, Firebase, Gemini AI, and a lot of ☕*
