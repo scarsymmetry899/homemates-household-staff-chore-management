@@ -1,9 +1,10 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil, Wifi, MessageCircle, Check, X, Nfc, Send } from "lucide-react";
+import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil, Wifi, MessageCircle, Check, X, Nfc, Send, Beaker, ChevronDown } from "lucide-react";
 import { PageTransition, AnimatedCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { useAppState } from "@/context/AppContext";
 import { isNfcSupported, writeNfcTag } from "@/lib/nfc";
+import { getSimulateTap } from "@/lib/nfcTestBridge";
 import { toast } from "sonner";
 
 interface SettingToggle {
@@ -64,6 +65,23 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
   // NFC write picker
   const [nfcWriteStaffId, setNfcWriteStaffId] = useState<string | null>(null);
   const [writingNfc, setWritingNfc] = useState(false);
+
+  // NFC test mode (dev-only simulation, no physical tag needed)
+  const [testModeOpen, setTestModeOpen] = useState(false);
+  const [testForceType, setTestForceType] = useState<"auto" | "check-in" | "check-out">("auto");
+  const [testSendTelegram, setTestSendTelegram] = useState(false);
+
+  const handleSimulateTap = (staffId: string) => {
+    const sim = getSimulateTap();
+    if (!sim) {
+      toast.error("Test mode not ready", { description: "Reload the page and try again." });
+      return;
+    }
+    sim(staffId, {
+      forceEventType: testForceType === "auto" ? undefined : testForceType,
+      sendTelegram: testSendTelegram,
+    });
+  };
 
   // NFC support detection (the actual scanning runs globally from AppInner)
   const nfcSupported = isNfcSupported();
@@ -337,6 +355,99 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="border-t border-border/20" />
+
+            {/* ── Test Mode (dev-only simulation, no physical tag needed) ── */}
+            <div className="space-y-2">
+              <button
+                onClick={() => setTestModeOpen((v) => !v)}
+                className="w-full flex items-center gap-2 text-left"
+                aria-expanded={testModeOpen}
+              >
+                <Beaker size={14} className="text-muted-foreground shrink-0" />
+                <span className="label-sm text-muted-foreground flex-1">Test Mode</span>
+                <motion.div animate={{ rotate: testModeOpen ? 180 : 0 }} transition={{ duration: 0.18 }}>
+                  <ChevronDown size={14} className="text-muted-foreground" />
+                </motion.div>
+              </button>
+
+              <AnimatePresence initial={false}>
+                {testModeOpen && (
+                  <motion.div
+                    key="test-mode-body"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.22 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-3 pt-1">
+                      <p className="text-xs text-muted-foreground">
+                        Simulate an NFC tap with any staff member. Runs through the full flow — overlay,
+                        score updates, alerts — without needing a physical tag.
+                      </p>
+
+                      {/* Event type selector */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Event</p>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {(["auto", "check-in", "check-out"] as const).map((t) => (
+                            <button
+                              key={t}
+                              onClick={() => setTestForceType(t)}
+                              className={`text-[11px] py-1.5 px-2 rounded-lg font-medium transition-colors ${
+                                testForceType === t
+                                  ? "bg-primary text-primary-foreground"
+                                  : "glass-btn text-muted-foreground"
+                              }`}
+                            >
+                              {t === "auto" ? "Auto" : t === "check-in" ? "Force In" : "Force Out"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Telegram toggle */}
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={testSendTelegram}
+                          onChange={(e) => setTestSendTelegram(e.target.checked)}
+                          className="w-3.5 h-3.5 accent-primary"
+                        />
+                        <span className="text-xs text-muted-foreground">Also send Telegram messages</span>
+                      </label>
+
+                      {/* Staff picker — tap to simulate */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                          Tap to simulate
+                        </p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {staff.map((s) => (
+                            <motion.button
+                              key={s.id}
+                              whileTap={{ scale: 0.96 }}
+                              onClick={() => handleSimulateTap(s.id)}
+                              className="flex items-center gap-2 p-2 rounded-lg glass-btn text-left hover:bg-secondary/10 transition-colors"
+                            >
+                              <img src={s.photo} alt={s.name} className="w-7 h-7 rounded-md object-cover shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[11px] font-semibold text-card-foreground truncate leading-tight">
+                                  {s.name.split(" ")[0]}
+                                </p>
+                                <p className="text-[9px] text-muted-foreground truncate leading-tight">{s.role}</p>
+                              </div>
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </AnimatedCard>

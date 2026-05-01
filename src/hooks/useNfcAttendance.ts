@@ -52,7 +52,18 @@ export function useNfcAttendance(enabled: boolean) {
   const lastTapRef = useRef<Map<string, number>>(new Map());
 
   const handleScan = useCallback(
-    async (staffId: string, timestamp: Date) => {
+    async (
+      staffId: string,
+      timestamp: Date,
+      options: {
+        /** Override the check-in/check-out auto-detection (test mode). */
+        forceEventType?: "check-in" | "check-out";
+        /** Skip Telegram messages (test mode default). */
+        silentTelegram?: boolean;
+        /** Skip the per-staff debounce (test mode default). */
+        skipDebounce?: boolean;
+      } = {}
+    ) => {
       const member = staff.find((s) => s.id === staffId);
       if (!member) {
         toast.error("Unknown NFC tag", { description: `Staff ID: ${staffId}` });
@@ -60,13 +71,17 @@ export function useNfcAttendance(enabled: boolean) {
       }
 
       // Anti-fumble: ignore taps within debounce window for this staff
-      const lastTap = lastTapRef.current.get(staffId) ?? 0;
-      if (timestamp.getTime() - lastTap < TAP_DEBOUNCE_MS) return;
-      lastTapRef.current.set(staffId, timestamp.getTime());
+      if (!options.skipDebounce) {
+        const lastTap = lastTapRef.current.get(staffId) ?? 0;
+        if (timestamp.getTime() - lastTap < TAP_DEBOUNCE_MS) return;
+        lastTapRef.current.set(staffId, timestamp.getTime());
+      }
 
       // "Currently working" → next tap is a check-out. Anything else → check-in.
+      // forceEventType (test mode) overrides this auto-detection.
       const isWorking = member.status === "on-duty" || member.status === "late";
-      const eventType: "check-in" | "check-out" = isWorking ? "check-out" : "check-in";
+      const eventType: "check-in" | "check-out" =
+        options.forceEventType ?? (isWorking ? "check-out" : "check-in");
 
       const timeStr = timestamp.toLocaleTimeString("en-IN", {
         hour: "2-digit",
@@ -224,15 +239,17 @@ export function useNfcAttendance(enabled: boolean) {
         logMethod: "nfc",
       });
 
-      // Notify owner
-      const ownerChatId = localStorage.getItem("homemaker_owner_telegram_chat_id");
-      if (ownerChatId) {
-        await sendMessage(ownerChatId, ownerMsg);
-      }
+      // Notify owner (skipped in test mode if silentTelegram)
+      if (!options.silentTelegram) {
+        const ownerChatId = localStorage.getItem("homemaker_owner_telegram_chat_id");
+        if (ownerChatId) {
+          await sendMessage(ownerChatId, ownerMsg);
+        }
 
-      // Notify staff member on their own Telegram
-      if (member.telegramChatId) {
-        await sendMessage(member.telegramChatId, staffMsg);
+        // Notify staff member on their own Telegram
+        if (member.telegramChatId) {
+          await sendMessage(member.telegramChatId, staffMsg);
+        }
       }
     },
     [
@@ -289,5 +306,21 @@ export function useNfcAttendance(enabled: boolean) {
     };
   }, [enabled]);
 
-  return { scanning, error, lastEvent, isSupported: isNfcSupported() };
+  /**
+   * Simulate a tap from Settings test mode. Bypasses debounce, runs through
+   * the full scan flow including overlay, alerts, scores, and (optionally)
+   * Telegram messages.
+   */
+  const simulateTap = useCallback(
+    (staffId: string, opts: { forceEventType?: "check-in" | "check-out"; sendTelegram?: boolean } = {}) => {
+      handleScanRef.current(staffId, new Date(), {
+        forceEventType: opts.forceEventType,
+        silentTelegram: !opts.sendTelegram,
+        skipDebounce: true,
+      });
+    },
+    []
+  );
+
+  return { scanning, error, lastEvent, isSupported: isNfcSupported(), simulateTap };
 }

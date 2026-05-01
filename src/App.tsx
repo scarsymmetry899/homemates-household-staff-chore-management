@@ -24,6 +24,7 @@ import { useTelegramPolling } from "@/hooks/useTelegramPolling";
 import { useNfcAttendance } from "@/hooks/useNfcAttendance";
 import { useAppState } from "@/context/AppContext";
 import NfcConfirmation from "@/components/NfcConfirmation";
+import { registerSimulateTap } from "@/lib/nfcTestBridge";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
@@ -37,7 +38,12 @@ function AppInner({ onLogout }: { onLogout: () => void }) {
   // Global NFC scanning — works on any screen, not just Settings.
   // Toggled from Settings via AppContext's nfcEnabled.
   const { nfcEnabled, staff } = useAppState();
-  const { lastEvent } = useNfcAttendance(nfcEnabled);
+  const { lastEvent, simulateTap } = useNfcAttendance(nfcEnabled);
+
+  // Expose simulateTap to SettingsPage via the module-level bridge
+  useEffect(() => {
+    registerSimulateTap(simulateTap);
+  }, [simulateTap]);
 
   return (
     <>
