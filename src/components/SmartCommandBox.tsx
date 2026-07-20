@@ -289,8 +289,8 @@ const SmartCommandBox = () => {
       // Update Gemini history for multi-turn
       geminiHistoryRef.current = [
         ...geminiHistoryRef.current,
-        { role: "user", parts: trimmed },
-        { role: "model", parts: rawResponse },
+        { role: "user" as const, parts: trimmed },
+        { role: "model" as const, parts: rawResponse },
       ].slice(-20); // keep last 10 turns
 
       pushMessage([

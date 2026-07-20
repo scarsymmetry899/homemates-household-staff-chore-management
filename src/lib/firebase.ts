@@ -38,7 +38,7 @@ export async function getFirebaseAuth() {
   try {
     const { initializeApp, getApps, getApp } = await import("firebase/app");
     const { getAuth } = await import("firebase/auth");
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig as Parameters<typeof initializeApp>[0]);
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig as import("firebase/app").FirebaseOptions);
     _auth = getAuth(app);
     return _auth as import("firebase/auth").Auth;
   } catch {
@@ -52,7 +52,7 @@ export async function getFirebaseFirestore() {
   try {
     const { initializeApp, getApps, getApp } = await import("firebase/app");
     const { getFirestore } = await import("firebase/firestore");
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig as Parameters<typeof initializeApp>[0]);
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig as import("firebase/app").FirebaseOptions);
     _firestore = getFirestore(app);
     return _firestore;
   } catch {
