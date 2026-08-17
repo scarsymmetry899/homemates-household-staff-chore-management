@@ -370,6 +370,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setAlerts(snapshot.alerts);
         setOwnerNameState(snapshot.ownerName);
         setSqlHouseholdId(snapshot.householdId);
+        setSetupComplete(true);
+        setHouseholdProfile((current) => current || {
+          name: `${snapshot.ownerName || "My"} Household`,
+          ownerName: snapshot.ownerName,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata",
+        });
         queueMicrotask(() => {
           isApplyingRemoteStateRef.current = false;
         });
