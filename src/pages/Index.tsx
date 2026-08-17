@@ -5,26 +5,28 @@ import { useNavigate } from "react-router-dom";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import StaffAvatar from "@/components/StaffAvatar";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
-const statusLabel: Record<string, string> = {
-  "on-duty": "Clocked In",
-  late: "Delayed",
-  absent: "No-Show",
-  "en-route": "Inbound",
-  "off-duty": "Off-Grid",
+const statusLabelKey: Record<string, string> = {
+  "on-duty": "status.onDuty",
+  late: "status.late",
+  absent: "status.absent",
+  "en-route": "status.enRoute",
+  "off-duty": "status.offDuty",
 };
 
 const Index = () => {
   const navigate = useNavigate();
   const { staff, alerts, expenses, ownerName, ownerLocation } = useAppState();
+  const { t, locale } = useI18n();
 
   // IST time
   const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
   const hour = now.getHours();
-  const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
-  const dateStr = now.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" });
-  const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata", hour12: true });
+  const greeting = hour < 12 ? t("home.goodMorning") : hour < 17 ? t("home.goodAfternoon") : t("home.goodEvening");
+  const dateStr = now.toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric" });
+  const timeStr = now.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata", hour12: true });
 
   const activeAlerts = alerts.filter((a) => !a.dismissed);
   const totalTasks = staff.reduce((a, s) => a + s.assignments.length, 0);
@@ -78,7 +80,7 @@ const Index = () => {
             onClick={() => navigate("/tasks")}
             className="mt-4 btn-estate text-primary-foreground label-sm px-6 py-3 rounded-2xl"
           >
-            Dispatch a Task
+            {t("home.dispatchTask")}
           </motion.button>
         </section>
 
@@ -94,7 +96,7 @@ const Index = () => {
                   <Bell size={18} className="text-status-absent" />
                 </div>
                 <div className="flex-1">
-                  <p className="label-sm text-status-absent">{activeAlerts.length} Flagged Incidents</p>
+                  <p className="label-sm text-status-absent">{activeAlerts.length} {t("home.flaggedIncidents")}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{activeAlerts[0].title}</p>
                 </div>
                 <ArrowRight size={16} className="text-muted-foreground" />
@@ -106,9 +108,9 @@ const Index = () => {
         {/* Active Homemates */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Active Homemakers</h3>
+            <h3 className="headline-sm text-foreground">{t("home.activeHomemakers")}</h3>
             <button onClick={() => navigate("/staff")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
-              View All
+              {t("home.viewAll")}
             </button>
           </div>
           <StaggerContainer className="space-y-3">
@@ -124,7 +126,7 @@ const Index = () => {
                       <p className="label-sm text-muted-foreground">{s.role}</p>
                       <p className="font-display text-base text-card-foreground font-medium">{s.name}</p>
                       {s.arrivalTime && (
-                        <p className="text-xs text-muted-foreground mt-0.5">Checked in at {s.arrivalTime}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("home.checkedInAt", { time: s.arrivalTime })}</p>
                       )}
                     </div>
                     <span
@@ -138,7 +140,7 @@ const Index = () => {
                           : "bg-destructive/10 text-destructive"
                       }`}
                     >
-                      {statusLabel[s.status]}
+                      {t(statusLabelKey[s.status])}
                     </span>
                   </div>
                 </PressableCard>
@@ -150,9 +152,9 @@ const Index = () => {
         {/* Task Progress */}
         <AnimatedCard delay={0.2} className="glass-card rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-card-foreground">Today's Progress</h3>
+            <h3 className="headline-sm text-card-foreground">{t("home.todayProgress")}</h3>
             <button onClick={() => navigate("/tasks")} className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl">
-              All Tasks
+              {t("home.allTasks")}
             </button>
           </div>
           <div className="flex items-center justify-center">
@@ -172,16 +174,16 @@ const Index = () => {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="font-display text-2xl text-foreground">{taskPct}%</span>
-                <span className="label-sm text-muted-foreground">Done</span>
+                <span className="label-sm text-muted-foreground">{t("home.done")}</span>
               </div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Completion Rate</span>
+            <span className="text-muted-foreground">{t("home.completionRate")}</span>
             <span className="text-card-foreground font-semibold">{doneTasks} / {totalTasks}</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            {totalTasks - doneTasks} tasks left for the day
+            {t("home.tasksLeft", { count: totalTasks - doneTasks })}
           </p>
         </AnimatedCard>
 
@@ -189,24 +191,24 @@ const Index = () => {
         <AnimatedCard delay={0.25} className="btn-estate rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="label-sm text-primary-foreground/60">This Month</p>
-              <h3 className="headline-sm text-primary-foreground mt-1">Household Spending</h3>
+              <p className="label-sm text-primary-foreground/60">{t("home.thisMonth")}</p>
+              <h3 className="headline-sm text-primary-foreground mt-1">{t("home.householdSpending")}</h3>
             </div>
             <div className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center backdrop-blur-sm">
               <TrendingUp size={16} className="text-primary-foreground" />
             </div>
           </div>
-          <p className="label-sm text-primary-foreground/60">Total Spent</p>
+          <p className="label-sm text-primary-foreground/60">{t("home.totalSpent")}</p>
           <p className="font-display text-3xl text-primary-foreground">
             ₹{(totalExpenses + payrollTotal).toLocaleString("en-IN")} <span className="text-sm text-primary-foreground/50">INR</span>
           </p>
           <div className="flex gap-8">
             <div>
-              <p className="label-sm text-primary-foreground/50">Payroll</p>
+              <p className="label-sm text-primary-foreground/50">{t("home.payroll")}</p>
               <p className="text-primary-foreground font-semibold">₹{(payrollTotal / 1000).toFixed(1)}k</p>
             </div>
             <div>
-              <p className="label-sm text-primary-foreground/50">Household</p>
+              <p className="label-sm text-primary-foreground/50">{t("home.household")}</p>
               <p className="text-primary-foreground font-semibold">₹{(householdTotal / 1000).toFixed(1)}k</p>
             </div>
           </div>
@@ -215,7 +217,7 @@ const Index = () => {
             onClick={() => navigate("/expenses")}
             className="w-full bg-primary-foreground/10 text-primary-foreground label-sm py-3 rounded-xl mt-2 backdrop-blur-sm border border-primary-foreground/10"
           >
-            View Full Ledger
+            {t("home.viewFullLedger")}
           </motion.button>
         </AnimatedCard>
 

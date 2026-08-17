@@ -2,9 +2,10 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil, Wifi, MessageCircle, Check, X, Nfc, Send, Beaker, ChevronDown } from "lucide-react";
 import { PageTransition, AnimatedCard, PullToRefresh } from "@/components/animations/MotionComponents";
-import { useAppState } from "@/context/AppContext";
+import { useAppState, type AppLanguage } from "@/context/AppContext";
 import { isNfcSupported, writeNfcTag } from "@/lib/nfc";
 import { getSimulateTap } from "@/lib/nfcTestBridge";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 interface SettingToggle {
@@ -44,8 +45,17 @@ const settingSections: { title: string; items: SettingToggle[] }[] = [
   },
 ];
 
+const appLanguages: { code: AppLanguage; label: string }[] = [
+  { code: "en", label: "English" },
+  { code: "hi", label: "हिन्दी" },
+  { code: "te", label: "తెలుగు" },
+  { code: "kn", label: "ಕನ್ನಡ" },
+  { code: "ml", label: "മലയാളം" },
+];
+
 const SettingsPage = ({ onLogout }: SettingsPageProps) => {
-  const { ownerName, setOwnerName, isDarkMode, setDarkMode, staff, nfcEnabled, setNfcEnabled, registerStaffNfcTag } = useAppState();
+  const { ownerName, setOwnerName, language, setLanguage, isDarkMode, setDarkMode, staff, nfcEnabled, setNfcEnabled, registerStaffNfcTag } = useAppState();
+  const { t } = useI18n();
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
     settingSections.forEach((s) => s.items.forEach((i) => (defaults[i.id] = i.defaultOn)));
@@ -149,8 +159,8 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Control Panel</p>
-          <h1 className="display-sm text-foreground">Settings</h1>
+          <p className="label-sm text-muted-foreground">{t("settings.controlPanel")}</p>
+          <h1 className="display-sm text-foreground">{t("settings.title")}</h1>
         </section>
 
         {/* Owner Name */}
@@ -160,7 +170,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
               <User size={18} className="text-primary" />
             </div>
             <div className="flex-1">
-              <p className="label-sm text-muted-foreground">Display Name</p>
+              <p className="label-sm text-muted-foreground">{t("settings.displayName")}</p>
               {editingName ? (
                 <div className="flex gap-2 mt-1">
                   <input
@@ -170,7 +180,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                     autoFocus
                     onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
                   />
-                  <button onClick={handleSaveName} className="label-sm text-secondary px-3">Save</button>
+                  <button onClick={handleSaveName} className="label-sm text-secondary px-3">{t("settings.save")}</button>
                 </div>
               ) : (
                 <p className="text-sm font-semibold text-card-foreground">{ownerName}</p>
@@ -184,9 +194,43 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
           </div>
         </AnimatedCard>
 
+        <AnimatedCard delay={0.04} className="glass-card rounded-2xl p-5 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
+              <Globe size={18} className="text-secondary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="label-sm text-muted-foreground">{t("settings.language")}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("settings.languageDescription")}</p>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {appLanguages.map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => setLanguage(item.code)}
+                    className={`rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
+                      language === item.code ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </AnimatedCard>
+
         {settingSections.map((section, si) => (
           <AnimatedCard key={section.title} delay={(si + 1) * 0.08} className="space-y-3">
-            <h3 className="headline-sm text-foreground">{section.title}</h3>
+            <h3 className="headline-sm text-foreground">
+              {section.title === "Notifications"
+                ? t("settings.notifications")
+                : section.title === "Dashboard Modules"
+                  ? t("settings.dashboardModules")
+                  : section.title === "Appearance"
+                    ? t("settings.appearance")
+                    : section.title}
+            </h3>
             <div className="glass-card rounded-2xl overflow-hidden divide-y divide-border/20">
               {section.items.map((item) => {
                 const Icon = item.icon;

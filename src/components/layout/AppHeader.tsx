@@ -3,6 +3,7 @@ import { Bell, Globe, Settings } from "lucide-react";
 import { useAppState, type AppLanguage } from "@/context/AppContext";
 import logoImg from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
+import { useI18n } from "@/lib/i18n";
 
 const languages: { code: AppLanguage; short: string; label: string }[] = [
   { code: "en", short: "EN", label: "English" },
@@ -14,6 +15,7 @@ const languages: { code: AppLanguage; short: string; label: string }[] = [
 
 const AppHeader = () => {
   const { alerts, language, setLanguage } = useAppState();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const activeAlerts = alerts.filter((a) => !a.dismissed);
   const activeLanguage = languages.find((item) => item.code === language) || languages[0];
@@ -31,7 +33,7 @@ const AppHeader = () => {
         <div className="relative">
           <Globe size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <select
-            aria-label="Change language"
+            aria-label={t("header.language")}
             value={language}
             onChange={(event) => setLanguage(event.target.value as AppLanguage)}
             className="h-10 rounded-xl glass-btn pl-7 pr-2 text-xs font-semibold text-foreground outline-none appearance-none"

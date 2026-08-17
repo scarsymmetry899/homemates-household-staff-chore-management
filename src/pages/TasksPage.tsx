@@ -4,6 +4,7 @@ import { CheckCircle2, Circle, Clock, Plus, X, Trash2, CalendarDays, Send, Alert
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/components/animations/MotionComponents";
 import StaffAvatar from "@/components/StaffAvatar";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 type TaskFilter = "all" | "pending" | "done" | "bydate";
@@ -21,6 +22,7 @@ interface TaskItem {
 
 const TasksPage = () => {
   const { staff, toggleTask, addTask, deleteTask, updateTaskDueDate, reassignTask } = useAppState();
+  const { t } = useI18n();
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [showForm, setShowForm] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -62,7 +64,7 @@ const TasksPage = () => {
 
   const handleToggle = (staffId: string, taskIndex: number, taskName: string, currentDone: boolean) => {
     toggleTask(staffId, taskIndex);
-    if (!currentDone) toast.success("Task completed", { description: taskName });
+    if (!currentDone) toast.success(t("tasks.taskCompleted"), { description: taskName });
   };
 
   const handleAddTask = async () => {
@@ -108,8 +110,8 @@ const TasksPage = () => {
 
   const handleRefresh = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 800));
-    toast.success("Tasks refreshed");
-  }, []);
+    toast.success(t("tasks.refreshed"));
+  }, [t]);
 
   const handleCarryForward = (task: TaskItem) => {
     updateTaskDueDate(task.staffId, task.taskIndex, today);
@@ -268,22 +270,22 @@ const TasksPage = () => {
   return (
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Mission Control</p>
+          <p className="label-sm text-muted-foreground">{t("tasks.missionControl")}</p>
           <h1 className="display-sm text-foreground">
-            Task
+            {t("nav.tasks")}
             <br />
-            <span className="font-display italic text-secondary">Pipeline</span>
+            <span className="font-display italic text-secondary">{t("tasks.pipeline")}</span>
           </h1>
         </section>
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-on-time">Shipped</p>
+            <p className="label-sm text-status-on-time">{t("tasks.shipped")}</p>
             <p className="font-display text-2xl text-card-foreground mt-1">{doneCount}</p>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-late">In Queue</p>
+            <p className="label-sm text-status-late">{t("tasks.inQueue")}</p>
             <p className="font-display text-2xl text-card-foreground mt-1">{pendingCount}</p>
           </motion.div>
         </div>
@@ -298,7 +300,7 @@ const TasksPage = () => {
                 filter === f ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
               }`}
             >
-              {f === "bydate" ? "By Date" : f}
+              {f === "bydate" ? t("tasks.filter.bydate") : t(`tasks.filter.${f}`)}
             </button>
           ))}
         </div>
@@ -309,7 +311,7 @@ const TasksPage = () => {
           onClick={() => setShowForm(!showForm)}
           className="w-full glass-card text-card-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
         >
-          <Plus size={16} /> Queue a Task
+          <Plus size={16} /> {t("tasks.queueTask")}
         </motion.button>
 
         <AnimatePresence>
@@ -322,7 +324,7 @@ const TasksPage = () => {
             >
               <div className="glass-card rounded-2xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="headline-sm text-card-foreground">New Task</h3>
+                  <h3 className="headline-sm text-card-foreground">{t("tasks.newTask")}</h3>
                   <button onClick={() => setShowForm(false)} className="glass-btn w-8 h-8 rounded-xl flex items-center justify-center">
                     <X size={16} className="text-muted-foreground" />
                   </button>
@@ -333,7 +335,7 @@ const TasksPage = () => {
                   onChange={(e) => setNewTask({ ...newTask, staffId: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
                 >
-                  <option value="">Assign to homemaker</option>
+                  <option value="">{t("tasks.assignTo")}</option>
                   {staff.map((s) => (
                     <option key={s.id} value={s.id}>{s.name} — {s.role}</option>
                   ))}
@@ -341,14 +343,14 @@ const TasksPage = () => {
 
                 <input
                   type="text"
-                  placeholder="Task description"
+                  placeholder={t("tasks.description")}
                   value={newTask.task}
                   onChange={(e) => setNewTask({ ...newTask, task: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
                 />
 
                 <div className="space-y-2">
-                  <label className="label-sm text-muted-foreground">Due date</label>
+                  <label className="label-sm text-muted-foreground">{t("tasks.dueDate")}</label>
                   <input
                     type="date"
                     value={newTask.dueDate}
@@ -359,8 +361,8 @@ const TasksPage = () => {
 
                 <div className="glass-btn rounded-xl px-4 py-3 flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="label-sm text-foreground">Dispatch via Telegram</p>
-                    <p className="text-xs text-muted-foreground">Auto-send after Telegram API is connected</p>
+                    <p className="label-sm text-foreground">{t("tasks.dispatchTelegram")}</p>
+                    <p className="text-xs text-muted-foreground">{t("tasks.telegramHelp")}</p>
                   </div>
                   <button
                     type="button"
@@ -378,7 +380,7 @@ const TasksPage = () => {
                   onClick={handleAddTask}
                   className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl inline-flex items-center justify-center gap-2"
                 >
-                  <Send size={14} /> Create & Assign Task
+                  <Send size={14} /> {t("tasks.createAssign")}
                 </motion.button>
               </div>
             </motion.div>
@@ -392,7 +394,7 @@ const TasksPage = () => {
               <section className="space-y-3">
                 <div className="flex items-center gap-2">
                   <AlertTriangle size={14} className="text-status-late" />
-                  <h3 className="label-sm text-status-late">Overdue ({overdueTasks.length})</h3>
+                  <h3 className="label-sm text-status-late">{t("tasks.overdue")} ({overdueTasks.length})</h3>
                 </div>
                 <div className="space-y-2">
                   {overdueTasks.map((task) => (
@@ -406,7 +408,7 @@ const TasksPage = () => {
               <section className="space-y-3">
                 <div className="flex items-center gap-2">
                   <CalendarDays size={14} className="text-secondary" />
-                  <h3 className="label-sm text-secondary">Due Today ({todayTasks.length})</h3>
+                  <h3 className="label-sm text-secondary">{t("tasks.dueToday")} ({todayTasks.length})</h3>
                 </div>
                 <StaggerContainer className="space-y-2">
                   {todayTasks.map((task) => (
@@ -422,7 +424,7 @@ const TasksPage = () => {
               <section className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Clock size={14} className="text-status-on-time" />
-                  <h3 className="label-sm text-status-on-time">Upcoming ({upcomingTasks.length})</h3>
+                  <h3 className="label-sm text-status-on-time">{t("tasks.upcoming")} ({upcomingTasks.length})</h3>
                 </div>
                 <StaggerContainer className="space-y-2">
                   {upcomingTasks.map((task) => (
@@ -438,7 +440,7 @@ const TasksPage = () => {
               <section className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Circle size={14} className="text-muted-foreground" />
-                  <h3 className="label-sm text-muted-foreground">No Due Date ({nodateTasks.length})</h3>
+                  <h3 className="label-sm text-muted-foreground">{t("tasks.noDueDate")} ({nodateTasks.length})</h3>
                 </div>
                 <StaggerContainer className="space-y-2">
                   {nodateTasks.map((task) => (
@@ -453,7 +455,7 @@ const TasksPage = () => {
             {pendingTasks.length === 0 && (
               <div className="text-center py-10 text-muted-foreground">
                 <CheckCircle2 size={32} className="mx-auto mb-3 text-status-on-time/50" />
-                <p className="text-sm">All tasks completed!</p>
+                <p className="text-sm">{t("tasks.allCompleted")}</p>
               </div>
             )}
           </div>
