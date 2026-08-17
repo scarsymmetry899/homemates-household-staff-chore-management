@@ -1,3 +1,5 @@
+import { getCurrentAuthIdToken, getFirebaseFunctions } from "@/lib/firebase";
+
 const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN as string | undefined;
 const BASE_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
@@ -32,6 +34,35 @@ export async function getBotInfo(): Promise<TgBotInfo | null> {
 }
 
 export async function sendMessage(chatId: number | string, text: string): Promise<boolean> {
+  const idToken = await getCurrentAuthIdToken();
+  if (idToken) {
+    try {
+      const res = await fetch("/api/send-telegram-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ chatId, text }),
+      });
+      if (res.ok) return true;
+    } catch (err) {
+      console.warn("Telegram Vercel API failed; trying Firebase callable fallback.", err);
+    }
+  }
+
+  const functions = await getFirebaseFunctions();
+  if (functions) {
+    try {
+      const { httpsCallable } = await import("firebase/functions");
+      const sendTelegramMessage = httpsCallable(functions, "sendTelegramMessage");
+      await sendTelegramMessage({ chatId, text });
+      return true;
+    } catch (err) {
+      console.warn("Telegram callable failed; trying local demo token fallback.", err);
+    }
+  }
+
   if (!BOT_TOKEN) return false;
   try {
     const res = await fetch(`${BASE_URL}/sendMessage`, {

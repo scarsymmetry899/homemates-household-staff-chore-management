@@ -1,8 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getCurrentAuthIdToken, getFirebaseFunctions, isFirebaseConfigured } from "@/lib/firebase";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
 
-export const isGeminiConfigured = !!API_KEY;
+export const isGeminiConfigured = isFirebaseConfigured || !!API_KEY;
 
 let _model: ReturnType<InstanceType<typeof GoogleGenerativeAI>["getGenerativeModel"]> | null = null;
 
@@ -37,6 +38,39 @@ export async function askGemini(
   expenseContext: GeminiExpenseContext[],
   chatHistory: { role: "user" | "model"; parts: string }[]
 ): Promise<string> {
+  const idToken = await getCurrentAuthIdToken();
+  if (idToken) {
+    try {
+      const res = await fetch("/api/ask-home-assistant", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ userMessage, staffContext, expenseContext, chatHistory }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { text?: string };
+        if (data.text) return data.text;
+      }
+    } catch (e) {
+      console.warn("Gemini Vercel API failed; trying Firebase callable fallback.", e);
+    }
+  }
+
+  const functions = await getFirebaseFunctions();
+  if (functions) {
+    try {
+      const { httpsCallable } = await import("firebase/functions");
+      const askHomeAssistant = httpsCallable(functions, "askHomeAssistant");
+      const result = await askHomeAssistant({ userMessage, staffContext, expenseContext, chatHistory });
+      const data = result.data as { text?: string };
+      if (data.text) return data.text;
+    } catch (e) {
+      console.warn("Gemini callable failed; trying local demo key fallback.", e);
+    }
+  }
+
   const model = getModel();
   if (!model) return "";
 

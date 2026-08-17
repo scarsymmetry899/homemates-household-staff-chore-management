@@ -31,6 +31,7 @@ export const isFirebaseConfigured = !!firebaseConfig.apiKey && !!firebaseConfig.
 // Dynamic import so the app works without Firebase keys
 let _auth: unknown = null;
 let _firestore: unknown = null;
+let _functions: unknown = null;
 
 export async function getFirebaseAuth() {
   if (!isFirebaseConfigured) return null;
@@ -207,11 +208,36 @@ export async function signOutFirebase(): Promise<void> {
   }
 }
 
+export async function getFirebaseFunctions() {
+  if (!isFirebaseConfigured) return null;
+  if (_functions) return _functions as import("firebase/functions").Functions;
+  try {
+    const { initializeApp, getApps, getApp } = await import("firebase/app");
+    const { getFunctions } = await import("firebase/functions");
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig as import("firebase/app").FirebaseOptions);
+    _functions = getFunctions(app, "us-central1");
+    return _functions as import("firebase/functions").Functions;
+  } catch {
+    return null;
+  }
+}
+
 export async function getCurrentAuthUser(): Promise<AuthResult> {
   const auth = await getFirebaseAuth();
   const user = auth?.currentUser;
   if (!user) return null;
   return { uid: user.uid, displayName: user.displayName, email: user.email };
+}
+
+export async function getCurrentAuthIdToken(): Promise<string | null> {
+  const auth = await getFirebaseAuth();
+  const user = auth?.currentUser;
+  if (!user) return null;
+  try {
+    return await user.getIdToken();
+  } catch {
+    return null;
+  }
 }
 
 // Listen to auth state changes
