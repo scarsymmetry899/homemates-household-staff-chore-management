@@ -39,6 +39,11 @@ This README will guide you through the process of using the generated JavaScript
   - [*RecordPayrollDeduction*](#recordpayrolldeduction)
   - [*RegisterNfcTag*](#registernfctag)
   - [*RecordNfcTap*](#recordnfctap)
+  - [*CreateStaffCashRequest*](#createstaffcashrequest)
+  - [*ReviewStaffCashRequest*](#reviewstaffcashrequest)
+  - [*MarkStaffCashRequestPurchased*](#markstaffcashrequestpurchased)
+  - [*CreateCctvCamera*](#createcctvcamera)
+  - [*RecordCctvHealthEvent*](#recordcctvhealthevent)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `web`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -153,6 +158,49 @@ export interface MyHouseholdsData {
         name: string;
       } & RoomZone_Key;
     } & InventoryItem_Key)[];
+    staffCashRequests_on_household: ({
+      id: UUIDString;
+      category: string;
+      amountRequested: number;
+      amountApproved?: number | null;
+      reason: string;
+      status: string;
+      neededBy?: TimestampString | null;
+      requestedAt: TimestampString;
+      approvedAt?: TimestampString | null;
+      purchasedAt?: TimestampString | null;
+      receiptUrl?: string | null;
+      notes?: string | null;
+      staff?: {
+        id: UUIDString;
+        name: string;
+        role: string;
+      } & StaffMember_Key;
+      inventoryItem?: {
+        id: UUIDString;
+        name: string;
+        category: string;
+        unit: string;
+      } & InventoryItem_Key;
+      linkedExpense?: {
+        id: UUIDString;
+        amount: number;
+        description: string;
+      } & ExpenseEntry_Key;
+    } & StaffCashRequest_Key)[];
+    cctvCameras_on_household: ({
+      id: UUIDString;
+      name: string;
+      provider?: string | null;
+      streamUrl?: string | null;
+      status: string;
+      lastHeartbeatAt?: TimestampString | null;
+      notes?: string | null;
+      room?: {
+        id: UUIDString;
+        name: string;
+      } & RoomZone_Key;
+    } & CctvCamera_Key)[];
     staffMembers_on_household: ({
       id: UUIDString;
       name: string;
@@ -3694,6 +3742,622 @@ console.log(data.nfcTapEvent_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.nfcTapEvent_insert);
+});
+```
+
+## CreateStaffCashRequest
+You can execute the `CreateStaffCashRequest` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createStaffCashRequest(vars: CreateStaffCashRequestVariables): MutationPromise<CreateStaffCashRequestData, CreateStaffCashRequestVariables>;
+
+interface CreateStaffCashRequestRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateStaffCashRequestVariables): MutationRef<CreateStaffCashRequestData, CreateStaffCashRequestVariables>;
+}
+export const createStaffCashRequestRef: CreateStaffCashRequestRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createStaffCashRequest(dc: DataConnect, vars: CreateStaffCashRequestVariables): MutationPromise<CreateStaffCashRequestData, CreateStaffCashRequestVariables>;
+
+interface CreateStaffCashRequestRef {
+  ...
+  (dc: DataConnect, vars: CreateStaffCashRequestVariables): MutationRef<CreateStaffCashRequestData, CreateStaffCashRequestVariables>;
+}
+export const createStaffCashRequestRef: CreateStaffCashRequestRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createStaffCashRequestRef:
+```typescript
+const name = createStaffCashRequestRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateStaffCashRequest` mutation requires an argument of type `CreateStaffCashRequestVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateStaffCashRequestVariables {
+  householdId: UUIDString;
+  staffId?: UUIDString | null;
+  inventoryItemId?: UUIDString | null;
+  category: string;
+  amountRequested: number;
+  reason: string;
+  neededBy?: TimestampString | null;
+  notes?: string | null;
+}
+```
+### Return Type
+Recall that executing the `CreateStaffCashRequest` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateStaffCashRequestData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateStaffCashRequestData {
+  staffCashRequest_insert: StaffCashRequest_Key;
+}
+```
+### Using `CreateStaffCashRequest`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createStaffCashRequest, CreateStaffCashRequestVariables } from '@homemaker/dataconnect';
+
+// The `CreateStaffCashRequest` mutation requires an argument of type `CreateStaffCashRequestVariables`:
+const createStaffCashRequestVars: CreateStaffCashRequestVariables = {
+  householdId: ..., 
+  staffId: ..., // optional
+  inventoryItemId: ..., // optional
+  category: ..., 
+  amountRequested: ..., 
+  reason: ..., 
+  neededBy: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `createStaffCashRequest()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createStaffCashRequest(createStaffCashRequestVars);
+// Variables can be defined inline as well.
+const { data } = await createStaffCashRequest({ householdId: ..., staffId: ..., inventoryItemId: ..., category: ..., amountRequested: ..., reason: ..., neededBy: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createStaffCashRequest(dataConnect, createStaffCashRequestVars);
+
+console.log(data.staffCashRequest_insert);
+
+// Or, you can use the `Promise` API.
+createStaffCashRequest(createStaffCashRequestVars).then((response) => {
+  const data = response.data;
+  console.log(data.staffCashRequest_insert);
+});
+```
+
+### Using `CreateStaffCashRequest`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createStaffCashRequestRef, CreateStaffCashRequestVariables } from '@homemaker/dataconnect';
+
+// The `CreateStaffCashRequest` mutation requires an argument of type `CreateStaffCashRequestVariables`:
+const createStaffCashRequestVars: CreateStaffCashRequestVariables = {
+  householdId: ..., 
+  staffId: ..., // optional
+  inventoryItemId: ..., // optional
+  category: ..., 
+  amountRequested: ..., 
+  reason: ..., 
+  neededBy: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `createStaffCashRequestRef()` function to get a reference to the mutation.
+const ref = createStaffCashRequestRef(createStaffCashRequestVars);
+// Variables can be defined inline as well.
+const ref = createStaffCashRequestRef({ householdId: ..., staffId: ..., inventoryItemId: ..., category: ..., amountRequested: ..., reason: ..., neededBy: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createStaffCashRequestRef(dataConnect, createStaffCashRequestVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.staffCashRequest_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.staffCashRequest_insert);
+});
+```
+
+## ReviewStaffCashRequest
+You can execute the `ReviewStaffCashRequest` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+reviewStaffCashRequest(vars: ReviewStaffCashRequestVariables): MutationPromise<ReviewStaffCashRequestData, ReviewStaffCashRequestVariables>;
+
+interface ReviewStaffCashRequestRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ReviewStaffCashRequestVariables): MutationRef<ReviewStaffCashRequestData, ReviewStaffCashRequestVariables>;
+}
+export const reviewStaffCashRequestRef: ReviewStaffCashRequestRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+reviewStaffCashRequest(dc: DataConnect, vars: ReviewStaffCashRequestVariables): MutationPromise<ReviewStaffCashRequestData, ReviewStaffCashRequestVariables>;
+
+interface ReviewStaffCashRequestRef {
+  ...
+  (dc: DataConnect, vars: ReviewStaffCashRequestVariables): MutationRef<ReviewStaffCashRequestData, ReviewStaffCashRequestVariables>;
+}
+export const reviewStaffCashRequestRef: ReviewStaffCashRequestRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the reviewStaffCashRequestRef:
+```typescript
+const name = reviewStaffCashRequestRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ReviewStaffCashRequest` mutation requires an argument of type `ReviewStaffCashRequestVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ReviewStaffCashRequestVariables {
+  requestId: UUIDString;
+  status: string;
+  amountApproved?: number | null;
+  notes?: string | null;
+}
+```
+### Return Type
+Recall that executing the `ReviewStaffCashRequest` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ReviewStaffCashRequestData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ReviewStaffCashRequestData {
+  staffCashRequest_update?: StaffCashRequest_Key | null;
+}
+```
+### Using `ReviewStaffCashRequest`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, reviewStaffCashRequest, ReviewStaffCashRequestVariables } from '@homemaker/dataconnect';
+
+// The `ReviewStaffCashRequest` mutation requires an argument of type `ReviewStaffCashRequestVariables`:
+const reviewStaffCashRequestVars: ReviewStaffCashRequestVariables = {
+  requestId: ..., 
+  status: ..., 
+  amountApproved: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `reviewStaffCashRequest()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await reviewStaffCashRequest(reviewStaffCashRequestVars);
+// Variables can be defined inline as well.
+const { data } = await reviewStaffCashRequest({ requestId: ..., status: ..., amountApproved: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await reviewStaffCashRequest(dataConnect, reviewStaffCashRequestVars);
+
+console.log(data.staffCashRequest_update);
+
+// Or, you can use the `Promise` API.
+reviewStaffCashRequest(reviewStaffCashRequestVars).then((response) => {
+  const data = response.data;
+  console.log(data.staffCashRequest_update);
+});
+```
+
+### Using `ReviewStaffCashRequest`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, reviewStaffCashRequestRef, ReviewStaffCashRequestVariables } from '@homemaker/dataconnect';
+
+// The `ReviewStaffCashRequest` mutation requires an argument of type `ReviewStaffCashRequestVariables`:
+const reviewStaffCashRequestVars: ReviewStaffCashRequestVariables = {
+  requestId: ..., 
+  status: ..., 
+  amountApproved: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `reviewStaffCashRequestRef()` function to get a reference to the mutation.
+const ref = reviewStaffCashRequestRef(reviewStaffCashRequestVars);
+// Variables can be defined inline as well.
+const ref = reviewStaffCashRequestRef({ requestId: ..., status: ..., amountApproved: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = reviewStaffCashRequestRef(dataConnect, reviewStaffCashRequestVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.staffCashRequest_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.staffCashRequest_update);
+});
+```
+
+## MarkStaffCashRequestPurchased
+You can execute the `MarkStaffCashRequestPurchased` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+markStaffCashRequestPurchased(vars: MarkStaffCashRequestPurchasedVariables): MutationPromise<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
+
+interface MarkStaffCashRequestPurchasedRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: MarkStaffCashRequestPurchasedVariables): MutationRef<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
+}
+export const markStaffCashRequestPurchasedRef: MarkStaffCashRequestPurchasedRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+markStaffCashRequestPurchased(dc: DataConnect, vars: MarkStaffCashRequestPurchasedVariables): MutationPromise<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
+
+interface MarkStaffCashRequestPurchasedRef {
+  ...
+  (dc: DataConnect, vars: MarkStaffCashRequestPurchasedVariables): MutationRef<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
+}
+export const markStaffCashRequestPurchasedRef: MarkStaffCashRequestPurchasedRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the markStaffCashRequestPurchasedRef:
+```typescript
+const name = markStaffCashRequestPurchasedRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `MarkStaffCashRequestPurchased` mutation requires an argument of type `MarkStaffCashRequestPurchasedVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface MarkStaffCashRequestPurchasedVariables {
+  requestId: UUIDString;
+  linkedExpenseId?: UUIDString | null;
+  receiptUrl?: string | null;
+  notes?: string | null;
+}
+```
+### Return Type
+Recall that executing the `MarkStaffCashRequestPurchased` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `MarkStaffCashRequestPurchasedData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface MarkStaffCashRequestPurchasedData {
+  staffCashRequest_update?: StaffCashRequest_Key | null;
+}
+```
+### Using `MarkStaffCashRequestPurchased`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, markStaffCashRequestPurchased, MarkStaffCashRequestPurchasedVariables } from '@homemaker/dataconnect';
+
+// The `MarkStaffCashRequestPurchased` mutation requires an argument of type `MarkStaffCashRequestPurchasedVariables`:
+const markStaffCashRequestPurchasedVars: MarkStaffCashRequestPurchasedVariables = {
+  requestId: ..., 
+  linkedExpenseId: ..., // optional
+  receiptUrl: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `markStaffCashRequestPurchased()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await markStaffCashRequestPurchased(markStaffCashRequestPurchasedVars);
+// Variables can be defined inline as well.
+const { data } = await markStaffCashRequestPurchased({ requestId: ..., linkedExpenseId: ..., receiptUrl: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await markStaffCashRequestPurchased(dataConnect, markStaffCashRequestPurchasedVars);
+
+console.log(data.staffCashRequest_update);
+
+// Or, you can use the `Promise` API.
+markStaffCashRequestPurchased(markStaffCashRequestPurchasedVars).then((response) => {
+  const data = response.data;
+  console.log(data.staffCashRequest_update);
+});
+```
+
+### Using `MarkStaffCashRequestPurchased`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, markStaffCashRequestPurchasedRef, MarkStaffCashRequestPurchasedVariables } from '@homemaker/dataconnect';
+
+// The `MarkStaffCashRequestPurchased` mutation requires an argument of type `MarkStaffCashRequestPurchasedVariables`:
+const markStaffCashRequestPurchasedVars: MarkStaffCashRequestPurchasedVariables = {
+  requestId: ..., 
+  linkedExpenseId: ..., // optional
+  receiptUrl: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `markStaffCashRequestPurchasedRef()` function to get a reference to the mutation.
+const ref = markStaffCashRequestPurchasedRef(markStaffCashRequestPurchasedVars);
+// Variables can be defined inline as well.
+const ref = markStaffCashRequestPurchasedRef({ requestId: ..., linkedExpenseId: ..., receiptUrl: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = markStaffCashRequestPurchasedRef(dataConnect, markStaffCashRequestPurchasedVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.staffCashRequest_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.staffCashRequest_update);
+});
+```
+
+## CreateCctvCamera
+You can execute the `CreateCctvCamera` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createCctvCamera(vars: CreateCctvCameraVariables): MutationPromise<CreateCctvCameraData, CreateCctvCameraVariables>;
+
+interface CreateCctvCameraRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateCctvCameraVariables): MutationRef<CreateCctvCameraData, CreateCctvCameraVariables>;
+}
+export const createCctvCameraRef: CreateCctvCameraRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createCctvCamera(dc: DataConnect, vars: CreateCctvCameraVariables): MutationPromise<CreateCctvCameraData, CreateCctvCameraVariables>;
+
+interface CreateCctvCameraRef {
+  ...
+  (dc: DataConnect, vars: CreateCctvCameraVariables): MutationRef<CreateCctvCameraData, CreateCctvCameraVariables>;
+}
+export const createCctvCameraRef: CreateCctvCameraRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createCctvCameraRef:
+```typescript
+const name = createCctvCameraRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateCctvCamera` mutation requires an argument of type `CreateCctvCameraVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateCctvCameraVariables {
+  householdId: UUIDString;
+  roomId?: UUIDString | null;
+  name: string;
+  provider?: string | null;
+  streamUrl?: string | null;
+  notes?: string | null;
+}
+```
+### Return Type
+Recall that executing the `CreateCctvCamera` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateCctvCameraData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateCctvCameraData {
+  cctvCamera_insert: CctvCamera_Key;
+}
+```
+### Using `CreateCctvCamera`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createCctvCamera, CreateCctvCameraVariables } from '@homemaker/dataconnect';
+
+// The `CreateCctvCamera` mutation requires an argument of type `CreateCctvCameraVariables`:
+const createCctvCameraVars: CreateCctvCameraVariables = {
+  householdId: ..., 
+  roomId: ..., // optional
+  name: ..., 
+  provider: ..., // optional
+  streamUrl: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `createCctvCamera()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createCctvCamera(createCctvCameraVars);
+// Variables can be defined inline as well.
+const { data } = await createCctvCamera({ householdId: ..., roomId: ..., name: ..., provider: ..., streamUrl: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createCctvCamera(dataConnect, createCctvCameraVars);
+
+console.log(data.cctvCamera_insert);
+
+// Or, you can use the `Promise` API.
+createCctvCamera(createCctvCameraVars).then((response) => {
+  const data = response.data;
+  console.log(data.cctvCamera_insert);
+});
+```
+
+### Using `CreateCctvCamera`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createCctvCameraRef, CreateCctvCameraVariables } from '@homemaker/dataconnect';
+
+// The `CreateCctvCamera` mutation requires an argument of type `CreateCctvCameraVariables`:
+const createCctvCameraVars: CreateCctvCameraVariables = {
+  householdId: ..., 
+  roomId: ..., // optional
+  name: ..., 
+  provider: ..., // optional
+  streamUrl: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `createCctvCameraRef()` function to get a reference to the mutation.
+const ref = createCctvCameraRef(createCctvCameraVars);
+// Variables can be defined inline as well.
+const ref = createCctvCameraRef({ householdId: ..., roomId: ..., name: ..., provider: ..., streamUrl: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createCctvCameraRef(dataConnect, createCctvCameraVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.cctvCamera_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.cctvCamera_insert);
+});
+```
+
+## RecordCctvHealthEvent
+You can execute the `RecordCctvHealthEvent` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+recordCctvHealthEvent(vars: RecordCctvHealthEventVariables): MutationPromise<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
+
+interface RecordCctvHealthEventRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RecordCctvHealthEventVariables): MutationRef<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
+}
+export const recordCctvHealthEventRef: RecordCctvHealthEventRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+recordCctvHealthEvent(dc: DataConnect, vars: RecordCctvHealthEventVariables): MutationPromise<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
+
+interface RecordCctvHealthEventRef {
+  ...
+  (dc: DataConnect, vars: RecordCctvHealthEventVariables): MutationRef<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
+}
+export const recordCctvHealthEventRef: RecordCctvHealthEventRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the recordCctvHealthEventRef:
+```typescript
+const name = recordCctvHealthEventRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `RecordCctvHealthEvent` mutation requires an argument of type `RecordCctvHealthEventVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface RecordCctvHealthEventVariables {
+  householdId: UUIDString;
+  cameraId: UUIDString;
+  eventType: string;
+  status: string;
+  message?: string | null;
+}
+```
+### Return Type
+Recall that executing the `RecordCctvHealthEvent` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `RecordCctvHealthEventData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface RecordCctvHealthEventData {
+  cctvCamera_update?: CctvCamera_Key | null;
+  cctvHealthEvent_insert: CctvHealthEvent_Key;
+}
+```
+### Using `RecordCctvHealthEvent`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, recordCctvHealthEvent, RecordCctvHealthEventVariables } from '@homemaker/dataconnect';
+
+// The `RecordCctvHealthEvent` mutation requires an argument of type `RecordCctvHealthEventVariables`:
+const recordCctvHealthEventVars: RecordCctvHealthEventVariables = {
+  householdId: ..., 
+  cameraId: ..., 
+  eventType: ..., 
+  status: ..., 
+  message: ..., // optional
+};
+
+// Call the `recordCctvHealthEvent()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await recordCctvHealthEvent(recordCctvHealthEventVars);
+// Variables can be defined inline as well.
+const { data } = await recordCctvHealthEvent({ householdId: ..., cameraId: ..., eventType: ..., status: ..., message: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await recordCctvHealthEvent(dataConnect, recordCctvHealthEventVars);
+
+console.log(data.cctvCamera_update);
+console.log(data.cctvHealthEvent_insert);
+
+// Or, you can use the `Promise` API.
+recordCctvHealthEvent(recordCctvHealthEventVars).then((response) => {
+  const data = response.data;
+  console.log(data.cctvCamera_update);
+  console.log(data.cctvHealthEvent_insert);
+});
+```
+
+### Using `RecordCctvHealthEvent`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, recordCctvHealthEventRef, RecordCctvHealthEventVariables } from '@homemaker/dataconnect';
+
+// The `RecordCctvHealthEvent` mutation requires an argument of type `RecordCctvHealthEventVariables`:
+const recordCctvHealthEventVars: RecordCctvHealthEventVariables = {
+  householdId: ..., 
+  cameraId: ..., 
+  eventType: ..., 
+  status: ..., 
+  message: ..., // optional
+};
+
+// Call the `recordCctvHealthEventRef()` function to get a reference to the mutation.
+const ref = recordCctvHealthEventRef(recordCctvHealthEventVars);
+// Variables can be defined inline as well.
+const ref = recordCctvHealthEventRef({ householdId: ..., cameraId: ..., eventType: ..., status: ..., message: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = recordCctvHealthEventRef(dataConnect, recordCctvHealthEventVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.cctvCamera_update);
+console.log(data.cctvHealthEvent_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.cctvCamera_update);
+  console.log(data.cctvHealthEvent_insert);
 });
 ```
 

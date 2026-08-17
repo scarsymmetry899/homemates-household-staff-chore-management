@@ -74,6 +74,16 @@ export interface AttendanceEvent_Key {
   __typename?: 'AttendanceEvent_Key';
 }
 
+export interface CctvCamera_Key {
+  id: UUIDString;
+  __typename?: 'CctvCamera_Key';
+}
+
+export interface CctvHealthEvent_Key {
+  id: UUIDString;
+  __typename?: 'CctvHealthEvent_Key';
+}
+
 export interface CompleteTaskInstanceData {
   taskInstance_update?: TaskInstance_Key | null;
 }
@@ -95,6 +105,19 @@ export interface CreateAlertVariables {
   severity: string;
   title: string;
   description: string;
+}
+
+export interface CreateCctvCameraData {
+  cctvCamera_insert: CctvCamera_Key;
+}
+
+export interface CreateCctvCameraVariables {
+  householdId: UUIDString;
+  roomId?: UUIDString | null;
+  name: string;
+  provider?: string | null;
+  streamUrl?: string | null;
+  notes?: string | null;
 }
 
 export interface CreateHomemateProfileData {
@@ -154,6 +177,21 @@ export interface CreateRoomZoneVariables {
   householdId: UUIDString;
   name: string;
   floorLabel?: string | null;
+  notes?: string | null;
+}
+
+export interface CreateStaffCashRequestData {
+  staffCashRequest_insert: StaffCashRequest_Key;
+}
+
+export interface CreateStaffCashRequestVariables {
+  householdId: UUIDString;
+  staffId?: UUIDString | null;
+  inventoryItemId?: UUIDString | null;
+  category: string;
+  amountRequested: number;
+  reason: string;
+  neededBy?: TimestampString | null;
   notes?: string | null;
 }
 
@@ -220,6 +258,17 @@ export interface InventoryMovement_Key {
   __typename?: 'InventoryMovement_Key';
 }
 
+export interface MarkStaffCashRequestPurchasedData {
+  staffCashRequest_update?: StaffCashRequest_Key | null;
+}
+
+export interface MarkStaffCashRequestPurchasedVariables {
+  requestId: UUIDString;
+  linkedExpenseId?: UUIDString | null;
+  receiptUrl?: string | null;
+  notes?: string | null;
+}
+
 export interface MyHouseholdsData {
   households: ({
     id: UUIDString;
@@ -252,6 +301,49 @@ export interface MyHouseholdsData {
         name: string;
       } & RoomZone_Key;
     } & InventoryItem_Key)[];
+    staffCashRequests_on_household: ({
+      id: UUIDString;
+      category: string;
+      amountRequested: number;
+      amountApproved?: number | null;
+      reason: string;
+      status: string;
+      neededBy?: TimestampString | null;
+      requestedAt: TimestampString;
+      approvedAt?: TimestampString | null;
+      purchasedAt?: TimestampString | null;
+      receiptUrl?: string | null;
+      notes?: string | null;
+      staff?: {
+        id: UUIDString;
+        name: string;
+        role: string;
+      } & StaffMember_Key;
+      inventoryItem?: {
+        id: UUIDString;
+        name: string;
+        category: string;
+        unit: string;
+      } & InventoryItem_Key;
+      linkedExpense?: {
+        id: UUIDString;
+        amount: number;
+        description: string;
+      } & ExpenseEntry_Key;
+    } & StaffCashRequest_Key)[];
+    cctvCameras_on_household: ({
+      id: UUIDString;
+      name: string;
+      provider?: string | null;
+      streamUrl?: string | null;
+      status: string;
+      lastHeartbeatAt?: TimestampString | null;
+      notes?: string | null;
+      room?: {
+        id: UUIDString;
+        name: string;
+      } & RoomZone_Key;
+    } & CctvCamera_Key)[];
     staffMembers_on_household: ({
       id: UUIDString;
       name: string;
@@ -361,6 +453,19 @@ export interface RecordAttendanceEventVariables {
   detail?: string | null;
 }
 
+export interface RecordCctvHealthEventData {
+  cctvCamera_update?: CctvCamera_Key | null;
+  cctvHealthEvent_insert: CctvHealthEvent_Key;
+}
+
+export interface RecordCctvHealthEventVariables {
+  householdId: UUIDString;
+  cameraId: UUIDString;
+  eventType: string;
+  status: string;
+  message?: string | null;
+}
+
 export interface RecordNfcTapData {
   nfcTapEvent_insert: NfcTapEvent_Key;
 }
@@ -412,6 +517,17 @@ export interface RemoveStaffMemberVariables {
   staffId: UUIDString;
 }
 
+export interface ReviewStaffCashRequestData {
+  staffCashRequest_update?: StaffCashRequest_Key | null;
+}
+
+export interface ReviewStaffCashRequestVariables {
+  requestId: UUIDString;
+  status: string;
+  amountApproved?: number | null;
+  notes?: string | null;
+}
+
 export interface RoomZone_Key {
   id: UUIDString;
   __typename?: 'RoomZone_Key';
@@ -426,6 +542,11 @@ export interface SetTaskCompletionVariables {
   status: string;
   completedAt?: TimestampString | null;
   source?: string | null;
+}
+
+export interface StaffCashRequest_Key {
+  id: UUIDString;
+  __typename?: 'StaffCashRequest_Key';
 }
 
 export interface StaffMember_Key {
@@ -887,4 +1008,64 @@ export const recordNfcTapRef: RecordNfcTapRef;
 
 export function recordNfcTap(vars: RecordNfcTapVariables): MutationPromise<RecordNfcTapData, RecordNfcTapVariables>;
 export function recordNfcTap(dc: DataConnect, vars: RecordNfcTapVariables): MutationPromise<RecordNfcTapData, RecordNfcTapVariables>;
+
+interface CreateStaffCashRequestRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateStaffCashRequestVariables): MutationRef<CreateStaffCashRequestData, CreateStaffCashRequestVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateStaffCashRequestVariables): MutationRef<CreateStaffCashRequestData, CreateStaffCashRequestVariables>;
+  operationName: string;
+}
+export const createStaffCashRequestRef: CreateStaffCashRequestRef;
+
+export function createStaffCashRequest(vars: CreateStaffCashRequestVariables): MutationPromise<CreateStaffCashRequestData, CreateStaffCashRequestVariables>;
+export function createStaffCashRequest(dc: DataConnect, vars: CreateStaffCashRequestVariables): MutationPromise<CreateStaffCashRequestData, CreateStaffCashRequestVariables>;
+
+interface ReviewStaffCashRequestRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ReviewStaffCashRequestVariables): MutationRef<ReviewStaffCashRequestData, ReviewStaffCashRequestVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: ReviewStaffCashRequestVariables): MutationRef<ReviewStaffCashRequestData, ReviewStaffCashRequestVariables>;
+  operationName: string;
+}
+export const reviewStaffCashRequestRef: ReviewStaffCashRequestRef;
+
+export function reviewStaffCashRequest(vars: ReviewStaffCashRequestVariables): MutationPromise<ReviewStaffCashRequestData, ReviewStaffCashRequestVariables>;
+export function reviewStaffCashRequest(dc: DataConnect, vars: ReviewStaffCashRequestVariables): MutationPromise<ReviewStaffCashRequestData, ReviewStaffCashRequestVariables>;
+
+interface MarkStaffCashRequestPurchasedRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: MarkStaffCashRequestPurchasedVariables): MutationRef<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: MarkStaffCashRequestPurchasedVariables): MutationRef<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
+  operationName: string;
+}
+export const markStaffCashRequestPurchasedRef: MarkStaffCashRequestPurchasedRef;
+
+export function markStaffCashRequestPurchased(vars: MarkStaffCashRequestPurchasedVariables): MutationPromise<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
+export function markStaffCashRequestPurchased(dc: DataConnect, vars: MarkStaffCashRequestPurchasedVariables): MutationPromise<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
+
+interface CreateCctvCameraRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateCctvCameraVariables): MutationRef<CreateCctvCameraData, CreateCctvCameraVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateCctvCameraVariables): MutationRef<CreateCctvCameraData, CreateCctvCameraVariables>;
+  operationName: string;
+}
+export const createCctvCameraRef: CreateCctvCameraRef;
+
+export function createCctvCamera(vars: CreateCctvCameraVariables): MutationPromise<CreateCctvCameraData, CreateCctvCameraVariables>;
+export function createCctvCamera(dc: DataConnect, vars: CreateCctvCameraVariables): MutationPromise<CreateCctvCameraData, CreateCctvCameraVariables>;
+
+interface RecordCctvHealthEventRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RecordCctvHealthEventVariables): MutationRef<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: RecordCctvHealthEventVariables): MutationRef<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
+  operationName: string;
+}
+export const recordCctvHealthEventRef: RecordCctvHealthEventRef;
+
+export function recordCctvHealthEvent(vars: RecordCctvHealthEventVariables): MutationPromise<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
+export function recordCctvHealthEvent(dc: DataConnect, vars: RecordCctvHealthEventVariables): MutationPromise<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
 

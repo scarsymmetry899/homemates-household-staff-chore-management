@@ -505,3 +505,138 @@ mutation RecordNfcTap(
     }
   )
 }
+
+mutation CreateStaffCashRequest(
+  $householdId: UUID!
+  $staffId: UUID
+  $inventoryItemId: UUID
+  $category: String!
+  $amountRequested: Int!
+  $reason: String!
+  $neededBy: Timestamp
+  $notes: String
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  staffCashRequest_insert(
+    data: {
+      household: { id: $householdId }
+      staff: { id: $staffId }
+      inventoryItem: { id: $inventoryItemId }
+      category: $category
+      amountRequested: $amountRequested
+      reason: $reason
+      neededBy: $neededBy
+      notes: $notes
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation ReviewStaffCashRequest(
+  $requestId: UUID!
+  $status: String!
+  $amountApproved: Int
+  $notes: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    staffCashRequest(id: $requestId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this cash request")
+      }
+    }
+  }
+  staffCashRequest_update(
+    id: $requestId
+    data: {
+      status: $status
+      amountApproved: $amountApproved
+      notes: $notes
+      approvedAt_expr: "request.time"
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation MarkStaffCashRequestPurchased(
+  $requestId: UUID!
+  $linkedExpenseId: UUID
+  $receiptUrl: String
+  $notes: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    staffCashRequest(id: $requestId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this cash request")
+      }
+    }
+  }
+  staffCashRequest_update(
+    id: $requestId
+    data: {
+      status: "purchased"
+      linkedExpense: { id: $linkedExpenseId }
+      receiptUrl: $receiptUrl
+      notes: $notes
+      purchasedAt_expr: "request.time"
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation CreateCctvCamera(
+  $householdId: UUID!
+  $roomId: UUID
+  $name: String!
+  $provider: String
+  $streamUrl: String
+  $notes: String
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  cctvCamera_insert(
+    data: {
+      household: { id: $householdId }
+      room: { id: $roomId }
+      name: $name
+      provider: $provider
+      streamUrl: $streamUrl
+      notes: $notes
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation RecordCctvHealthEvent(
+  $householdId: UUID!
+  $cameraId: UUID!
+  $eventType: String!
+  $status: String!
+  $message: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  cctvCamera_update(
+    id: $cameraId
+    data: { status: $status, lastHeartbeatAt_expr: "request.time", updatedAt_expr: "request.time" }
+  )
+  cctvHealthEvent_insert(
+    data: {
+      household: { id: $householdId }
+      camera: { id: $cameraId }
+      eventType: $eventType
+      status: $status
+      message: $message
+      occurredAt_expr: "request.time"
+    }
+  )
+}

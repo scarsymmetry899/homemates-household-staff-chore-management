@@ -366,3 +366,63 @@ export function recordNfcTap(dcOrVars, vars) {
   return executeMutation(recordNfcTapRef(dcInstance, inputVars));
 }
 
+export const createStaffCashRequestRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateStaffCashRequest', inputVars);
+}
+createStaffCashRequestRef.operationName = 'CreateStaffCashRequest';
+
+export function createStaffCashRequest(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createStaffCashRequestRef(dcInstance, inputVars));
+}
+
+export const reviewStaffCashRequestRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'ReviewStaffCashRequest', inputVars);
+}
+reviewStaffCashRequestRef.operationName = 'ReviewStaffCashRequest';
+
+export function reviewStaffCashRequest(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(reviewStaffCashRequestRef(dcInstance, inputVars));
+}
+
+export const markStaffCashRequestPurchasedRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'MarkStaffCashRequestPurchased', inputVars);
+}
+markStaffCashRequestPurchasedRef.operationName = 'MarkStaffCashRequestPurchased';
+
+export function markStaffCashRequestPurchased(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(markStaffCashRequestPurchasedRef(dcInstance, inputVars));
+}
+
+export const createCctvCameraRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateCctvCamera', inputVars);
+}
+createCctvCameraRef.operationName = 'CreateCctvCamera';
+
+export function createCctvCamera(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createCctvCameraRef(dcInstance, inputVars));
+}
+
+export const recordCctvHealthEventRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'RecordCctvHealthEvent', inputVars);
+}
+recordCctvHealthEventRef.operationName = 'RecordCctvHealthEvent';
+
+export function recordCctvHealthEvent(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(recordCctvHealthEventRef(dcInstance, inputVars));
+}
+

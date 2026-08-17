@@ -160,6 +160,26 @@ type InventoryMovement @table {
   createdAt: Timestamp! @default(expr: "request.time")
 }
 
+type StaffCashRequest @table {
+  household: Household!
+  staff: StaffMember
+  inventoryItem: InventoryItem
+  linkedExpense: ExpenseEntry
+  category: String!
+  amountRequested: Int!
+  amountApproved: Int
+  reason: String!
+  status: String! @default(value: "pending")
+  neededBy: Timestamp
+  requestedAt: Timestamp! @default(expr: "request.time")
+  approvedAt: Timestamp
+  purchasedAt: Timestamp
+  receiptUrl: String
+  notes: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
 type NfcTag @table {
   household: Household!
   room: RoomZone
@@ -182,6 +202,29 @@ type NfcTapEvent @table {
   actionType: String!
   verificationStatus: String! @default(value: "recorded")
   deviceLabel: String
+  occurredAt: Timestamp! @default(expr: "request.time")
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type CctvCamera @table {
+  household: Household!
+  room: RoomZone
+  name: String!
+  provider: String
+  streamUrl: String
+  status: String! @default(value: "unknown")
+  lastHeartbeatAt: Timestamp
+  notes: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type CctvHealthEvent @table {
+  household: Household!
+  camera: CctvCamera!
+  eventType: String!
+  status: String!
+  message: String
   occurredAt: Timestamp! @default(expr: "request.time")
   createdAt: Timestamp! @default(expr: "request.time")
 }

@@ -54,6 +54,49 @@ query MyHouseholds @auth(level: USER)
         name
       }
     }
+    staffCashRequests_on_household(limit: 100, orderBy: [{ requestedAt: DESC }]) {
+      id
+      category
+      amountRequested
+      amountApproved
+      reason
+      status
+      neededBy
+      requestedAt
+      approvedAt
+      purchasedAt
+      receiptUrl
+      notes
+      staff {
+        id
+        name
+        role
+      }
+      inventoryItem {
+        id
+        name
+        category
+        unit
+      }
+      linkedExpense {
+        id
+        amount
+        description
+      }
+    }
+    cctvCameras_on_household(limit: 100, orderBy: [{ name: ASC }]) {
+      id
+      name
+      provider
+      streamUrl
+      status
+      lastHeartbeatAt
+      notes
+      room {
+        id
+        name
+      }
+    }
     staffMembers_on_household(limit: 100, orderBy: [{ name: ASC }]) {
       id
       name
