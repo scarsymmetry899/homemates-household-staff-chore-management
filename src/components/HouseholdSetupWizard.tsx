@@ -8,6 +8,17 @@ import { useAppState, type HomemateProfile, type HouseholdSetupPayload, type Inv
 
 const steps = ["Household", "Housemates", "Rooms", "Staff", "Inventory", "Review"];
 
+const responsibilityPresets = [
+  { label: "Cooking", roleHint: "Cook", tasks: ["Prepare breakfast", "Prepare lunch", "Prepare dinner", "Plan grocery list"] },
+  { label: "Cleaning", roleHint: "Cleaner", tasks: ["Sweep and mop floors", "Dust living areas", "Clean bathrooms", "Take out trash"] },
+  { label: "Dishwashing", roleHint: "Kitchen Helper", tasks: ["Wash utensils", "Clean kitchen counters", "Load/unload dishwasher"] },
+  { label: "Babysitting", roleHint: "Babysitter", tasks: ["Baby feeding", "Nap-time care", "School pickup support", "Playtime supervision"] },
+  { label: "Driving", roleHint: "Chauffeur", tasks: ["Morning drop-off", "Vehicle cleaning", "Fuel check", "Evening pickup"] },
+  { label: "Gardening", roleHint: "Gardener", tasks: ["Water plants", "Trim hedges", "Lawn care", "Check garden supplies"] },
+  { label: "Laundry", roleHint: "Laundry Help", tasks: ["Wash clothes", "Dry clothes", "Iron uniforms", "Fold and store laundry"] },
+  { label: "Elder care", roleHint: "Caregiver", tasks: ["Medicine reminder", "Meal assistance", "Walk support"] },
+];
+
 function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -85,10 +96,68 @@ export default function HouseholdSetupWizard() {
     );
   };
 
+  const toggleResponsibility = (staffId: string, label: string) => {
+    const preset = responsibilityPresets.find((item) => item.label === label);
+    setStaff((prev) =>
+      prev.map((member) => {
+        if (member.id !== staffId) return member;
+        const hasSkill = member.skills.includes(label);
+        const skills = hasSkill ? member.skills.filter((skill) => skill !== label) : [...member.skills, label];
+        const presetTasks = preset?.tasks || [];
+        const assignments = hasSkill
+          ? member.assignments.filter((assignment) => !presetTasks.includes(assignment.task))
+          : [
+              ...member.assignments,
+              ...presetTasks
+                .filter((task) => !member.assignments.some((assignment) => assignment.task === task))
+                .map((task) => ({ id: makeId("task"), task, done: false })),
+            ];
+        const roleParts = skills.map((skill) => responsibilityPresets.find((item) => item.label === skill)?.roleHint || skill);
+        return {
+          ...member,
+          skills,
+          assignments,
+          role: member.role.trim() && !responsibilityPresets.some((item) => item.roleHint === member.role)
+            ? member.role
+            : roleParts.join(" + "),
+        };
+      })
+    );
+  };
+
+  const toggleTask = (staffId: string, task: string) => {
+    setStaff((prev) =>
+      prev.map((member) => {
+        if (member.id !== staffId) return member;
+        const exists = member.assignments.some((assignment) => assignment.task === task);
+        return {
+          ...member,
+          assignments: exists
+            ? member.assignments.filter((assignment) => assignment.task !== task)
+            : [...member.assignments, { id: makeId("task"), task, done: false }],
+        };
+      })
+    );
+  };
+
+  const addCustomResponsibility = (staffId: string, label: string) => {
+    setStaff((prev) =>
+      prev.map((member) => {
+        if (member.id !== staffId || member.skills.includes(label)) return member;
+        const skills = [...member.skills, label];
+        return {
+          ...member,
+          skills,
+          role: member.role.trim() ? member.role : skills.join(" + "),
+        };
+      })
+    );
+  };
+
   const canContinue = () => {
     if (step === 0) return householdName.trim() && setupOwnerName.trim();
     if (step === 2) return rooms.some((room) => room.name.trim());
-    if (step === 3) return staff.every((member) => member.name.trim() && member.role.trim());
+    if (step === 3) return staff.every((member) => member.name.trim() && member.role.trim() && member.skills.length > 0);
     return true;
   };
 
@@ -238,17 +307,100 @@ export default function HouseholdSetupWizard() {
                 <div key={member.id} className="rounded-3xl bg-muted/30 p-4 space-y-3">
                   <div className="grid md:grid-cols-3 gap-3">
                     <input className={inputClass} value={member.name} onChange={(e) => updateStaff(member.id, { name: e.target.value })} placeholder="Staff name" />
-                    <input className={inputClass} value={member.role} onChange={(e) => updateStaff(member.id, { role: e.target.value })} placeholder="Role e.g. Cook" />
+                    <input className={inputClass} value={member.role} onChange={(e) => updateStaff(member.id, { role: e.target.value })} placeholder="Combined role e.g. Cook + Cleaner" />
                     <select className={inputClass} value={member.department} onChange={(e) => updateStaff(member.id, { department: e.target.value as Department })}>
                       {departments.map((department) => <option key={department}>{department}</option>)}
                     </select>
                   </div>
+                  <div className="space-y-2">
+                    <p className="label-sm text-muted-foreground">Responsibilities</p>
+                    <div className="flex flex-wrap gap-2">
+                      {responsibilityPresets.map((preset) => {
+                        const selected = member.skills.includes(preset.label);
+                        return (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            onClick={() => toggleResponsibility(member.id, preset.label)}
+                            className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                              selected ? "bg-primary text-primary-foreground" : "bg-background/70 text-muted-foreground border border-border/40"
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Select multiple if one person cooks, cleans, babysits, drives, gardens, or handles other mixed work.
+                    </p>
+                    <input
+                      className={inputClass}
+                      placeholder="Add custom responsibility and press Enter"
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter") return;
+                        e.preventDefault();
+                        const value = e.currentTarget.value.trim();
+                        if (!value) return;
+                        addCustomResponsibility(member.id, value);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    {member.skills.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {member.skills.map((skill) => (
+                          <button
+                            key={skill}
+                            type="button"
+                            onClick={() => toggleResponsibility(member.id, skill)}
+                            className="rounded-full bg-primary/10 px-3 py-1.5 text-xs text-primary"
+                          >
+                            {skill} ×
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {member.skills.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="label-sm text-muted-foreground">Starting tasks for this person</p>
+                      <div className="flex flex-wrap gap-2">
+                        {[...new Set(member.skills.flatMap((skill) => responsibilityPresets.find((preset) => preset.label === skill)?.tasks || []))].map((task) => {
+                          const selected = member.assignments.some((assignment) => assignment.task === task);
+                          return (
+                            <button
+                              key={task}
+                              type="button"
+                              onClick={() => toggleTask(member.id, task)}
+                              className={`rounded-full px-3 py-2 text-xs transition ${
+                                selected ? "bg-secondary/15 text-secondary border border-secondary/30" : "bg-background/70 text-muted-foreground border border-border/40"
+                              }`}
+                            >
+                              {selected ? "✓ " : ""}{task}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   <div className="grid md:grid-cols-4 gap-3">
                     <input className={inputClass} value={member.phone} onChange={(e) => updateStaff(member.id, { phone: e.target.value })} placeholder="Phone" />
                     <input className={inputClass} type="number" value={member.salary || ""} onChange={(e) => updateStaff(member.id, { salary: Number(e.target.value) })} placeholder="Monthly salary" />
                     <input className={inputClass} value={member.shiftStart} onChange={(e) => updateStaff(member.id, { shiftStart: e.target.value })} placeholder="Shift start" />
                     <input className={inputClass} value={member.shiftEnd} onChange={(e) => updateStaff(member.id, { shiftEnd: e.target.value })} placeholder="Shift end" />
                   </div>
+                  <input
+                    className={inputClass}
+                    placeholder="Add custom task and press Enter"
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      const value = e.currentTarget.value.trim();
+                      if (!value) return;
+                      toggleTask(member.id, value);
+                      e.currentTarget.value = "";
+                    }}
+                  />
                   <button className="text-sm text-destructive" onClick={() => setStaff((prev) => prev.filter((s) => s.id !== member.id))}>Remove staff member</button>
                 </div>
               ))}

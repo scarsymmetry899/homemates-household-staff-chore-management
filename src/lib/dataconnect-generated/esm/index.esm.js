@@ -102,6 +102,18 @@ export function createPayrollProfile(dcOrVars, vars) {
   return executeMutation(createPayrollProfileRef(dcInstance, inputVars));
 }
 
+export const createStaffSkillRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateStaffSkill', inputVars);
+}
+createStaffSkillRef.operationName = 'CreateStaffSkill';
+
+export function createStaffSkill(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createStaffSkillRef(dcInstance, inputVars));
+}
+
 export const updateStaffStatusRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();

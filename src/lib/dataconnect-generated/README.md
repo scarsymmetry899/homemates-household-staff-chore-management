@@ -17,6 +17,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*CreateRoomZone*](#createroomzone)
   - [*CreateInventoryItem*](#createinventoryitem)
   - [*CreatePayrollProfile*](#createpayrollprofile)
+  - [*CreateStaffSkill*](#createstaffskill)
   - [*UpdateStaffStatus*](#updatestaffstatus)
   - [*UpdateStaffRole*](#updatestaffrole)
   - [*UpdateStaffShift*](#updatestaffshift)
@@ -1136,6 +1137,118 @@ console.log(data.payrollProfile_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.payrollProfile_insert);
+});
+```
+
+## CreateStaffSkill
+You can execute the `CreateStaffSkill` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createStaffSkill(vars: CreateStaffSkillVariables): MutationPromise<CreateStaffSkillData, CreateStaffSkillVariables>;
+
+interface CreateStaffSkillRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateStaffSkillVariables): MutationRef<CreateStaffSkillData, CreateStaffSkillVariables>;
+}
+export const createStaffSkillRef: CreateStaffSkillRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createStaffSkill(dc: DataConnect, vars: CreateStaffSkillVariables): MutationPromise<CreateStaffSkillData, CreateStaffSkillVariables>;
+
+interface CreateStaffSkillRef {
+  ...
+  (dc: DataConnect, vars: CreateStaffSkillVariables): MutationRef<CreateStaffSkillData, CreateStaffSkillVariables>;
+}
+export const createStaffSkillRef: CreateStaffSkillRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createStaffSkillRef:
+```typescript
+const name = createStaffSkillRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateStaffSkill` mutation requires an argument of type `CreateStaffSkillVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateStaffSkillVariables {
+  staffId: UUIDString;
+  name: string;
+}
+```
+### Return Type
+Recall that executing the `CreateStaffSkill` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateStaffSkillData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateStaffSkillData {
+  staffSkill_insert: StaffSkill_Key;
+}
+```
+### Using `CreateStaffSkill`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createStaffSkill, CreateStaffSkillVariables } from '@homemaker/dataconnect';
+
+// The `CreateStaffSkill` mutation requires an argument of type `CreateStaffSkillVariables`:
+const createStaffSkillVars: CreateStaffSkillVariables = {
+  staffId: ..., 
+  name: ..., 
+};
+
+// Call the `createStaffSkill()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createStaffSkill(createStaffSkillVars);
+// Variables can be defined inline as well.
+const { data } = await createStaffSkill({ staffId: ..., name: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createStaffSkill(dataConnect, createStaffSkillVars);
+
+console.log(data.staffSkill_insert);
+
+// Or, you can use the `Promise` API.
+createStaffSkill(createStaffSkillVars).then((response) => {
+  const data = response.data;
+  console.log(data.staffSkill_insert);
+});
+```
+
+### Using `CreateStaffSkill`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createStaffSkillRef, CreateStaffSkillVariables } from '@homemaker/dataconnect';
+
+// The `CreateStaffSkill` mutation requires an argument of type `CreateStaffSkillVariables`:
+const createStaffSkillVars: CreateStaffSkillVariables = {
+  staffId: ..., 
+  name: ..., 
+};
+
+// Call the `createStaffSkillRef()` function to get a reference to the mutation.
+const ref = createStaffSkillRef(createStaffSkillVars);
+// Variables can be defined inline as well.
+const ref = createStaffSkillRef({ staffId: ..., name: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createStaffSkillRef(dataConnect, createStaffSkillVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.staffSkill_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.staffSkill_insert);
 });
 ```
 

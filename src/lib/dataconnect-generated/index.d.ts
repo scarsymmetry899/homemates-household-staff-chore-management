@@ -157,6 +157,15 @@ export interface CreateRoomZoneVariables {
   notes?: string | null;
 }
 
+export interface CreateStaffSkillData {
+  staffSkill_insert: StaffSkill_Key;
+}
+
+export interface CreateStaffSkillVariables {
+  staffId: UUIDString;
+  name: string;
+}
+
 export interface DeleteExpenseEntryData {
   expenseEntry_delete?: ExpenseEntry_Key | null;
 }
@@ -614,6 +623,18 @@ export const createPayrollProfileRef: CreatePayrollProfileRef;
 
 export function createPayrollProfile(vars: CreatePayrollProfileVariables): MutationPromise<CreatePayrollProfileData, CreatePayrollProfileVariables>;
 export function createPayrollProfile(dc: DataConnect, vars: CreatePayrollProfileVariables): MutationPromise<CreatePayrollProfileData, CreatePayrollProfileVariables>;
+
+interface CreateStaffSkillRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateStaffSkillVariables): MutationRef<CreateStaffSkillData, CreateStaffSkillVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateStaffSkillVariables): MutationRef<CreateStaffSkillData, CreateStaffSkillVariables>;
+  operationName: string;
+}
+export const createStaffSkillRef: CreateStaffSkillRef;
+
+export function createStaffSkill(vars: CreateStaffSkillVariables): MutationPromise<CreateStaffSkillData, CreateStaffSkillVariables>;
+export function createStaffSkill(dc: DataConnect, vars: CreateStaffSkillVariables): MutationPromise<CreateStaffSkillData, CreateStaffSkillVariables>;
 
 interface UpdateStaffStatusRef {
   /* Allow users to create refs without passing in DataConnect */

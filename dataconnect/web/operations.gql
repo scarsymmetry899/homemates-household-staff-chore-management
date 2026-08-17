@@ -126,6 +126,17 @@ mutation CreatePayrollProfile(
   )
 }
 
+mutation CreateStaffSkill($staffId: UUID!, $name: String!) @auth(level: USER) @transaction {
+  query @redact {
+    staffMember(id: $staffId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this staff member")
+      }
+    }
+  }
+  staffSkill_insert(data: { staff: { id: $staffId }, name: $name })
+}
+
 mutation UpdateStaffStatus($staffId: UUID!, $status: String!) @auth(level: USER) @transaction {
   query @redact {
     staffMember(id: $staffId) {

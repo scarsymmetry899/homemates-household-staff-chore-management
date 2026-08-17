@@ -10,6 +10,7 @@ import {
   createInventoryItem,
   createPayrollProfile,
   createRoomZone,
+  createStaffSkill,
   myHouseholds,
   recordPayrollDeduction,
   upsertCurrentUser,
@@ -252,6 +253,17 @@ export async function createConfiguredSqlConnectHousehold(
     });
     const staffId = inserted.data.staffMember_insert.id;
     staffIdByLocalId.set(member.id, staffId);
+    for (const skill of member.skills) {
+      await createStaffSkill({ staffId, name: skill });
+    }
+    for (const assignment of member.assignments) {
+      await addTaskInstance({
+        householdId,
+        assignedStaffId: staffId,
+        title: assignment.task,
+        dueAt: assignment.dueDate ? `${assignment.dueDate}T00:00:00.000Z` : null,
+      });
+    }
     await createPayrollProfile({
       householdId,
       staffId,

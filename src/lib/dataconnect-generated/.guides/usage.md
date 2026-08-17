@@ -14,7 +14,7 @@ If a user is not using a supported framework, they can use the generated SDK dir
 Here's an example of how to use it with the first 5 operations:
 
 ```js
-import { upsertCurrentUser, createHousehold, myHouseholds, addStaffMember, createHomemateProfile, createRoomZone, createInventoryItem, createPayrollProfile, updateStaffStatus, updateStaffRole } from '@homemaker/dataconnect';
+import { upsertCurrentUser, createHousehold, myHouseholds, addStaffMember, createHomemateProfile, createRoomZone, createInventoryItem, createPayrollProfile, createStaffSkill, updateStaffStatus } from '@homemaker/dataconnect';
 
 
 // Operation UpsertCurrentUser:  For variables, look at type UpsertCurrentUserVars in ../index.d.ts
@@ -41,11 +41,11 @@ const { data } = await CreateInventoryItem(dataConnect, createInventoryItemVars)
 // Operation CreatePayrollProfile:  For variables, look at type CreatePayrollProfileVars in ../index.d.ts
 const { data } = await CreatePayrollProfile(dataConnect, createPayrollProfileVars);
 
+// Operation CreateStaffSkill:  For variables, look at type CreateStaffSkillVars in ../index.d.ts
+const { data } = await CreateStaffSkill(dataConnect, createStaffSkillVars);
+
 // Operation UpdateStaffStatus:  For variables, look at type UpdateStaffStatusVars in ../index.d.ts
 const { data } = await UpdateStaffStatus(dataConnect, updateStaffStatusVars);
-
-// Operation UpdateStaffRole:  For variables, look at type UpdateStaffRoleVars in ../index.d.ts
-const { data } = await UpdateStaffRole(dataConnect, updateStaffRoleVars);
 
 
 ```
