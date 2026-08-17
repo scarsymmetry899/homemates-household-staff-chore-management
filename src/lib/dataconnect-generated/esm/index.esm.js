@@ -258,6 +258,30 @@ export function dismissAlert(dcOrVars, vars) {
   return executeMutation(dismissAlertRef(dcInstance, inputVars));
 }
 
+export const createAlertRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateAlert', inputVars);
+}
+createAlertRef.operationName = 'CreateAlert';
+
+export function createAlert(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createAlertRef(dcInstance, inputVars));
+}
+
+export const recordPayrollDeductionRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'RecordPayrollDeduction', inputVars);
+}
+recordPayrollDeductionRef.operationName = 'RecordPayrollDeduction';
+
+export function recordPayrollDeduction(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(recordPayrollDeductionRef(dcInstance, inputVars));
+}
+
 export const registerNfcTagRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();

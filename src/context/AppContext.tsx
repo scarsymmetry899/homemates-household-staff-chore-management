@@ -11,11 +11,15 @@ import {
   addExpenseEntry as sqlAddExpenseEntry,
   addStaffMember as sqlAddStaffMember,
   addTaskInstance as sqlAddTaskInstance,
+  createAlert as sqlCreateAlert,
   deleteExpenseEntry as sqlDeleteExpenseEntry,
   deleteTaskInstance as sqlDeleteTaskInstance,
   dismissAlert as sqlDismissAlert,
   recordAttendanceEvent as sqlRecordAttendanceEvent,
+  recordNfcTap as sqlRecordNfcTap,
+  recordPayrollDeduction as sqlRecordPayrollDeduction,
   reassignTaskInstance as sqlReassignTaskInstance,
+  registerNfcTag as sqlRegisterNfcTag,
   removeStaffMember as sqlRemoveStaffMember,
   setTaskCompletion as sqlSetTaskCompletion,
   updateExpenseEntry as sqlUpdateExpenseEntry,
@@ -79,6 +83,8 @@ interface AppState {
   addAlert: (alert: Omit<Alert, "id" | "dismissed">) => void;
   updateStaffTelegramId: (staffId: string, telegramChatId: string) => void;
   markAttendance: (staffId: string, type: string, detail: string) => void;
+  registerStaffNfcTag: (staffId: string, label?: string) => Promise<string | null>;
+  recordNfcTap: (staffId: string, actionType: string, deviceLabel?: string) => void;
   reassignTask: (fromStaffId: string, taskIndex: number, toStaffId: string) => void;
   extendTaskDeadlineByName: (staffId: string, taskName: string, days?: number) => void;
   updatePunctualityScore: (staffId: string, delta: number) => void;
@@ -286,6 +292,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [sqlHouseholdId]);
 
+  const getNfcTagStorageKey = useCallback((staffId: string) => `homemaker_nfc_tag_id_${staffId}`, []);
+
   const setOwnerName = useCallback((name: string) => {
     setOwnerNameState(name);
     localStorage.setItem("homemaker_owner_name", name);
@@ -490,6 +498,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [persistSql, sqlHouseholdId]);
 
   const addDeduction = useCallback((staffId: string, amount: number, _reason: string) => {
+    const current = staff.find((s) => s.id === staffId);
     setStaff((prev) =>
       prev.map((s) =>
         s.id === staffId
@@ -504,7 +513,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           : s
       )
     );
-  }, []);
+    if (current) {
+      const deductions = current.payroll.deductions + amount;
+      const netPay = current.payroll.baseSalary - deductions;
+      persistSql(() => sqlRecordPayrollDeduction({
+        householdId: sqlHouseholdId!,
+        staffId,
+        monthLabel: current.payroll.month,
+        baseSalary: current.payroll.baseSalary,
+        deductions,
+        advances: 0,
+        netPay,
+        status: "draft",
+      }));
+    }
+  }, [persistSql, sqlHouseholdId, staff]);
 
   const updateStaffPhoto = useCallback((staffId: string, photoUrl: string) => {
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, photo: photoUrl } : s)));
@@ -534,8 +557,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [persistSql, staff]);
 
   const addAlert = useCallback((alert: Omit<Alert, "id" | "dismissed">) => {
-    setAlerts((prev) => [{ ...alert, id: `a${Date.now()}`, dismissed: false }, ...prev]);
-  }, []);
+    const tempId = `a${Date.now()}`;
+    setAlerts((prev) => [{ ...alert, id: tempId, dismissed: false }, ...prev]);
+    persistSql(async () => {
+      const result = await sqlCreateAlert({
+        householdId: sqlHouseholdId!,
+        staffId: alert.staffId || null,
+        taskId: null,
+        alertType: alert.type,
+        severity: alert.severity,
+        title: alert.title,
+        description: alert.description,
+      });
+      setAlerts((prev) => prev.map((a) => (
+        a.id === tempId ? { ...a, id: result.data.alert_insert.id } : a
+      )));
+    });
+  }, [persistSql, sqlHouseholdId]);
 
   const updateStaffTelegramId = useCallback((staffId: string, telegramChatId: string) => {
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, telegramChatId } : s)));
@@ -561,6 +599,46 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       detail,
     }));
   }, [persistSql, sqlHouseholdId]);
+
+  const registerStaffNfcTag = useCallback(async (staffId: string, label?: string): Promise<string | null> => {
+    if (!sqlHouseholdId) return null;
+    const member = staff.find((s) => s.id === staffId);
+    if (!member) return null;
+
+    try {
+      const result = await sqlRegisterNfcTag({
+        householdId: sqlHouseholdId,
+        tagUid: `staff:${staffId}`,
+        tagType: "staff-attendance",
+        label: label || `${member.name} attendance tag`,
+        roomId: null,
+        staffId,
+        taskTemplateId: null,
+      });
+      const tagId = result.data.nfcTag_insert.id;
+      localStorage.setItem(getNfcTagStorageKey(staffId), tagId);
+      return tagId;
+    } catch (error) {
+      console.warn("SQL Connect NFC tag registration failed", error);
+      return null;
+    }
+  }, [getNfcTagStorageKey, sqlHouseholdId, staff]);
+
+  const recordNfcTap = useCallback((staffId: string, actionType: string, deviceLabel?: string) => {
+    if (!sqlHouseholdId) return;
+    const tagId = localStorage.getItem(getNfcTagStorageKey(staffId));
+    if (!tagId) return;
+
+    persistSql(() => sqlRecordNfcTap({
+      householdId: sqlHouseholdId,
+      tagId,
+      staffId,
+      roomId: null,
+      taskId: null,
+      actionType,
+      deviceLabel: deviceLabel || navigator.userAgent,
+    }));
+  }, [getNfcTagStorageKey, persistSql, sqlHouseholdId]);
 
   const reassignTask = useCallback((fromStaffId: string, taskIndex: number, toStaffId: string) => {
     const taskId = staff.find((s) => s.id === fromStaffId)?.assignments[taskIndex]?.id;
@@ -718,7 +796,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setOwnerName, setDarkMode, setNfcEnabled, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
         addExpense, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
-        markAttendance, reassignTask, extendTaskDeadlineByName,
+        markAttendance, registerStaffNfcTag, recordNfcTap, reassignTask, extendTaskDeadlineByName,
         updatePunctualityScore, updateReliabilityScore,
       }}
     >

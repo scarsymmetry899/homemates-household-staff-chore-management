@@ -48,6 +48,7 @@ function formatDate(value: string): string {
 
 function mapHousehold(household: SqlHousehold, ownerName: string): SqlConnectHouseholdSnapshot {
   const tasksByStaffId = new Map<string, { task: string; done: boolean; dueDate?: string }[]>();
+  const latestPayrollByStaffId = new Map<string, SqlHousehold["payrollRuns_on_household"][number]>();
 
   household.taskInstances_on_household.forEach((task) => {
     const staffId = task.assignedStaff?.id;
@@ -62,36 +63,45 @@ function mapHousehold(household: SqlHousehold, ownerName: string): SqlConnectHou
     tasksByStaffId.set(staffId, existing);
   });
 
+  household.payrollRuns_on_household.forEach((run) => {
+    if (!latestPayrollByStaffId.has(run.staff.id)) {
+      latestPayrollByStaffId.set(run.staff.id, run);
+    }
+  });
+
   return {
     householdId: household.id,
     ownerName,
-    staff: household.staffMembers_on_household.map((member) => ({
-      id: member.id,
-      name: member.name,
-      role: member.role,
-      department: toDepartment(member.department),
-      photo: member.photoUrl || "/placeholder.svg",
-      phone: member.phone || "",
-      salary: member.salary,
-      status: toStaffStatus(member.status),
-      reliabilityScore: member.reliabilityScore,
-      punctualityScore: member.punctualityScore,
-      tenure: "New profile",
-      location: member.locationLabel || "Not set",
-      skills: [],
-      shiftStart: member.shiftStart || "09:00 AM",
-      shiftEnd: member.shiftEnd || "06:00 PM",
-      assignments: tasksByStaffId.get(member.id) || [],
-      notes: member.notes || undefined,
-      attendance: [],
-      payroll: {
-        baseSalary: member.salary,
-        deductions: 0,
-        netPay: member.salary,
-        month: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-      },
-      telegramChatId: member.telegramChatId || undefined,
-    })),
+    staff: household.staffMembers_on_household.map((member) => {
+      const payrollRun = latestPayrollByStaffId.get(member.id);
+      return {
+        id: member.id,
+        name: member.name,
+        role: member.role,
+        department: toDepartment(member.department),
+        photo: member.photoUrl || "/placeholder.svg",
+        phone: member.phone || "",
+        salary: member.salary,
+        status: toStaffStatus(member.status),
+        reliabilityScore: member.reliabilityScore,
+        punctualityScore: member.punctualityScore,
+        tenure: "New profile",
+        location: member.locationLabel || "Not set",
+        skills: [],
+        shiftStart: member.shiftStart || "09:00 AM",
+        shiftEnd: member.shiftEnd || "06:00 PM",
+        assignments: tasksByStaffId.get(member.id) || [],
+        notes: member.notes || undefined,
+        attendance: [],
+        payroll: {
+          baseSalary: payrollRun?.baseSalary ?? member.salary,
+          deductions: payrollRun?.deductions ?? 0,
+          netPay: payrollRun?.netPay ?? member.salary,
+          month: payrollRun?.monthLabel || new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+        },
+        telegramChatId: member.telegramChatId || undefined,
+      };
+    }),
     expenses: household.expenseEntries_on_household.map((expense) => ({
       id: expense.id,
       category: expense.category as Expense["category"],

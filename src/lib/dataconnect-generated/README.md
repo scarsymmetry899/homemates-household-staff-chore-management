@@ -30,6 +30,8 @@ This README will guide you through the process of using the generated JavaScript
   - [*UpdateExpenseEntry*](#updateexpenseentry)
   - [*DeleteExpenseEntry*](#deleteexpenseentry)
   - [*DismissAlert*](#dismissalert)
+  - [*CreateAlert*](#createalert)
+  - [*RecordPayrollDeduction*](#recordpayrolldeduction)
   - [*RegisterNfcTag*](#registernfctag)
   - [*RecordNfcTap*](#recordnfctap)
 
@@ -173,6 +175,19 @@ export interface MyHouseholdsData {
         name: string;
       } & StaffMember_Key;
     } & ExpenseEntry_Key)[];
+    payrollRuns_on_household: ({
+      id: UUIDString;
+      monthLabel: string;
+      baseSalary: number;
+      deductions: number;
+      advances: number;
+      netPay: number;
+      status: string;
+      updatedAt: TimestampString;
+      staff: {
+        id: UUIDString;
+      } & StaffMember_Key;
+    } & PayrollRun_Key)[];
   } & Household_Key)[];
 }
 ```
@@ -2539,6 +2554,263 @@ console.log(data.alert_update);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.alert_update);
+});
+```
+
+## CreateAlert
+You can execute the `CreateAlert` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createAlert(vars: CreateAlertVariables): MutationPromise<CreateAlertData, CreateAlertVariables>;
+
+interface CreateAlertRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateAlertVariables): MutationRef<CreateAlertData, CreateAlertVariables>;
+}
+export const createAlertRef: CreateAlertRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createAlert(dc: DataConnect, vars: CreateAlertVariables): MutationPromise<CreateAlertData, CreateAlertVariables>;
+
+interface CreateAlertRef {
+  ...
+  (dc: DataConnect, vars: CreateAlertVariables): MutationRef<CreateAlertData, CreateAlertVariables>;
+}
+export const createAlertRef: CreateAlertRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createAlertRef:
+```typescript
+const name = createAlertRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateAlert` mutation requires an argument of type `CreateAlertVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateAlertVariables {
+  householdId: UUIDString;
+  staffId?: UUIDString | null;
+  taskId?: UUIDString | null;
+  alertType: string;
+  severity: string;
+  title: string;
+  description: string;
+}
+```
+### Return Type
+Recall that executing the `CreateAlert` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateAlertData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateAlertData {
+  alert_insert: Alert_Key;
+}
+```
+### Using `CreateAlert`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createAlert, CreateAlertVariables } from '@homemaker/dataconnect';
+
+// The `CreateAlert` mutation requires an argument of type `CreateAlertVariables`:
+const createAlertVars: CreateAlertVariables = {
+  householdId: ..., 
+  staffId: ..., // optional
+  taskId: ..., // optional
+  alertType: ..., 
+  severity: ..., 
+  title: ..., 
+  description: ..., 
+};
+
+// Call the `createAlert()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createAlert(createAlertVars);
+// Variables can be defined inline as well.
+const { data } = await createAlert({ householdId: ..., staffId: ..., taskId: ..., alertType: ..., severity: ..., title: ..., description: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createAlert(dataConnect, createAlertVars);
+
+console.log(data.alert_insert);
+
+// Or, you can use the `Promise` API.
+createAlert(createAlertVars).then((response) => {
+  const data = response.data;
+  console.log(data.alert_insert);
+});
+```
+
+### Using `CreateAlert`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createAlertRef, CreateAlertVariables } from '@homemaker/dataconnect';
+
+// The `CreateAlert` mutation requires an argument of type `CreateAlertVariables`:
+const createAlertVars: CreateAlertVariables = {
+  householdId: ..., 
+  staffId: ..., // optional
+  taskId: ..., // optional
+  alertType: ..., 
+  severity: ..., 
+  title: ..., 
+  description: ..., 
+};
+
+// Call the `createAlertRef()` function to get a reference to the mutation.
+const ref = createAlertRef(createAlertVars);
+// Variables can be defined inline as well.
+const ref = createAlertRef({ householdId: ..., staffId: ..., taskId: ..., alertType: ..., severity: ..., title: ..., description: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createAlertRef(dataConnect, createAlertVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.alert_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.alert_insert);
+});
+```
+
+## RecordPayrollDeduction
+You can execute the `RecordPayrollDeduction` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+recordPayrollDeduction(vars: RecordPayrollDeductionVariables): MutationPromise<RecordPayrollDeductionData, RecordPayrollDeductionVariables>;
+
+interface RecordPayrollDeductionRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RecordPayrollDeductionVariables): MutationRef<RecordPayrollDeductionData, RecordPayrollDeductionVariables>;
+}
+export const recordPayrollDeductionRef: RecordPayrollDeductionRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+recordPayrollDeduction(dc: DataConnect, vars: RecordPayrollDeductionVariables): MutationPromise<RecordPayrollDeductionData, RecordPayrollDeductionVariables>;
+
+interface RecordPayrollDeductionRef {
+  ...
+  (dc: DataConnect, vars: RecordPayrollDeductionVariables): MutationRef<RecordPayrollDeductionData, RecordPayrollDeductionVariables>;
+}
+export const recordPayrollDeductionRef: RecordPayrollDeductionRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the recordPayrollDeductionRef:
+```typescript
+const name = recordPayrollDeductionRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `RecordPayrollDeduction` mutation requires an argument of type `RecordPayrollDeductionVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface RecordPayrollDeductionVariables {
+  householdId: UUIDString;
+  staffId: UUIDString;
+  monthLabel: string;
+  baseSalary: number;
+  deductions: number;
+  advances: number;
+  netPay: number;
+  status: string;
+}
+```
+### Return Type
+Recall that executing the `RecordPayrollDeduction` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `RecordPayrollDeductionData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface RecordPayrollDeductionData {
+  payrollRun_insert: PayrollRun_Key;
+}
+```
+### Using `RecordPayrollDeduction`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, recordPayrollDeduction, RecordPayrollDeductionVariables } from '@homemaker/dataconnect';
+
+// The `RecordPayrollDeduction` mutation requires an argument of type `RecordPayrollDeductionVariables`:
+const recordPayrollDeductionVars: RecordPayrollDeductionVariables = {
+  householdId: ..., 
+  staffId: ..., 
+  monthLabel: ..., 
+  baseSalary: ..., 
+  deductions: ..., 
+  advances: ..., 
+  netPay: ..., 
+  status: ..., 
+};
+
+// Call the `recordPayrollDeduction()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await recordPayrollDeduction(recordPayrollDeductionVars);
+// Variables can be defined inline as well.
+const { data } = await recordPayrollDeduction({ householdId: ..., staffId: ..., monthLabel: ..., baseSalary: ..., deductions: ..., advances: ..., netPay: ..., status: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await recordPayrollDeduction(dataConnect, recordPayrollDeductionVars);
+
+console.log(data.payrollRun_insert);
+
+// Or, you can use the `Promise` API.
+recordPayrollDeduction(recordPayrollDeductionVars).then((response) => {
+  const data = response.data;
+  console.log(data.payrollRun_insert);
+});
+```
+
+### Using `RecordPayrollDeduction`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, recordPayrollDeductionRef, RecordPayrollDeductionVariables } from '@homemaker/dataconnect';
+
+// The `RecordPayrollDeduction` mutation requires an argument of type `RecordPayrollDeductionVariables`:
+const recordPayrollDeductionVars: RecordPayrollDeductionVariables = {
+  householdId: ..., 
+  staffId: ..., 
+  monthLabel: ..., 
+  baseSalary: ..., 
+  deductions: ..., 
+  advances: ..., 
+  netPay: ..., 
+  status: ..., 
+};
+
+// Call the `recordPayrollDeductionRef()` function to get a reference to the mutation.
+const ref = recordPayrollDeductionRef(recordPayrollDeductionVars);
+// Variables can be defined inline as well.
+const ref = recordPayrollDeductionRef({ householdId: ..., staffId: ..., monthLabel: ..., baseSalary: ..., deductions: ..., advances: ..., netPay: ..., status: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = recordPayrollDeductionRef(dataConnect, recordPayrollDeductionVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.payrollRun_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.payrollRun_insert);
 });
 ```
 

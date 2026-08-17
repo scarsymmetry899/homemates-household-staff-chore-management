@@ -83,6 +83,20 @@ export interface CompleteTaskInstanceVariables {
   source?: string | null;
 }
 
+export interface CreateAlertData {
+  alert_insert: Alert_Key;
+}
+
+export interface CreateAlertVariables {
+  householdId: UUIDString;
+  staffId?: UUIDString | null;
+  taskId?: UUIDString | null;
+  alertType: string;
+  severity: string;
+  title: string;
+  description: string;
+}
+
 export interface CreateHouseholdData {
   user_upsert: User_Key;
   household_insert: Household_Key;
@@ -207,6 +221,19 @@ export interface MyHouseholdsData {
         name: string;
       } & StaffMember_Key;
     } & ExpenseEntry_Key)[];
+    payrollRuns_on_household: ({
+      id: UUIDString;
+      monthLabel: string;
+      baseSalary: number;
+      deductions: number;
+      advances: number;
+      netPay: number;
+      status: string;
+      updatedAt: TimestampString;
+      staff: {
+        id: UUIDString;
+      } & StaffMember_Key;
+    } & PayrollRun_Key)[];
   } & Household_Key)[];
 }
 
@@ -263,6 +290,21 @@ export interface RecordNfcTapVariables {
   taskId?: UUIDString | null;
   actionType: string;
   deviceLabel?: string | null;
+}
+
+export interface RecordPayrollDeductionData {
+  payrollRun_insert: PayrollRun_Key;
+}
+
+export interface RecordPayrollDeductionVariables {
+  householdId: UUIDString;
+  staffId: UUIDString;
+  monthLabel: string;
+  baseSalary: number;
+  deductions: number;
+  advances: number;
+  netPay: number;
+  status: string;
 }
 
 export interface RegisterNfcTagData {
@@ -654,6 +696,30 @@ export const dismissAlertRef: DismissAlertRef;
 
 export function dismissAlert(vars: DismissAlertVariables): MutationPromise<DismissAlertData, DismissAlertVariables>;
 export function dismissAlert(dc: DataConnect, vars: DismissAlertVariables): MutationPromise<DismissAlertData, DismissAlertVariables>;
+
+interface CreateAlertRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateAlertVariables): MutationRef<CreateAlertData, CreateAlertVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateAlertVariables): MutationRef<CreateAlertData, CreateAlertVariables>;
+  operationName: string;
+}
+export const createAlertRef: CreateAlertRef;
+
+export function createAlert(vars: CreateAlertVariables): MutationPromise<CreateAlertData, CreateAlertVariables>;
+export function createAlert(dc: DataConnect, vars: CreateAlertVariables): MutationPromise<CreateAlertData, CreateAlertVariables>;
+
+interface RecordPayrollDeductionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RecordPayrollDeductionVariables): MutationRef<RecordPayrollDeductionData, RecordPayrollDeductionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: RecordPayrollDeductionVariables): MutationRef<RecordPayrollDeductionData, RecordPayrollDeductionVariables>;
+  operationName: string;
+}
+export const recordPayrollDeductionRef: RecordPayrollDeductionRef;
+
+export function recordPayrollDeduction(vars: RecordPayrollDeductionVariables): MutationPromise<RecordPayrollDeductionData, RecordPayrollDeductionVariables>;
+export function recordPayrollDeduction(dc: DataConnect, vars: RecordPayrollDeductionVariables): MutationPromise<RecordPayrollDeductionData, RecordPayrollDeductionVariables>;
 
 interface RegisterNfcTagRef {
   /* Allow users to create refs without passing in DataConnect */

@@ -38,6 +38,7 @@ export function useNfcAttendance(enabled: boolean) {
     staff,
     updateStaffStatus,
     markAttendance,
+    recordNfcTap,
     addAlert,
     updatePunctualityScore,
     updateReliabilityScore,
@@ -62,6 +63,8 @@ export function useNfcAttendance(enabled: boolean) {
         silentTelegram?: boolean;
         /** Skip the per-staff debounce (test mode default). */
         skipDebounce?: boolean;
+        /** Raw browser/device label for SQL tap audit trail. */
+        deviceLabel?: string;
       } = {}
     ) => {
       const member = staff.find((s) => s.id === staffId);
@@ -214,6 +217,7 @@ export function useNfcAttendance(enabled: boolean) {
 
       updateStaffStatus(member.id, newStatus);
       markAttendance(member.id, eventType, detail);
+      recordNfcTap(member.id, eventType, options.deviceLabel);
 
       const event: NfcEvent = {
         staffId: member.id,
@@ -256,6 +260,7 @@ export function useNfcAttendance(enabled: boolean) {
       staff,
       updateStaffStatus,
       markAttendance,
+      recordNfcTap,
       addAlert,
       updatePunctualityScore,
       updateReliabilityScore,
@@ -288,7 +293,7 @@ export function useNfcAttendance(enabled: boolean) {
 
     startNfcScan(
       (result) => {
-        handleScanRef.current(result.staffId, result.timestamp);
+        handleScanRef.current(result.staffId, result.timestamp, { deviceLabel: result.rawData });
       },
       (err) => {
         setError(err.message);

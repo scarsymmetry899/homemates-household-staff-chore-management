@@ -81,5 +81,18 @@ query MyHouseholds @auth(level: USER)
         name
       }
     }
+    payrollRuns_on_household(limit: 100, orderBy: [{ updatedAt: DESC }]) {
+      id
+      monthLabel
+      baseSalary
+      deductions
+      advances
+      netPay
+      status
+      updatedAt
+      staff {
+        id
+      }
+    }
   }
 }

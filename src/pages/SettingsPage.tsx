@@ -45,7 +45,7 @@ const settingSections: { title: string; items: SettingToggle[] }[] = [
 ];
 
 const SettingsPage = ({ onLogout }: SettingsPageProps) => {
-  const { ownerName, setOwnerName, isDarkMode, setDarkMode, staff, nfcEnabled, setNfcEnabled } = useAppState();
+  const { ownerName, setOwnerName, isDarkMode, setDarkMode, staff, nfcEnabled, setNfcEnabled, registerStaffNfcTag } = useAppState();
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
     settingSections.forEach((s) => s.items.forEach((i) => (defaults[i.id] = i.defaultOn)));
@@ -130,6 +130,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
     try {
       await writeNfcTag(staffId);
       const member = staff.find((s) => s.id === staffId);
+      await registerStaffNfcTag(staffId, member ? `${member.name} attendance tag` : undefined);
       toast.success("NFC tag written", { description: `Tag programmed for ${member?.name}` });
       setNfcWriteStaffId(null);
     } catch (e) {

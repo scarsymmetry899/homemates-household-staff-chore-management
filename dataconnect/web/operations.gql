@@ -284,6 +284,63 @@ mutation DismissAlert($alertId: UUID!) @auth(level: USER) @transaction {
   alert_update(id: $alertId, data: { status: "resolved", resolvedAt_expr: "request.time" })
 }
 
+mutation CreateAlert(
+  $householdId: UUID!
+  $staffId: UUID
+  $taskId: UUID
+  $alertType: String!
+  $severity: String!
+  $title: String!
+  $description: String!
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  alert_insert(
+    data: {
+      household: { id: $householdId }
+      staff: { id: $staffId }
+      task: { id: $taskId }
+      alertType: $alertType
+      severity: $severity
+      title: $title
+      description: $description
+    }
+  )
+}
+
+mutation RecordPayrollDeduction(
+  $householdId: UUID!
+  $staffId: UUID!
+  $monthLabel: String!
+  $baseSalary: Int!
+  $deductions: Int!
+  $advances: Int!
+  $netPay: Int!
+  $status: String!
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  payrollRun_insert(
+    data: {
+      household: { id: $householdId }
+      staff: { id: $staffId }
+      monthLabel: $monthLabel
+      baseSalary: $baseSalary
+      deductions: $deductions
+      advances: $advances
+      netPay: $netPay
+      status: $status
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
 mutation RegisterNfcTag(
   $householdId: UUID!
   $tagUid: String!
