@@ -7,6 +7,7 @@ import {
 } from "@/lib/householdStore";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { bootstrapSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
+import { createConfiguredSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
 import {
   addExpenseEntry as sqlAddExpenseEntry,
   addStaffMember as sqlAddStaffMember,
@@ -54,10 +55,63 @@ export interface Alert {
   actions: string[];
 }
 
+export interface HouseholdProfile {
+  name: string;
+  ownerName: string;
+  ownerPhone?: string;
+  addressLabel?: string;
+  timezone: string;
+}
+
+export interface HomemateProfile {
+  id: string;
+  name: string;
+  relationLabel: string;
+  phone?: string;
+  notes?: string;
+}
+
+export interface RoomZoneProfile {
+  id: string;
+  name: string;
+  floorLabel?: string;
+  notes?: string;
+}
+
+export interface InventorySetupItem {
+  id: string;
+  name: string;
+  category: string;
+  unit: string;
+  currentQuantity: number;
+  minimumQuantity?: number;
+  roomId?: string;
+}
+
+export interface HouseholdSetupPayload {
+  householdName: string;
+  ownerName: string;
+  ownerPhone?: string;
+  addressLabel?: string;
+  timezone: string;
+  homemates: HomemateProfile[];
+  staff: StaffMember[];
+  rooms: RoomZoneProfile[];
+  inventoryItems: InventorySetupItem[];
+  payroll: {
+    deductionPolicy?: string;
+  };
+}
+
 interface AppState {
   staff: StaffMember[];
   expenses: Expense[];
   alerts: Alert[];
+  setupComplete: boolean;
+  householdProfile: HouseholdProfile | null;
+  homemates: HomemateProfile[];
+  rooms: RoomZoneProfile[];
+  inventoryItems: InventorySetupItem[];
   ownerName: string;
   ownerLocation: string;
   isDarkMode: boolean;
@@ -89,6 +143,7 @@ interface AppState {
   extendTaskDeadlineByName: (staffId: string, taskName: string, days?: number) => void;
   updatePunctualityScore: (staffId: string, delta: number) => void;
   updateReliabilityScore: (staffId: string, delta: number) => void;
+  completeHouseholdSetup: (setup: HouseholdSetupPayload) => Promise<void>;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -143,9 +198,14 @@ const initialAlerts: Alert[] = [
 ];
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
-  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
-  const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
+  const [staff, setStaff] = useState<StaffMember[]>(() => isFirebaseConfigured ? [] : initialStaff);
+  const [expenses, setExpenses] = useState<Expense[]>(() => isFirebaseConfigured ? [] : initialExpenses);
+  const [alerts, setAlerts] = useState<Alert[]>(() => isFirebaseConfigured ? [] : initialAlerts);
+  const [setupComplete, setSetupComplete] = useState(() => !isFirebaseConfigured);
+  const [householdProfile, setHouseholdProfile] = useState<HouseholdProfile | null>(null);
+  const [homemates, setHomemates] = useState<HomemateProfile[]>([]);
+  const [rooms, setRooms] = useState<RoomZoneProfile[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<InventorySetupItem[]>([]);
   const [sqlHouseholdId, setSqlHouseholdId] = useState<string | null>(null);
   const [hasLoadedRemoteState, setHasLoadedRemoteState] = useState(false);
   const [hasBootstrappedSql, setHasBootstrappedSql] = useState(false);
@@ -166,6 +226,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     staff,
     expenses,
     alerts,
+    setupComplete,
+    householdProfile,
+    homemates,
+    rooms,
+    inventoryItems,
     ownerName,
     isDarkMode,
     nfcEnabled,
@@ -197,6 +262,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setStaff(state.staff);
         setExpenses(state.expenses);
         setAlerts(state.alerts);
+        setSetupComplete(!!state.setupComplete);
+        setHouseholdProfile(state.householdProfile || null);
+        setHomemates(state.homemates || []);
+        setRooms(state.rooms || []);
+        setInventoryItems(state.inventoryItems || []);
         setOwnerNameState(state.ownerName);
         setIsDarkModeState(state.isDarkMode);
         setNfcEnabledState(state.nfcEnabled);
@@ -771,6 +841,66 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return () => clearTimeout(timeoutId);
   }, []);
 
+  const completeHouseholdSetup = useCallback(async (setup: HouseholdSetupPayload) => {
+    const profile: HouseholdProfile = {
+      name: setup.householdName,
+      ownerName: setup.ownerName,
+      ownerPhone: setup.ownerPhone,
+      addressLabel: setup.addressLabel,
+      timezone: setup.timezone,
+    };
+
+    isApplyingRemoteStateRef.current = true;
+    setHouseholdProfile(profile);
+    setHomemates(setup.homemates);
+    setRooms(setup.rooms);
+    setInventoryItems(setup.inventoryItems);
+    setOwnerNameState(setup.ownerName);
+    setStaff(setup.staff);
+    setExpenses([]);
+    setAlerts([]);
+    setSetupComplete(true);
+    localStorage.setItem("homemaker_owner_name", setup.ownerName);
+
+    let persistedStaff = setup.staff;
+    let persistedExpenses: Expense[] = [];
+    let persistedAlerts: Alert[] = [];
+
+    try {
+      const snapshot = await createConfiguredSqlConnectHousehold(setup);
+      if (snapshot) {
+        setSqlHouseholdId(snapshot.householdId);
+        setStaff(snapshot.staff);
+        setExpenses(snapshot.expenses);
+        setAlerts(snapshot.alerts);
+        persistedStaff = snapshot.staff;
+        persistedExpenses = snapshot.expenses;
+        persistedAlerts = snapshot.alerts;
+      }
+    } finally {
+      queueMicrotask(() => {
+        isApplyingRemoteStateRef.current = false;
+        const nextState: HouseholdStateSnapshot = {
+          staff: persistedStaff,
+          expenses: persistedExpenses,
+          alerts: persistedAlerts,
+          setupComplete: true,
+          householdProfile: profile,
+          homemates: setup.homemates,
+          rooms: setup.rooms,
+          inventoryItems: setup.inventoryItems,
+          ownerName: setup.ownerName,
+          isDarkMode,
+          nfcEnabled,
+        };
+        lastSavedStateRef.current = JSON.stringify(nextState);
+        saveHouseholdState(nextState).catch((error) => {
+          console.warn("Unable to save setup state", error);
+        });
+      });
+    }
+  }, [isDarkMode, nfcEnabled]);
+
   if (isFirebaseConfigured && (!hasLoadedRemoteState || !hasBootstrappedSql)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-6">
@@ -792,12 +922,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AppContext.Provider
       value={{
-        staff, expenses, alerts, ownerName, ownerLocation, isDarkMode, nfcEnabled,
+        staff, expenses, alerts, setupComplete, householdProfile, homemates, rooms, inventoryItems,
+        ownerName, ownerLocation, isDarkMode, nfcEnabled,
         setOwnerName, setDarkMode, setNfcEnabled, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
         addExpense, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
         markAttendance, registerStaffNfcTag, recordNfcTap, reassignTask, extendTaskDeadlineByName,
         updatePunctualityScore, updateReliabilityScore,
+        completeHouseholdSetup,
       }}
     >
       {children}

@@ -1,4 +1,11 @@
-import type { Alert, Expense } from "@/context/AppContext";
+import type {
+  Alert,
+  Expense,
+  HomemateProfile,
+  HouseholdProfile,
+  InventorySetupItem,
+  RoomZoneProfile,
+} from "@/context/AppContext";
 import type { StaffMember } from "@/data/staff";
 import { getCurrentAuthUser, getFirebaseFirestore, isFirebaseConfigured } from "@/lib/firebase";
 
@@ -6,6 +13,11 @@ export interface HouseholdStateSnapshot {
   staff: StaffMember[];
   expenses: Expense[];
   alerts: Alert[];
+  setupComplete?: boolean;
+  householdProfile?: HouseholdProfile | null;
+  homemates?: HomemateProfile[];
+  rooms?: RoomZoneProfile[];
+  inventoryItems?: InventorySetupItem[];
   ownerName: string;
   isDarkMode: boolean;
   nfcEnabled: boolean;
@@ -63,6 +75,11 @@ export async function subscribeToHouseholdState(
           staff: data.staff,
           expenses: data.expenses,
           alerts: data.alerts,
+          setupComplete: !!data.setupComplete,
+          householdProfile: data.householdProfile || null,
+          homemates: data.homemates || [],
+          rooms: data.rooms || [],
+          inventoryItems: data.inventoryItems || [],
           ownerName: data.ownerName || "Boss",
           isDarkMode: !!data.isDarkMode,
           nfcEnabled: !!data.nfcEnabled,

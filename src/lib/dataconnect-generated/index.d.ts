@@ -97,6 +97,18 @@ export interface CreateAlertVariables {
   description: string;
 }
 
+export interface CreateHomemateProfileData {
+  homemateProfile_insert: HomemateProfile_Key;
+}
+
+export interface CreateHomemateProfileVariables {
+  householdId: UUIDString;
+  name: string;
+  relationLabel?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+}
+
 export interface CreateHouseholdData {
   user_upsert: User_Key;
   household_insert: Household_Key;
@@ -106,6 +118,43 @@ export interface CreateHouseholdVariables {
   name: string;
   timezone: string;
   addressLabel?: string | null;
+}
+
+export interface CreateInventoryItemData {
+  inventoryItem_insert: InventoryItem_Key;
+}
+
+export interface CreateInventoryItemVariables {
+  householdId: UUIDString;
+  roomId?: UUIDString | null;
+  name: string;
+  category: string;
+  unit: string;
+  currentQuantity: number;
+  minimumQuantity?: number | null;
+}
+
+export interface CreatePayrollProfileData {
+  payrollProfile_insert: PayrollProfile_Key;
+}
+
+export interface CreatePayrollProfileVariables {
+  householdId: UUIDString;
+  staffId: UUIDString;
+  baseSalary: number;
+  payFrequency: string;
+  deductionPolicy?: string | null;
+}
+
+export interface CreateRoomZoneData {
+  roomZone_insert: RoomZone_Key;
+}
+
+export interface CreateRoomZoneVariables {
+  householdId: UUIDString;
+  name: string;
+  floorLabel?: string | null;
+  notes?: string | null;
 }
 
 export interface DeleteExpenseEntryData {
@@ -169,6 +218,31 @@ export interface MyHouseholdsData {
     timezone: string;
     addressLabel?: string | null;
     createdAt: TimestampString;
+    homemateProfiles_on_household: ({
+      id: UUIDString;
+      name: string;
+      relationLabel?: string | null;
+      phone?: string | null;
+      notes?: string | null;
+    } & HomemateProfile_Key)[];
+    roomZones_on_household: ({
+      id: UUIDString;
+      name: string;
+      floorLabel?: string | null;
+      notes?: string | null;
+    } & RoomZone_Key)[];
+    inventoryItems_on_household: ({
+      id: UUIDString;
+      name: string;
+      category: string;
+      unit: string;
+      currentQuantity: number;
+      minimumQuantity?: number | null;
+      room?: {
+        id: UUIDString;
+        name: string;
+      } & RoomZone_Key;
+    } & InventoryItem_Key)[];
     staffMembers_on_household: ({
       id: UUIDString;
       name: string;
@@ -492,6 +566,54 @@ export const addStaffMemberRef: AddStaffMemberRef;
 
 export function addStaffMember(vars: AddStaffMemberVariables): MutationPromise<AddStaffMemberData, AddStaffMemberVariables>;
 export function addStaffMember(dc: DataConnect, vars: AddStaffMemberVariables): MutationPromise<AddStaffMemberData, AddStaffMemberVariables>;
+
+interface CreateHomemateProfileRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateHomemateProfileVariables): MutationRef<CreateHomemateProfileData, CreateHomemateProfileVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateHomemateProfileVariables): MutationRef<CreateHomemateProfileData, CreateHomemateProfileVariables>;
+  operationName: string;
+}
+export const createHomemateProfileRef: CreateHomemateProfileRef;
+
+export function createHomemateProfile(vars: CreateHomemateProfileVariables): MutationPromise<CreateHomemateProfileData, CreateHomemateProfileVariables>;
+export function createHomemateProfile(dc: DataConnect, vars: CreateHomemateProfileVariables): MutationPromise<CreateHomemateProfileData, CreateHomemateProfileVariables>;
+
+interface CreateRoomZoneRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateRoomZoneVariables): MutationRef<CreateRoomZoneData, CreateRoomZoneVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateRoomZoneVariables): MutationRef<CreateRoomZoneData, CreateRoomZoneVariables>;
+  operationName: string;
+}
+export const createRoomZoneRef: CreateRoomZoneRef;
+
+export function createRoomZone(vars: CreateRoomZoneVariables): MutationPromise<CreateRoomZoneData, CreateRoomZoneVariables>;
+export function createRoomZone(dc: DataConnect, vars: CreateRoomZoneVariables): MutationPromise<CreateRoomZoneData, CreateRoomZoneVariables>;
+
+interface CreateInventoryItemRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateInventoryItemVariables): MutationRef<CreateInventoryItemData, CreateInventoryItemVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateInventoryItemVariables): MutationRef<CreateInventoryItemData, CreateInventoryItemVariables>;
+  operationName: string;
+}
+export const createInventoryItemRef: CreateInventoryItemRef;
+
+export function createInventoryItem(vars: CreateInventoryItemVariables): MutationPromise<CreateInventoryItemData, CreateInventoryItemVariables>;
+export function createInventoryItem(dc: DataConnect, vars: CreateInventoryItemVariables): MutationPromise<CreateInventoryItemData, CreateInventoryItemVariables>;
+
+interface CreatePayrollProfileRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreatePayrollProfileVariables): MutationRef<CreatePayrollProfileData, CreatePayrollProfileVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreatePayrollProfileVariables): MutationRef<CreatePayrollProfileData, CreatePayrollProfileVariables>;
+  operationName: string;
+}
+export const createPayrollProfileRef: CreatePayrollProfileRef;
+
+export function createPayrollProfile(vars: CreatePayrollProfileVariables): MutationPromise<CreatePayrollProfileData, CreatePayrollProfileVariables>;
+export function createPayrollProfile(dc: DataConnect, vars: CreatePayrollProfileVariables): MutationPromise<CreatePayrollProfileData, CreatePayrollProfileVariables>;
 
 interface UpdateStaffStatusRef {
   /* Allow users to create refs without passing in DataConnect */

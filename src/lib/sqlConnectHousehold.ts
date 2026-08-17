@@ -6,11 +6,17 @@ import {
   addStaffMember,
   addTaskInstance,
   createHousehold,
+  createHomemateProfile,
+  createInventoryItem,
+  createPayrollProfile,
+  createRoomZone,
   myHouseholds,
+  recordPayrollDeduction,
   upsertCurrentUser,
   type MyHouseholdsData,
   type UUIDString,
 } from "@homemaker/dataconnect";
+import type { HouseholdSetupPayload } from "@/context/AppContext";
 
 export interface SqlConnectHouseholdSnapshot {
   householdId: UUIDString;
@@ -182,6 +188,106 @@ async function seedHousehold(seed: SeedSnapshot): Promise<UUIDString> {
   return householdId;
 }
 
+async function createEmptyHousehold(ownerName: string): Promise<UUIDString> {
+  const created = await createHousehold({
+    name: `${ownerName || "My"} Household`,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata",
+    addressLabel: null,
+  });
+  return created.data.household_insert.id;
+}
+
+export async function createConfiguredSqlConnectHousehold(
+  setup: HouseholdSetupPayload
+): Promise<SqlConnectHouseholdSnapshot | null> {
+  if (!isFirebaseConfigured) return null;
+
+  const user = await getCurrentAuthUser();
+  if (!user) return null;
+
+  await upsertCurrentUser({
+    displayName: setup.ownerName || user.displayName || null,
+    email: user.email || null,
+  });
+
+  const created = await createHousehold({
+    name: setup.householdName,
+    timezone: setup.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata",
+    addressLabel: setup.addressLabel || null,
+  });
+  const householdId = created.data.household_insert.id;
+
+  const roomIdByLocalId = new Map<string, UUIDString>();
+  for (const room of setup.rooms) {
+    const inserted = await createRoomZone({
+      householdId,
+      name: room.name,
+      floorLabel: room.floorLabel || null,
+      notes: room.notes || null,
+    });
+    roomIdByLocalId.set(room.id, inserted.data.roomZone_insert.id);
+  }
+
+  for (const homemate of setup.homemates) {
+    await createHomemateProfile({
+      householdId,
+      name: homemate.name,
+      relationLabel: homemate.relationLabel || null,
+      phone: homemate.phone || null,
+      notes: homemate.notes || null,
+    });
+  }
+
+  const staffIdByLocalId = new Map<string, UUIDString>();
+  for (const member of setup.staff) {
+    const inserted = await addStaffMember({
+      householdId,
+      name: member.name,
+      role: member.role,
+      department: member.department,
+      phone: member.phone || null,
+      salary: member.salary,
+      shiftStart: member.shiftStart,
+      shiftEnd: member.shiftEnd,
+    });
+    const staffId = inserted.data.staffMember_insert.id;
+    staffIdByLocalId.set(member.id, staffId);
+    await createPayrollProfile({
+      householdId,
+      staffId,
+      baseSalary: member.salary,
+      payFrequency: "monthly",
+      deductionPolicy: setup.payroll.deductionPolicy || null,
+    });
+    await recordPayrollDeduction({
+      householdId,
+      staffId,
+      monthLabel: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      baseSalary: member.salary,
+      deductions: 0,
+      advances: 0,
+      netPay: member.salary,
+      status: "draft",
+    });
+  }
+
+  for (const item of setup.inventoryItems) {
+    await createInventoryItem({
+      householdId,
+      roomId: item.roomId ? roomIdByLocalId.get(item.roomId) || null : null,
+      name: item.name,
+      category: item.category,
+      unit: item.unit,
+      currentQuantity: item.currentQuantity,
+      minimumQuantity: item.minimumQuantity ?? null,
+    });
+  }
+
+  const householdsResult = await myHouseholds({ fetchPolicy: "network-only" });
+  const household = householdsResult.data.households[0];
+  return household ? mapHousehold(household, setup.ownerName || user.displayName || "Boss") : null;
+}
+
 export async function bootstrapSqlConnectHousehold(
   seed: SeedSnapshot
 ): Promise<SqlConnectHouseholdSnapshot | null> {
@@ -199,7 +305,7 @@ export async function bootstrapSqlConnectHousehold(
   let household = householdsResult.data.households[0];
 
   if (!household) {
-    await seedHousehold(seed);
+    await createEmptyHousehold(user.displayName || seed.ownerName || "My");
     householdsResult = await myHouseholds({ fetchPolicy: "network-only" });
     household = householdsResult.data.households[0];
   }

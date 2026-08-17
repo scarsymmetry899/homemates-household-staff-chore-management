@@ -64,6 +64,62 @@ exports.addStaffMember = function addStaffMember(dcOrVars, vars) {
 }
 ;
 
+const createHomemateProfileRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateHomemateProfile', inputVars);
+}
+createHomemateProfileRef.operationName = 'CreateHomemateProfile';
+exports.createHomemateProfileRef = createHomemateProfileRef;
+
+exports.createHomemateProfile = function createHomemateProfile(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createHomemateProfileRef(dcInstance, inputVars));
+}
+;
+
+const createRoomZoneRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateRoomZone', inputVars);
+}
+createRoomZoneRef.operationName = 'CreateRoomZone';
+exports.createRoomZoneRef = createRoomZoneRef;
+
+exports.createRoomZone = function createRoomZone(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createRoomZoneRef(dcInstance, inputVars));
+}
+;
+
+const createInventoryItemRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateInventoryItem', inputVars);
+}
+createInventoryItemRef.operationName = 'CreateInventoryItem';
+exports.createInventoryItemRef = createInventoryItemRef;
+
+exports.createInventoryItem = function createInventoryItem(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createInventoryItemRef(dcInstance, inputVars));
+}
+;
+
+const createPayrollProfileRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreatePayrollProfile', inputVars);
+}
+createPayrollProfileRef.operationName = 'CreatePayrollProfile';
+exports.createPayrollProfileRef = createPayrollProfileRef;
+
+exports.createPayrollProfile = function createPayrollProfile(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createPayrollProfileRef(dcInstance, inputVars));
+}
+;
+
 const updateStaffStatusRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();

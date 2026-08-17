@@ -13,6 +13,10 @@ This README will guide you through the process of using the generated JavaScript
   - [*UpsertCurrentUser*](#upsertcurrentuser)
   - [*CreateHousehold*](#createhousehold)
   - [*AddStaffMember*](#addstaffmember)
+  - [*CreateHomemateProfile*](#createhomemateprofile)
+  - [*CreateRoomZone*](#createroomzone)
+  - [*CreateInventoryItem*](#createinventoryitem)
+  - [*CreatePayrollProfile*](#createpayrollprofile)
   - [*UpdateStaffStatus*](#updatestaffstatus)
   - [*UpdateStaffRole*](#updatestaffrole)
   - [*UpdateStaffShift*](#updatestaffshift)
@@ -123,6 +127,31 @@ export interface MyHouseholdsData {
     timezone: string;
     addressLabel?: string | null;
     createdAt: TimestampString;
+    homemateProfiles_on_household: ({
+      id: UUIDString;
+      name: string;
+      relationLabel?: string | null;
+      phone?: string | null;
+      notes?: string | null;
+    } & HomemateProfile_Key)[];
+    roomZones_on_household: ({
+      id: UUIDString;
+      name: string;
+      floorLabel?: string | null;
+      notes?: string | null;
+    } & RoomZone_Key)[];
+    inventoryItems_on_household: ({
+      id: UUIDString;
+      name: string;
+      category: string;
+      unit: string;
+      currentQuantity: number;
+      minimumQuantity?: number | null;
+      room?: {
+        id: UUIDString;
+        name: string;
+      } & RoomZone_Key;
+    } & InventoryItem_Key)[];
     staffMembers_on_household: ({
       id: UUIDString;
       name: string;
@@ -620,6 +649,493 @@ console.log(data.staffMember_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.staffMember_insert);
+});
+```
+
+## CreateHomemateProfile
+You can execute the `CreateHomemateProfile` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createHomemateProfile(vars: CreateHomemateProfileVariables): MutationPromise<CreateHomemateProfileData, CreateHomemateProfileVariables>;
+
+interface CreateHomemateProfileRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateHomemateProfileVariables): MutationRef<CreateHomemateProfileData, CreateHomemateProfileVariables>;
+}
+export const createHomemateProfileRef: CreateHomemateProfileRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createHomemateProfile(dc: DataConnect, vars: CreateHomemateProfileVariables): MutationPromise<CreateHomemateProfileData, CreateHomemateProfileVariables>;
+
+interface CreateHomemateProfileRef {
+  ...
+  (dc: DataConnect, vars: CreateHomemateProfileVariables): MutationRef<CreateHomemateProfileData, CreateHomemateProfileVariables>;
+}
+export const createHomemateProfileRef: CreateHomemateProfileRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createHomemateProfileRef:
+```typescript
+const name = createHomemateProfileRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateHomemateProfile` mutation requires an argument of type `CreateHomemateProfileVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateHomemateProfileVariables {
+  householdId: UUIDString;
+  name: string;
+  relationLabel?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+}
+```
+### Return Type
+Recall that executing the `CreateHomemateProfile` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateHomemateProfileData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateHomemateProfileData {
+  homemateProfile_insert: HomemateProfile_Key;
+}
+```
+### Using `CreateHomemateProfile`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createHomemateProfile, CreateHomemateProfileVariables } from '@homemaker/dataconnect';
+
+// The `CreateHomemateProfile` mutation requires an argument of type `CreateHomemateProfileVariables`:
+const createHomemateProfileVars: CreateHomemateProfileVariables = {
+  householdId: ..., 
+  name: ..., 
+  relationLabel: ..., // optional
+  phone: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `createHomemateProfile()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createHomemateProfile(createHomemateProfileVars);
+// Variables can be defined inline as well.
+const { data } = await createHomemateProfile({ householdId: ..., name: ..., relationLabel: ..., phone: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createHomemateProfile(dataConnect, createHomemateProfileVars);
+
+console.log(data.homemateProfile_insert);
+
+// Or, you can use the `Promise` API.
+createHomemateProfile(createHomemateProfileVars).then((response) => {
+  const data = response.data;
+  console.log(data.homemateProfile_insert);
+});
+```
+
+### Using `CreateHomemateProfile`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createHomemateProfileRef, CreateHomemateProfileVariables } from '@homemaker/dataconnect';
+
+// The `CreateHomemateProfile` mutation requires an argument of type `CreateHomemateProfileVariables`:
+const createHomemateProfileVars: CreateHomemateProfileVariables = {
+  householdId: ..., 
+  name: ..., 
+  relationLabel: ..., // optional
+  phone: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `createHomemateProfileRef()` function to get a reference to the mutation.
+const ref = createHomemateProfileRef(createHomemateProfileVars);
+// Variables can be defined inline as well.
+const ref = createHomemateProfileRef({ householdId: ..., name: ..., relationLabel: ..., phone: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createHomemateProfileRef(dataConnect, createHomemateProfileVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.homemateProfile_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.homemateProfile_insert);
+});
+```
+
+## CreateRoomZone
+You can execute the `CreateRoomZone` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createRoomZone(vars: CreateRoomZoneVariables): MutationPromise<CreateRoomZoneData, CreateRoomZoneVariables>;
+
+interface CreateRoomZoneRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateRoomZoneVariables): MutationRef<CreateRoomZoneData, CreateRoomZoneVariables>;
+}
+export const createRoomZoneRef: CreateRoomZoneRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createRoomZone(dc: DataConnect, vars: CreateRoomZoneVariables): MutationPromise<CreateRoomZoneData, CreateRoomZoneVariables>;
+
+interface CreateRoomZoneRef {
+  ...
+  (dc: DataConnect, vars: CreateRoomZoneVariables): MutationRef<CreateRoomZoneData, CreateRoomZoneVariables>;
+}
+export const createRoomZoneRef: CreateRoomZoneRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createRoomZoneRef:
+```typescript
+const name = createRoomZoneRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateRoomZone` mutation requires an argument of type `CreateRoomZoneVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateRoomZoneVariables {
+  householdId: UUIDString;
+  name: string;
+  floorLabel?: string | null;
+  notes?: string | null;
+}
+```
+### Return Type
+Recall that executing the `CreateRoomZone` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateRoomZoneData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateRoomZoneData {
+  roomZone_insert: RoomZone_Key;
+}
+```
+### Using `CreateRoomZone`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createRoomZone, CreateRoomZoneVariables } from '@homemaker/dataconnect';
+
+// The `CreateRoomZone` mutation requires an argument of type `CreateRoomZoneVariables`:
+const createRoomZoneVars: CreateRoomZoneVariables = {
+  householdId: ..., 
+  name: ..., 
+  floorLabel: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `createRoomZone()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createRoomZone(createRoomZoneVars);
+// Variables can be defined inline as well.
+const { data } = await createRoomZone({ householdId: ..., name: ..., floorLabel: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createRoomZone(dataConnect, createRoomZoneVars);
+
+console.log(data.roomZone_insert);
+
+// Or, you can use the `Promise` API.
+createRoomZone(createRoomZoneVars).then((response) => {
+  const data = response.data;
+  console.log(data.roomZone_insert);
+});
+```
+
+### Using `CreateRoomZone`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createRoomZoneRef, CreateRoomZoneVariables } from '@homemaker/dataconnect';
+
+// The `CreateRoomZone` mutation requires an argument of type `CreateRoomZoneVariables`:
+const createRoomZoneVars: CreateRoomZoneVariables = {
+  householdId: ..., 
+  name: ..., 
+  floorLabel: ..., // optional
+  notes: ..., // optional
+};
+
+// Call the `createRoomZoneRef()` function to get a reference to the mutation.
+const ref = createRoomZoneRef(createRoomZoneVars);
+// Variables can be defined inline as well.
+const ref = createRoomZoneRef({ householdId: ..., name: ..., floorLabel: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createRoomZoneRef(dataConnect, createRoomZoneVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.roomZone_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.roomZone_insert);
+});
+```
+
+## CreateInventoryItem
+You can execute the `CreateInventoryItem` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createInventoryItem(vars: CreateInventoryItemVariables): MutationPromise<CreateInventoryItemData, CreateInventoryItemVariables>;
+
+interface CreateInventoryItemRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateInventoryItemVariables): MutationRef<CreateInventoryItemData, CreateInventoryItemVariables>;
+}
+export const createInventoryItemRef: CreateInventoryItemRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createInventoryItem(dc: DataConnect, vars: CreateInventoryItemVariables): MutationPromise<CreateInventoryItemData, CreateInventoryItemVariables>;
+
+interface CreateInventoryItemRef {
+  ...
+  (dc: DataConnect, vars: CreateInventoryItemVariables): MutationRef<CreateInventoryItemData, CreateInventoryItemVariables>;
+}
+export const createInventoryItemRef: CreateInventoryItemRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createInventoryItemRef:
+```typescript
+const name = createInventoryItemRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateInventoryItem` mutation requires an argument of type `CreateInventoryItemVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateInventoryItemVariables {
+  householdId: UUIDString;
+  roomId?: UUIDString | null;
+  name: string;
+  category: string;
+  unit: string;
+  currentQuantity: number;
+  minimumQuantity?: number | null;
+}
+```
+### Return Type
+Recall that executing the `CreateInventoryItem` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateInventoryItemData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateInventoryItemData {
+  inventoryItem_insert: InventoryItem_Key;
+}
+```
+### Using `CreateInventoryItem`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createInventoryItem, CreateInventoryItemVariables } from '@homemaker/dataconnect';
+
+// The `CreateInventoryItem` mutation requires an argument of type `CreateInventoryItemVariables`:
+const createInventoryItemVars: CreateInventoryItemVariables = {
+  householdId: ..., 
+  roomId: ..., // optional
+  name: ..., 
+  category: ..., 
+  unit: ..., 
+  currentQuantity: ..., 
+  minimumQuantity: ..., // optional
+};
+
+// Call the `createInventoryItem()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createInventoryItem(createInventoryItemVars);
+// Variables can be defined inline as well.
+const { data } = await createInventoryItem({ householdId: ..., roomId: ..., name: ..., category: ..., unit: ..., currentQuantity: ..., minimumQuantity: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createInventoryItem(dataConnect, createInventoryItemVars);
+
+console.log(data.inventoryItem_insert);
+
+// Or, you can use the `Promise` API.
+createInventoryItem(createInventoryItemVars).then((response) => {
+  const data = response.data;
+  console.log(data.inventoryItem_insert);
+});
+```
+
+### Using `CreateInventoryItem`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createInventoryItemRef, CreateInventoryItemVariables } from '@homemaker/dataconnect';
+
+// The `CreateInventoryItem` mutation requires an argument of type `CreateInventoryItemVariables`:
+const createInventoryItemVars: CreateInventoryItemVariables = {
+  householdId: ..., 
+  roomId: ..., // optional
+  name: ..., 
+  category: ..., 
+  unit: ..., 
+  currentQuantity: ..., 
+  minimumQuantity: ..., // optional
+};
+
+// Call the `createInventoryItemRef()` function to get a reference to the mutation.
+const ref = createInventoryItemRef(createInventoryItemVars);
+// Variables can be defined inline as well.
+const ref = createInventoryItemRef({ householdId: ..., roomId: ..., name: ..., category: ..., unit: ..., currentQuantity: ..., minimumQuantity: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createInventoryItemRef(dataConnect, createInventoryItemVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.inventoryItem_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.inventoryItem_insert);
+});
+```
+
+## CreatePayrollProfile
+You can execute the `CreatePayrollProfile` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createPayrollProfile(vars: CreatePayrollProfileVariables): MutationPromise<CreatePayrollProfileData, CreatePayrollProfileVariables>;
+
+interface CreatePayrollProfileRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreatePayrollProfileVariables): MutationRef<CreatePayrollProfileData, CreatePayrollProfileVariables>;
+}
+export const createPayrollProfileRef: CreatePayrollProfileRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createPayrollProfile(dc: DataConnect, vars: CreatePayrollProfileVariables): MutationPromise<CreatePayrollProfileData, CreatePayrollProfileVariables>;
+
+interface CreatePayrollProfileRef {
+  ...
+  (dc: DataConnect, vars: CreatePayrollProfileVariables): MutationRef<CreatePayrollProfileData, CreatePayrollProfileVariables>;
+}
+export const createPayrollProfileRef: CreatePayrollProfileRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createPayrollProfileRef:
+```typescript
+const name = createPayrollProfileRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreatePayrollProfile` mutation requires an argument of type `CreatePayrollProfileVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreatePayrollProfileVariables {
+  householdId: UUIDString;
+  staffId: UUIDString;
+  baseSalary: number;
+  payFrequency: string;
+  deductionPolicy?: string | null;
+}
+```
+### Return Type
+Recall that executing the `CreatePayrollProfile` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreatePayrollProfileData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreatePayrollProfileData {
+  payrollProfile_insert: PayrollProfile_Key;
+}
+```
+### Using `CreatePayrollProfile`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createPayrollProfile, CreatePayrollProfileVariables } from '@homemaker/dataconnect';
+
+// The `CreatePayrollProfile` mutation requires an argument of type `CreatePayrollProfileVariables`:
+const createPayrollProfileVars: CreatePayrollProfileVariables = {
+  householdId: ..., 
+  staffId: ..., 
+  baseSalary: ..., 
+  payFrequency: ..., 
+  deductionPolicy: ..., // optional
+};
+
+// Call the `createPayrollProfile()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createPayrollProfile(createPayrollProfileVars);
+// Variables can be defined inline as well.
+const { data } = await createPayrollProfile({ householdId: ..., staffId: ..., baseSalary: ..., payFrequency: ..., deductionPolicy: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createPayrollProfile(dataConnect, createPayrollProfileVars);
+
+console.log(data.payrollProfile_insert);
+
+// Or, you can use the `Promise` API.
+createPayrollProfile(createPayrollProfileVars).then((response) => {
+  const data = response.data;
+  console.log(data.payrollProfile_insert);
+});
+```
+
+### Using `CreatePayrollProfile`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createPayrollProfileRef, CreatePayrollProfileVariables } from '@homemaker/dataconnect';
+
+// The `CreatePayrollProfile` mutation requires an argument of type `CreatePayrollProfileVariables`:
+const createPayrollProfileVars: CreatePayrollProfileVariables = {
+  householdId: ..., 
+  staffId: ..., 
+  baseSalary: ..., 
+  payFrequency: ..., 
+  deductionPolicy: ..., // optional
+};
+
+// Call the `createPayrollProfileRef()` function to get a reference to the mutation.
+const ref = createPayrollProfileRef(createPayrollProfileVars);
+// Variables can be defined inline as well.
+const ref = createPayrollProfileRef({ householdId: ..., staffId: ..., baseSalary: ..., payFrequency: ..., deductionPolicy: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createPayrollProfileRef(dataConnect, createPayrollProfileVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.payrollProfile_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.payrollProfile_insert);
 });
 ```
 

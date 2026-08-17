@@ -29,6 +29,31 @@ query MyHouseholds @auth(level: USER)
     timezone
     addressLabel
     createdAt
+    homemateProfiles_on_household(limit: 50, orderBy: [{ createdAt: ASC }]) {
+      id
+      name
+      relationLabel
+      phone
+      notes
+    }
+    roomZones_on_household(limit: 100, orderBy: [{ createdAt: ASC }]) {
+      id
+      name
+      floorLabel
+      notes
+    }
+    inventoryItems_on_household(limit: 200, orderBy: [{ name: ASC }]) {
+      id
+      name
+      category
+      unit
+      currentQuantity
+      minimumQuantity
+      room {
+        id
+        name
+      }
+    }
     staffMembers_on_household(limit: 100, orderBy: [{ name: ASC }]) {
       id
       name

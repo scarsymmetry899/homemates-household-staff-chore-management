@@ -28,6 +28,104 @@ mutation AddStaffMember(
   )
 }
 
+mutation CreateHomemateProfile(
+  $householdId: UUID!
+  $name: String!
+  $relationLabel: String
+  $phone: String
+  $notes: String
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  homemateProfile_insert(
+    data: {
+      household: { id: $householdId }
+      name: $name
+      relationLabel: $relationLabel
+      phone: $phone
+      notes: $notes
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation CreateRoomZone(
+  $householdId: UUID!
+  $name: String!
+  $floorLabel: String
+  $notes: String
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  roomZone_insert(
+    data: {
+      household: { id: $householdId }
+      name: $name
+      floorLabel: $floorLabel
+      notes: $notes
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation CreateInventoryItem(
+  $householdId: UUID!
+  $roomId: UUID
+  $name: String!
+  $category: String!
+  $unit: String!
+  $currentQuantity: Float!
+  $minimumQuantity: Float
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  inventoryItem_insert(
+    data: {
+      household: { id: $householdId }
+      room: { id: $roomId }
+      name: $name
+      category: $category
+      unit: $unit
+      currentQuantity: $currentQuantity
+      minimumQuantity: $minimumQuantity
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation CreatePayrollProfile(
+  $householdId: UUID!
+  $staffId: UUID!
+  $baseSalary: Int!
+  $payFrequency: String!
+  $deductionPolicy: String
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  payrollProfile_insert(
+    data: {
+      household: { id: $householdId }
+      staff: { id: $staffId }
+      baseSalary: $baseSalary
+      payFrequency: $payFrequency
+      deductionPolicy: $deductionPolicy
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
 mutation UpdateStaffStatus($staffId: UUID!, $status: String!) @auth(level: USER) @transaction {
   query @redact {
     staffMember(id: $staffId) {
