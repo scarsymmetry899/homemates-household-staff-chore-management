@@ -2,9 +2,11 @@ import { Outlet, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import AppHeader from "./AppHeader";
 import SmartCommandBox from "@/components/SmartCommandBox";
+import { useAppState } from "@/context/AppContext";
 
 const AppLayout = () => {
   const location = useLocation();
+  const { appRole } = useAppState();
   const isStaffProfile = location.pathname.startsWith("/staff/");
 
   return (
@@ -16,7 +18,7 @@ const AppLayout = () => {
       >
         <Outlet />
       </main>
-      <SmartCommandBox />
+      {appRole === "owner" && <SmartCommandBox />}
       <BottomNav />
     </div>
   );

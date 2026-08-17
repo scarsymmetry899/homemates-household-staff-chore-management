@@ -5,6 +5,7 @@ import type {
   HouseholdProfile,
   InventorySetupItem,
   RoomZoneProfile,
+  type AppRole,
   type AppLanguage,
 } from "@/context/AppContext";
 import type { StaffMember } from "@/data/staff";
@@ -21,6 +22,8 @@ export interface HouseholdStateSnapshot {
   inventoryItems?: InventorySetupItem[];
   ownerName: string;
   language?: AppLanguage;
+  appRole?: AppRole;
+  activeStaffId?: string | null;
   isDarkMode: boolean;
   nfcEnabled: boolean;
 }
@@ -84,6 +87,8 @@ export async function subscribeToHouseholdState(
           inventoryItems: data.inventoryItems || [],
           ownerName: data.ownerName || "Boss",
           language: data.language || "en",
+          appRole: data.appRole || "owner",
+          activeStaffId: data.activeStaffId || null,
           isDarkMode: !!data.isDarkMode,
           nfcEnabled: !!data.nfcEnabled,
         });

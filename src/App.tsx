@@ -17,6 +17,7 @@ import InsightsPage from "./pages/InsightsPage";
 import ExpensesPage from "./pages/ExpensesPage";
 import AlertsPage from "./pages/AlertsPage";
 import SettingsPage from "./pages/SettingsPage";
+import StaffWorkspace from "./pages/StaffWorkspace";
 import NotFound from "./pages/NotFound";
 import { onAuthStateChange, isFirebaseConfigured, signOutFirebase } from "@/lib/firebase";
 import { useTelegramPolling } from "@/hooks/useTelegramPolling";
@@ -36,7 +37,7 @@ function AppInner({ onLogout }: { onLogout: () => void }) {
 
   // Global NFC scanning — works on any screen, not just Settings.
   // Toggled from Settings via AppContext's nfcEnabled.
-  const { nfcEnabled, staff, setupComplete } = useAppState();
+  const { appRole, nfcEnabled, staff, setupComplete } = useAppState();
   const { lastEvent, simulateTap } = useNfcAttendance(nfcEnabled && setupComplete);
 
   // Expose simulateTap to SettingsPage via the module-level bridge
@@ -54,7 +55,8 @@ function AppInner({ onLogout }: { onLogout: () => void }) {
       <HashRouter>
         <Routes>
           <Route element={<AppLayout />}>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={appRole === "staff" ? <StaffWorkspace /> : <Index />} />
+            <Route path="/my-day" element={<StaffWorkspace />} />
             <Route path="/staff" element={<StaffDirectory />} />
             <Route path="/staff/:id" element={<StaffProfile />} />
             <Route path="/tasks" element={<TasksPage />} />

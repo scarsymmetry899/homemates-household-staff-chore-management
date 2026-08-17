@@ -33,6 +33,7 @@ import {
 } from "@homemaker/dataconnect";
 
 export type AppLanguage = "en" | "hi" | "te" | "kn" | "ml";
+export type AppRole = "owner" | "staff";
 
 export interface Expense {
   id: string;
@@ -117,10 +118,14 @@ interface AppState {
   ownerName: string;
   ownerLocation: string;
   language: AppLanguage;
+  appRole: AppRole;
+  activeStaffId: string | null;
   isDarkMode: boolean;
   nfcEnabled: boolean;
   setOwnerName: (name: string) => void;
   setLanguage: (language: AppLanguage) => void;
+  setAppRole: (role: AppRole) => void;
+  setActiveStaffId: (staffId: string | null) => void;
   setDarkMode: (v: boolean) => void;
   setNfcEnabled: (v: boolean) => void;
   toggleTask: (staffId: string, taskIndex: number) => void;
@@ -223,6 +228,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const saved = localStorage.getItem("homemaker_language");
     return saved === "hi" || saved === "te" || saved === "kn" || saved === "ml" ? saved : "en";
   });
+  const [appRole, setAppRoleState] = useState<AppRole>(() => {
+    return localStorage.getItem("homemaker_app_role") === "staff" ? "staff" : "owner";
+  });
+  const [activeStaffId, setActiveStaffIdState] = useState<string | null>(() => {
+    return localStorage.getItem("homemaker_active_staff_id") || null;
+  });
   const [isDarkMode, setIsDarkModeState] = useState<boolean>(() => {
     return localStorage.getItem("homemaker_dark_mode") === "true";
   });
@@ -241,6 +252,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     inventoryItems,
     ownerName,
     language,
+    appRole,
+    activeStaffId,
     isDarkMode,
     nfcEnabled,
   };
@@ -283,10 +296,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setInventoryItems(state.inventoryItems || []);
         setOwnerNameState(state.ownerName);
         setLanguageState(state.language || "en");
+        setAppRoleState(state.appRole || "owner");
+        setActiveStaffIdState(state.activeStaffId || null);
         setIsDarkModeState(state.isDarkMode);
         setNfcEnabledState(state.nfcEnabled);
         localStorage.setItem("homemaker_owner_name", state.ownerName);
         localStorage.setItem("homemaker_language", state.language || "en");
+        localStorage.setItem("homemaker_app_role", state.appRole || "owner");
+        if (state.activeStaffId) localStorage.setItem("homemaker_active_staff_id", state.activeStaffId);
         localStorage.setItem("homemaker_dark_mode", String(state.isDarkMode));
         localStorage.setItem("homemaker_nfc_enabled", String(state.nfcEnabled));
         setHasLoadedRemoteState(true);
@@ -389,6 +406,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setLanguageState(nextLanguage);
     localStorage.setItem("homemaker_language", nextLanguage);
   }, []);
+
+  const setAppRole = useCallback((role: AppRole) => {
+    setAppRoleState(role);
+    localStorage.setItem("homemaker_app_role", role);
+  }, []);
+
+  const setActiveStaffId = useCallback((staffId: string | null) => {
+    setActiveStaffIdState(staffId);
+    if (staffId) localStorage.setItem("homemaker_active_staff_id", staffId);
+    else localStorage.removeItem("homemaker_active_staff_id");
+  }, []);
+
+  useEffect(() => {
+    if (appRole !== "staff") return;
+    if (activeStaffId && staff.some((member) => member.id === activeStaffId)) return;
+    const firstStaffId = staff[0]?.id || null;
+    if (firstStaffId) setActiveStaffId(firstStaffId);
+  }, [activeStaffId, appRole, setActiveStaffId, staff]);
 
   const setDarkMode = useCallback((v: boolean) => {
     setIsDarkModeState(v);
@@ -912,6 +947,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           inventoryItems: setup.inventoryItems,
           ownerName: setup.ownerName,
           language,
+          appRole,
+          activeStaffId,
           isDarkMode,
           nfcEnabled,
         };
@@ -921,7 +958,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         });
       });
     }
-  }, [isDarkMode, language, nfcEnabled]);
+  }, [activeStaffId, appRole, isDarkMode, language, nfcEnabled]);
 
   if (isFirebaseConfigured && (!hasLoadedRemoteState || !hasBootstrappedSql)) {
     return (
@@ -945,8 +982,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     <AppContext.Provider
       value={{
         staff, expenses, alerts, setupComplete, householdProfile, homemates, rooms, inventoryItems,
-        ownerName, ownerLocation, language, isDarkMode, nfcEnabled,
-        setOwnerName, setLanguage, setDarkMode, setNfcEnabled, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
+        ownerName, ownerLocation, language, appRole, activeStaffId, isDarkMode, nfcEnabled,
+        setOwnerName, setLanguage, setAppRole, setActiveStaffId, setDarkMode, setNfcEnabled, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
         addExpense, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
         markAttendance, registerStaffNfcTag, recordNfcTap, reassignTask, extendTaskDeadlineByName,

@@ -54,7 +54,22 @@ const appLanguages: { code: AppLanguage; label: string }[] = [
 ];
 
 const SettingsPage = ({ onLogout }: SettingsPageProps) => {
-  const { ownerName, setOwnerName, language, setLanguage, isDarkMode, setDarkMode, staff, nfcEnabled, setNfcEnabled, registerStaffNfcTag } = useAppState();
+  const {
+    ownerName,
+    setOwnerName,
+    language,
+    setLanguage,
+    appRole,
+    setAppRole,
+    activeStaffId,
+    setActiveStaffId,
+    isDarkMode,
+    setDarkMode,
+    staff,
+    nfcEnabled,
+    setNfcEnabled,
+    registerStaffNfcTag,
+  } = useAppState();
   const { t } = useI18n();
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
@@ -216,6 +231,47 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+        </AnimatedCard>
+
+        <AnimatedCard delay={0.05} className="glass-card rounded-2xl p-5 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Shield size={18} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="label-sm text-muted-foreground">View Mode</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Owner sees the full household. Staff mode only shows the selected staff member's daily workspace.
+              </p>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {(["owner", "staff"] as const).map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setAppRole(role)}
+                    className={`rounded-xl px-3 py-2 text-sm font-semibold capitalize transition-all ${
+                      appRole === role ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
+                    }`}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+              {appRole === "staff" && (
+                <select
+                  value={activeStaffId || staff[0]?.id || ""}
+                  onChange={(event) => setActiveStaffId(event.target.value || null)}
+                  className="mt-3 w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
+                >
+                  {staff.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name} - {member.role}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         </AnimatedCard>
