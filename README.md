@@ -127,7 +127,7 @@ Built for mobile-first use — the entire UI is optimised for phone screens with
 | Animations | Framer Motion |
 | Routing | React Router v6 |
 | State | React Context + useState |
-| Backend | Firebase (Auth + Firestore + Cloud Functions) |
+| Backend | Firebase Auth + Firebase SQL Connect/Postgres + Firestore compatibility bridge + Cloud Functions |
 | AI | Google Gemini 1.5 Flash (chat + vision) |
 | Messaging | Telegram Bot API |
 | Attendance | Web NFC API + Google Sheets (Apps Script webhook) |
@@ -207,6 +207,18 @@ All three integrations are optional — the app runs in demo mode if keys are no
    - Your production domain
 4. Create a **Firestore** database (start in test mode for development)
 5. Copy your project config keys into `.env.local`
+
+### Firebase SQL Connect / Postgres Setup
+
+The production data model lives in `dataconnect/`. It is intended to become the source of truth for households, homemates, staff, attendance, payroll, expenses, inventory, NFC tags, alerts, and AI audit logs.
+
+```bash
+# After installing Firebase CLI and enabling SQL Connect for the project
+npm run dataconnect:init-sdk
+npm run dataconnect:deploy
+```
+
+The generated web SDK should land in `src/lib/dataconnect-generated`. Until those generated SDK files exist, the current app can still run through the temporary Firestore compatibility bridge.
 
 ### Cloud Functions (optional)
 The `functions/` directory contains Cloud Functions for:

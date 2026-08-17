@@ -1,0 +1,341 @@
+mutation AddStaffMember(
+  $householdId: UUID!
+  $name: String!
+  $role: String!
+  $department: String!
+  $phone: String
+  $salary: Int!
+  $shiftStart: String
+  $shiftEnd: String
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  staffMember_insert(
+    data: {
+      household: { id: $householdId }
+      name: $name
+      role: $role
+      department: $department
+      phone: $phone
+      salary: $salary
+      shiftStart: $shiftStart
+      shiftEnd: $shiftEnd
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation UpdateStaffStatus($staffId: UUID!, $status: String!) @auth(level: USER) @transaction {
+  query @redact {
+    staffMember(id: $staffId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this staff member")
+      }
+    }
+  }
+  staffMember_update(id: $staffId, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateStaffRole($staffId: UUID!, $role: String!) @auth(level: USER) @transaction {
+  query @redact {
+    staffMember(id: $staffId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this staff member")
+      }
+    }
+  }
+  staffMember_update(id: $staffId, data: { role: $role, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateStaffShift($staffId: UUID!, $shiftStart: String!, $shiftEnd: String!) @auth(level: USER) @transaction {
+  query @redact {
+    staffMember(id: $staffId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this staff member")
+      }
+    }
+  }
+  staffMember_update(
+    id: $staffId
+    data: { shiftStart: $shiftStart, shiftEnd: $shiftEnd, updatedAt_expr: "request.time" }
+  )
+}
+
+mutation UpdateStaffPhoto($staffId: UUID!, $photoUrl: String!) @auth(level: USER) @transaction {
+  query @redact {
+    staffMember(id: $staffId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this staff member")
+      }
+    }
+  }
+  staffMember_update(id: $staffId, data: { photoUrl: $photoUrl, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateStaffTelegramId($staffId: UUID!, $telegramChatId: String!) @auth(level: USER) @transaction {
+  query @redact {
+    staffMember(id: $staffId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this staff member")
+      }
+    }
+  }
+  staffMember_update(id: $staffId, data: { telegramChatId: $telegramChatId, updatedAt_expr: "request.time" })
+}
+
+mutation RemoveStaffMember($staffId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    staffMember(id: $staffId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this staff member")
+      }
+    }
+  }
+  staffMember_delete(id: $staffId)
+}
+
+mutation AddTaskInstance(
+  $householdId: UUID!
+  $assignedStaffId: UUID
+  $title: String!
+  $dueAt: Timestamp
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  taskInstance_insert(
+    data: {
+      household: { id: $householdId }
+      assignedStaff: { id: $assignedStaffId }
+      title: $title
+      dueAt: $dueAt
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation CompleteTaskInstance($taskId: UUID!, $source: String) @auth(level: USER) @transaction {
+  query @redact {
+    taskInstance(id: $taskId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this task")
+      }
+    }
+  }
+  taskInstance_update(
+    id: $taskId
+    data: {
+      status: "completed"
+      completedAt_expr: "request.time"
+      completionSource: $source
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation SetTaskCompletion($taskId: UUID!, $status: String!, $completedAt: Timestamp, $source: String) @auth(level: USER) @transaction {
+  query @redact {
+    taskInstance(id: $taskId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this task")
+      }
+    }
+  }
+  taskInstance_update(
+    id: $taskId
+    data: {
+      status: $status
+      completedAt: $completedAt
+      completionSource: $source
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation UpdateTaskDueDate($taskId: UUID!, $dueAt: Timestamp) @auth(level: USER) @transaction {
+  query @redact {
+    taskInstance(id: $taskId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this task")
+      }
+    }
+  }
+  taskInstance_update(id: $taskId, data: { dueAt: $dueAt, updatedAt_expr: "request.time" })
+}
+
+mutation ReassignTaskInstance($taskId: UUID!, $assignedStaffId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    taskInstance(id: $taskId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this task")
+      }
+    }
+  }
+  taskInstance_update(
+    id: $taskId
+    data: { assignedStaff: { id: $assignedStaffId }, status: "pending", updatedAt_expr: "request.time" }
+  )
+}
+
+mutation DeleteTaskInstance($taskId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    taskInstance(id: $taskId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this task")
+      }
+    }
+  }
+  taskInstance_delete(id: $taskId)
+}
+
+mutation RecordAttendanceEvent(
+  $householdId: UUID!
+  $staffId: UUID!
+  $eventType: String!
+  $source: String!
+  $detail: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  attendanceEvent_insert(
+    data: {
+      household: { id: $householdId }
+      staff: { id: $staffId }
+      eventType: $eventType
+      source: $source
+      detail: $detail
+      occurredAt_expr: "request.time"
+    }
+  )
+}
+
+mutation AddExpenseEntry(
+  $householdId: UUID!
+  $staffId: UUID
+  $category: String!
+  $amount: Int!
+  $description: String!
+  $receiptUrl: String
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  expenseEntry_insert(
+    data: {
+      household: { id: $householdId }
+      staff: { id: $staffId }
+      category: $category
+      amount: $amount
+      description: $description
+      receiptUrl: $receiptUrl
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation UpdateExpenseEntry(
+  $expenseId: UUID!
+  $category: String!
+  $amount: Int!
+  $description: String!
+) @auth(level: USER) @transaction {
+  query @redact {
+    expenseEntry(id: $expenseId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this expense")
+      }
+    }
+  }
+  expenseEntry_update(
+    id: $expenseId
+    data: { category: $category, amount: $amount, description: $description, updatedAt_expr: "request.time" }
+  )
+}
+
+mutation DeleteExpenseEntry($expenseId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    expenseEntry(id: $expenseId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this expense")
+      }
+    }
+  }
+  expenseEntry_delete(id: $expenseId)
+}
+
+mutation DismissAlert($alertId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    alert(id: $alertId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this alert")
+      }
+    }
+  }
+  alert_update(id: $alertId, data: { status: "resolved", resolvedAt_expr: "request.time" })
+}
+
+mutation RegisterNfcTag(
+  $householdId: UUID!
+  $tagUid: String!
+  $tagType: String!
+  $label: String!
+  $roomId: UUID
+  $staffId: UUID
+  $taskTemplateId: UUID
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  nfcTag_insert(
+    data: {
+      household: { id: $householdId }
+      room: { id: $roomId }
+      staff: { id: $staffId }
+      taskTemplate: { id: $taskTemplateId }
+      tagUid: $tagUid
+      tagType: $tagType
+      label: $label
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation RecordNfcTap(
+  $householdId: UUID!
+  $tagId: UUID!
+  $staffId: UUID
+  $roomId: UUID
+  $taskId: UUID
+  $actionType: String!
+  $deviceLabel: String
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  nfcTapEvent_insert(
+    data: {
+      household: { id: $householdId }
+      tag: { id: $tagId }
+      staff: { id: $staffId }
+      room: { id: $roomId }
+      task: { id: $taskId }
+      actionType: $actionType
+      deviceLabel: $deviceLabel
+      occurredAt_expr: "request.time"
+    }
+  )
+}

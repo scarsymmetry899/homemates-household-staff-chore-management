@@ -10,7 +10,10 @@ const AppLayout = () => {
   return (
     <div className="h-[100dvh] bg-background flex flex-col max-w-md mx-auto relative overflow-hidden">
       {!isStaffProfile && <AppHeader />}
-      <main className="flex-1 pb-24 overflow-y-auto overflow-x-hidden overscroll-none" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <main
+        className="app-shell-scroll flex-1 pb-24 overflow-y-auto overflow-x-hidden overscroll-none"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         <Outlet />
       </main>
       <SmartCommandBox />

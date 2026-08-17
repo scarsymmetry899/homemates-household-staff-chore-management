@@ -1,0 +1,228 @@
+type User @table(key: "uid") {
+  uid: String!
+  displayName: String
+  email: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type Household @table {
+  name: String!
+  owner: User!
+  timezone: String! @default(value: "Asia/Kolkata")
+  addressLabel: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type HouseholdMember @table {
+  household: Household!
+  user: User!
+  role: String! @default(value: "owner")
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type HomemateProfile @table {
+  household: Household!
+  name: String!
+  relationLabel: String
+  phone: String
+  notes: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type StaffMember @table {
+  household: Household!
+  name: String!
+  role: String!
+  department: String!
+  phone: String
+  photoUrl: String
+  salary: Int! @default(value: 0)
+  status: String! @default(value: "off-duty")
+  locationLabel: String
+  shiftStart: String
+  shiftEnd: String
+  reliabilityScore: Float! @default(value: 100)
+  punctualityScore: Float! @default(value: 100)
+  telegramChatId: String
+  notes: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type StaffSkill @table {
+  staff: StaffMember!
+  name: String!
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type RoomZone @table {
+  household: Household!
+  name: String!
+  floorLabel: String
+  notes: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type TaskTemplate @table {
+  household: Household!
+  room: RoomZone
+  name: String!
+  category: String!
+  defaultFrequency: String
+  requiresNfcProof: Boolean! @default(value: false)
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type TaskInstance @table {
+  household: Household!
+  template: TaskTemplate
+  assignedStaff: StaffMember
+  title: String!
+  status: String! @default(value: "pending")
+  dueAt: Timestamp
+  completedAt: Timestamp
+  completionSource: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type AttendanceEvent @table {
+  household: Household!
+  staff: StaffMember!
+  eventType: String!
+  source: String!
+  detail: String
+  occurredAt: Timestamp! @default(expr: "request.time")
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type PayrollProfile @table {
+  household: Household!
+  staff: StaffMember!
+  baseSalary: Int! @default(value: 0)
+  payFrequency: String! @default(value: "monthly")
+  deductionPolicy: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type PayrollRun @table {
+  household: Household!
+  staff: StaffMember!
+  monthLabel: String!
+  baseSalary: Int! @default(value: 0)
+  deductions: Int! @default(value: 0)
+  advances: Int! @default(value: 0)
+  netPay: Int! @default(value: 0)
+  status: String! @default(value: "draft")
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type ExpenseEntry @table {
+  household: Household!
+  staff: StaffMember
+  category: String!
+  amount: Int!
+  description: String!
+  receiptUrl: String
+  status: String! @default(value: "approved")
+  spentAt: Timestamp! @default(expr: "request.time")
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type InventoryItem @table {
+  household: Household!
+  room: RoomZone
+  name: String!
+  category: String!
+  unit: String!
+  currentQuantity: Float! @default(value: 0)
+  minimumQuantity: Float
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type InventoryMovement @table {
+  household: Household!
+  item: InventoryItem!
+  movementType: String!
+  quantity: Float!
+  source: String!
+  notes: String
+  occurredAt: Timestamp! @default(expr: "request.time")
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type NfcTag @table {
+  household: Household!
+  room: RoomZone
+  staff: StaffMember
+  taskTemplate: TaskTemplate
+  tagUid: String!
+  tagType: String!
+  label: String!
+  isActive: Boolean! @default(value: true)
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type NfcTapEvent @table {
+  household: Household!
+  tag: NfcTag!
+  staff: StaffMember
+  room: RoomZone
+  task: TaskInstance
+  actionType: String!
+  verificationStatus: String! @default(value: "recorded")
+  deviceLabel: String
+  occurredAt: Timestamp! @default(expr: "request.time")
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type Alert @table {
+  household: Household!
+  staff: StaffMember
+  task: TaskInstance
+  alertType: String!
+  severity: String!
+  title: String!
+  description: String!
+  status: String! @default(value: "active")
+  createdAt: Timestamp! @default(expr: "request.time")
+  resolvedAt: Timestamp
+}
+
+type AiConversation @table {
+  household: Household!
+  user: User!
+  title: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type AiMessage @table {
+  conversation: AiConversation!
+  role: String!
+  content: String!
+  groundedContextHash: String
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type AiActionLog @table {
+  household: Household!
+  conversation: AiConversation
+  user: User!
+  actionType: String!
+  status: String! @default(value: "proposed")
+  inputJson: String
+  resultJson: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}

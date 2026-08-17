@@ -1,5 +1,30 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { staffMembers as initialStaff, type StaffMember, type StaffStatus } from "@/data/staff";
+import {
+  saveHouseholdState,
+  subscribeToHouseholdState,
+  type HouseholdStateSnapshot,
+} from "@/lib/householdStore";
+import { bootstrapSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
+import {
+  addExpenseEntry as sqlAddExpenseEntry,
+  addStaffMember as sqlAddStaffMember,
+  addTaskInstance as sqlAddTaskInstance,
+  deleteExpenseEntry as sqlDeleteExpenseEntry,
+  deleteTaskInstance as sqlDeleteTaskInstance,
+  dismissAlert as sqlDismissAlert,
+  recordAttendanceEvent as sqlRecordAttendanceEvent,
+  reassignTaskInstance as sqlReassignTaskInstance,
+  removeStaffMember as sqlRemoveStaffMember,
+  setTaskCompletion as sqlSetTaskCompletion,
+  updateExpenseEntry as sqlUpdateExpenseEntry,
+  updateStaffPhoto as sqlUpdateStaffPhoto,
+  updateStaffRole as sqlUpdateStaffRole,
+  updateStaffShift as sqlUpdateStaffShift,
+  updateStaffStatus as sqlUpdateStaffStatus,
+  updateStaffTelegramId as sqlUpdateStaffTelegramId,
+  updateTaskDueDate as sqlUpdateTaskDueDate,
+} from "@homemaker/dataconnect";
 
 export interface Expense {
   id: string;
@@ -114,6 +139,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
+  const [sqlHouseholdId, setSqlHouseholdId] = useState<string | null>(null);
+  const [hasLoadedRemoteState, setHasLoadedRemoteState] = useState(false);
+  const isApplyingRemoteStateRef = useRef(false);
+  const lastSavedStateRef = useRef("");
   const [ownerName, setOwnerNameState] = useState<string>(() => {
     return localStorage.getItem("homemaker_owner_name") || "Boss";
   });
@@ -125,9 +154,116 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return localStorage.getItem("homemaker_nfc_enabled") === "true";
   });
 
+  const currentHouseholdState: HouseholdStateSnapshot = {
+    staff,
+    expenses,
+    alerts,
+    ownerName,
+    isDarkMode,
+    nfcEnabled,
+  };
+  const currentHouseholdStateJson = JSON.stringify(currentHouseholdState);
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+
+    subscribeToHouseholdState(
+      (state) => {
+        if (cancelled) return;
+        isApplyingRemoteStateRef.current = true;
+        lastSavedStateRef.current = JSON.stringify(state);
+        setStaff(state.staff);
+        setExpenses(state.expenses);
+        setAlerts(state.alerts);
+        setOwnerNameState(state.ownerName);
+        setIsDarkModeState(state.isDarkMode);
+        setNfcEnabledState(state.nfcEnabled);
+        localStorage.setItem("homemaker_owner_name", state.ownerName);
+        localStorage.setItem("homemaker_dark_mode", String(state.isDarkMode));
+        localStorage.setItem("homemaker_nfc_enabled", String(state.nfcEnabled));
+        setHasLoadedRemoteState(true);
+        queueMicrotask(() => {
+          isApplyingRemoteStateRef.current = false;
+        });
+      },
+      () => {
+        if (cancelled) return;
+        setHasLoadedRemoteState(true);
+        lastSavedStateRef.current = currentHouseholdStateJson;
+        saveHouseholdState(currentHouseholdState).catch((error) => {
+          console.warn("Unable to seed Firebase household state", error);
+        });
+      },
+      (error) => {
+        console.warn("Firebase household sync unavailable", error);
+        setHasLoadedRemoteState(true);
+      }
+    ).then((unsub) => {
+      unsubscribe = unsub;
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedRemoteState || isApplyingRemoteStateRef.current) return;
+    if (lastSavedStateRef.current === currentHouseholdStateJson) return;
+
+    const timeout = setTimeout(() => {
+      lastSavedStateRef.current = currentHouseholdStateJson;
+      saveHouseholdState(currentHouseholdState).catch((error) => {
+        console.warn("Unable to save Firebase household state", error);
+      });
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [currentHouseholdStateJson, hasLoadedRemoteState]);
+
+  useEffect(() => {
+    if (!hasLoadedRemoteState) return;
+
+    let cancelled = false;
+    bootstrapSqlConnectHousehold({
+      staff,
+      expenses,
+      alerts,
+      ownerName,
+    })
+      .then((snapshot) => {
+        if (cancelled || !snapshot) return;
+        isApplyingRemoteStateRef.current = true;
+        setStaff(snapshot.staff);
+        setExpenses(snapshot.expenses);
+        setAlerts(snapshot.alerts);
+        setOwnerNameState(snapshot.ownerName);
+        setSqlHouseholdId(snapshot.householdId);
+        queueMicrotask(() => {
+          isApplyingRemoteStateRef.current = false;
+        });
+      })
+      .catch((error) => {
+        console.warn("Firebase SQL Connect household bootstrap unavailable", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasLoadedRemoteState]);
+
+  const persistSql = useCallback((operation: () => Promise<unknown>) => {
+    if (!sqlHouseholdId) return;
+    operation().catch((error) => {
+      console.warn("SQL Connect persistence failed", error);
+    });
+  }, [sqlHouseholdId]);
 
   const setOwnerName = useCallback((name: string) => {
     setOwnerNameState(name);
@@ -170,56 +306,123 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const toggleTask = useCallback((staffId: string, taskIndex: number) => {
+    let taskId: string | undefined;
+    let nextDone = false;
     setStaff((prev) =>
-      prev.map((s) =>
-        s.id === staffId
-          ? { ...s, assignments: s.assignments.map((t, i) => (i === taskIndex ? { ...t, done: !t.done } : t)) }
-          : s
-      )
+      prev.map((s) => {
+        if (s.id !== staffId) return s;
+        return {
+          ...s,
+          assignments: s.assignments.map((t, i) => {
+            if (i !== taskIndex) return t;
+            taskId = t.id;
+            nextDone = !t.done;
+            return { ...t, done: nextDone };
+          }),
+        };
+      })
     );
-  }, []);
+    if (taskId) {
+      persistSql(() => sqlSetTaskCompletion({
+        taskId,
+        status: nextDone ? "completed" : "pending",
+        completedAt: nextDone ? new Date().toISOString() : null,
+        source: "app",
+      }));
+    }
+  }, [persistSql]);
 
   const updateStaffStatus = useCallback((staffId: string, status: StaffStatus) => {
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, status } : s)));
-  }, []);
+    persistSql(() => sqlUpdateStaffStatus({ staffId, status }));
+  }, [persistSql]);
 
   const updateStaffRole = useCallback((staffId: string, role: string) => {
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, role } : s)));
-  }, []);
+    persistSql(() => sqlUpdateStaffRole({ staffId, role }));
+  }, [persistSql]);
 
   const updateStaffShift = useCallback((staffId: string, shiftStart: string, shiftEnd: string) => {
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, shiftStart, shiftEnd } : s)));
-  }, []);
+    persistSql(() => sqlUpdateStaffShift({ staffId, shiftStart, shiftEnd }));
+  }, [persistSql]);
 
   const addExpense = useCallback((expense: Omit<Expense, "id">) => {
-    setExpenses((prev) => [{ ...expense, id: `e${Date.now()}` }, ...prev]);
-  }, []);
+    const tempId = `e${Date.now()}`;
+    setExpenses((prev) => [{ ...expense, id: tempId }, ...prev]);
+    persistSql(async () => {
+      const staffId = expense.staffName ? staff.find((s) => s.name === expense.staffName)?.id : null;
+      const result = await sqlAddExpenseEntry({
+        householdId: sqlHouseholdId!,
+        staffId,
+        category: expense.category,
+        amount: expense.amount,
+        description: expense.description,
+        receiptUrl: null,
+      });
+      setExpenses((prev) => prev.map((e) => (
+        e.id === tempId ? { ...e, id: result.data.expenseEntry_insert.id } : e
+      )));
+    });
+  }, [persistSql, sqlHouseholdId, staff]);
 
   const editExpense = useCallback((id: string, updates: Partial<Omit<Expense, "id">>) => {
+    const current = expenses.find((e) => e.id === id);
     setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
-  }, []);
+    if (current) {
+      persistSql(() => sqlUpdateExpenseEntry({
+        expenseId: id,
+        category: updates.category || current.category,
+        amount: updates.amount ?? current.amount,
+        description: updates.description || current.description,
+      }));
+    }
+  }, [expenses, persistSql]);
 
   const deleteExpense = useCallback((id: string) => {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
-  }, []);
+    persistSql(() => sqlDeleteExpenseEntry({ expenseId: id }));
+  }, [persistSql]);
 
   const dismissAlert = useCallback((alertId: string) => {
     setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, dismissed: true } : a)));
-  }, []);
+    persistSql(() => sqlDismissAlert({ alertId }));
+  }, [persistSql]);
 
   const addTask = useCallback((staffId: string, task: string, dueDate?: string) => {
+    const tempId = `t${Date.now()}`;
     setStaff((prev) =>
       prev.map((s) =>
-        s.id === staffId ? { ...s, assignments: [...s.assignments, { task, done: false, dueDate }] } : s
+        s.id === staffId ? { ...s, assignments: [...s.assignments, { id: tempId, task, done: false, dueDate }] } : s
       )
     );
-  }, []);
+    persistSql(async () => {
+      const result = await sqlAddTaskInstance({
+        householdId: sqlHouseholdId!,
+        assignedStaffId: staffId,
+        title: task,
+        dueAt: dueDate ? `${dueDate}T00:00:00.000Z` : null,
+      });
+      setStaff((prev) => prev.map((s) => (
+        s.id === staffId
+          ? {
+              ...s,
+              assignments: s.assignments.map((assignment) => (
+                assignment.id === tempId ? { ...assignment, id: result.data.taskInstance_insert.id } : assignment
+              )),
+            }
+          : s
+      )));
+    });
+  }, [persistSql, sqlHouseholdId]);
 
   const removeStaff = useCallback((staffId: string) => {
     setStaff((prev) => prev.filter((s) => s.id !== staffId));
-  }, []);
+    persistSql(() => sqlRemoveStaffMember({ staffId }));
+  }, [persistSql]);
 
   const deleteTask = useCallback((staffId: string, taskIndex: number) => {
+    const taskId = staff.find((s) => s.id === staffId)?.assignments[taskIndex]?.id;
     setStaff((prev) =>
       prev.map((s) =>
         s.id === staffId
@@ -227,12 +430,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           : s
       )
     );
-  }, []);
+    if (taskId) persistSql(() => sqlDeleteTaskInstance({ taskId }));
+  }, [persistSql, staff]);
 
   const addStaff = useCallback((member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => {
+    const tempId = `s${Date.now()}`;
     const newMember: StaffMember = {
       ...member,
-      id: `s${Date.now()}`,
+      id: tempId,
       reliabilityScore: 100,
       punctualityScore: 100,
       skills: [],
@@ -246,7 +451,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       },
     };
     setStaff((prev) => [...prev, newMember]);
-  }, []);
+    persistSql(async () => {
+      const result = await sqlAddStaffMember({
+        householdId: sqlHouseholdId!,
+        name: member.name,
+        role: member.role,
+        department: member.department,
+        phone: member.phone || null,
+        salary: member.salary,
+        shiftStart: member.shiftStart,
+        shiftEnd: member.shiftEnd,
+      });
+      setStaff((prev) => prev.map((s) => (
+        s.id === tempId ? { ...s, id: result.data.staffMember_insert.id } : s
+      )));
+    });
+  }, [persistSql, sqlHouseholdId]);
 
   const addDeduction = useCallback((staffId: string, amount: number, _reason: string) => {
     setStaff((prev) =>
@@ -267,9 +487,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateStaffPhoto = useCallback((staffId: string, photoUrl: string) => {
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, photo: photoUrl } : s)));
-  }, []);
+    persistSql(() => sqlUpdateStaffPhoto({ staffId, photoUrl }));
+  }, [persistSql]);
 
   const updateTaskDueDate = useCallback((staffId: string, taskIndex: number, newDueDate: string) => {
+    const taskId = staff.find((s) => s.id === staffId)?.assignments[taskIndex]?.id;
     setStaff((prev) =>
       prev.map((s) =>
         s.id === staffId
@@ -282,7 +504,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           : s
       )
     );
-  }, []);
+    if (taskId) {
+      persistSql(() => sqlUpdateTaskDueDate({
+        taskId,
+        dueAt: `${newDueDate}T00:00:00.000Z`,
+      }));
+    }
+  }, [persistSql, staff]);
 
   const addAlert = useCallback((alert: Omit<Alert, "id" | "dismissed">) => {
     setAlerts((prev) => [{ ...alert, id: `a${Date.now()}`, dismissed: false }, ...prev]);
@@ -290,7 +518,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateStaffTelegramId = useCallback((staffId: string, telegramChatId: string) => {
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, telegramChatId } : s)));
-  }, []);
+    persistSql(() => sqlUpdateStaffTelegramId({ staffId, telegramChatId }));
+  }, [persistSql]);
 
   const markAttendance = useCallback((staffId: string, type: string, detail: string) => {
     const now = new Date();
@@ -303,9 +532,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           : s
       )
     );
-  }, []);
+    persistSql(() => sqlRecordAttendanceEvent({
+      householdId: sqlHouseholdId!,
+      staffId,
+      eventType: type,
+      source: "app",
+      detail,
+    }));
+  }, [persistSql, sqlHouseholdId]);
 
   const reassignTask = useCallback((fromStaffId: string, taskIndex: number, toStaffId: string) => {
+    const taskId = staff.find((s) => s.id === fromStaffId)?.assignments[taskIndex]?.id;
     setStaff((prev) => {
       const fromStaff = prev.find((s) => s.id === fromStaffId);
       if (!fromStaff) return prev;
@@ -321,7 +558,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return s;
       });
     });
-  }, []);
+    if (taskId) persistSql(() => sqlReassignTaskInstance({ taskId, assignedStaffId: toStaffId }));
+  }, [persistSql, staff]);
 
   const extendTaskDeadlineByName = useCallback((staffId: string, taskName: string, days = 7) => {
     setStaff((prev) =>

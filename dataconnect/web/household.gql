@@ -1,0 +1,85 @@
+mutation UpsertCurrentUser($displayName: String, $email: String) @auth(level: USER) {
+  user_upsert(
+    data: {
+      uid_expr: "auth.uid"
+      displayName: $displayName
+      email: $email
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation CreateHousehold($name: String!, $timezone: String!, $addressLabel: String) @auth(level: USER) @transaction {
+  user_upsert(data: { uid_expr: "auth.uid", updatedAt_expr: "request.time" })
+  household_insert(
+    data: {
+      name: $name
+      timezone: $timezone
+      addressLabel: $addressLabel
+      owner: { uid_expr: "auth.uid" }
+    }
+  )
+}
+
+query MyHouseholds @auth(level: USER)
+  @refresh(onMutationExecuted: { operation: "CreateHousehold", condition: "mutation.auth.uid == request.auth.uid" }) {
+  households(where: { ownerUid: { eq_expr: "auth.uid" } }, orderBy: [{ createdAt: DESC }]) {
+    id
+    name
+    timezone
+    addressLabel
+    createdAt
+    staffMembers_on_household(limit: 100, orderBy: [{ name: ASC }]) {
+      id
+      name
+      role
+      department
+      phone
+      photoUrl
+      salary
+      status
+      locationLabel
+      shiftStart
+      shiftEnd
+      reliabilityScore
+      punctualityScore
+      telegramChatId
+      notes
+    }
+    taskInstances_on_household(limit: 100, orderBy: [{ createdAt: DESC }]) {
+      id
+      title
+      status
+      dueAt
+      completedAt
+      assignedStaff {
+        id
+        name
+      }
+    }
+    alerts_on_household(where: { status: { eq: "active" } }, limit: 50, orderBy: [{ createdAt: DESC }]) {
+      id
+      alertType
+      severity
+      title
+      description
+      status
+      createdAt
+      staff {
+        id
+        name
+      }
+    }
+    expenseEntries_on_household(limit: 100, orderBy: [{ spentAt: DESC }]) {
+      id
+      category
+      amount
+      description
+      spentAt
+      staff {
+        id
+        name
+      }
+    }
+  }
+}

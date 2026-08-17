@@ -1,0 +1,6 @@
+connectorId: web
+generate:
+  javascriptSdk:
+    outputDir: ../../src/lib/dataconnect-generated
+    package: "@homemaker/dataconnect"
+    packageJsonDir: ../..

@@ -277,6 +277,36 @@
     scrollbar-width: none;
   }
 
+  .app-shell-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsla(197, 24%, 45%, 0.72) hsla(0, 0%, 100%, 0.3);
+    scrollbar-gutter: stable;
+  }
+
+  .app-shell-scroll::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .app-shell-scroll::-webkit-scrollbar-track {
+    margin: 12px 0 96px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, hsla(0, 0%, 100%, 0.18), hsla(24, 20%, 88%, 0.45));
+    border: 1px solid hsla(0, 0%, 100%, 0.35);
+    box-shadow: inset 0 1px 0 hsla(0, 0%, 100%, 0.4);
+  }
+
+  .app-shell-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: linear-gradient(180deg, hsla(207, 29%, 34%, 0.9), hsla(197, 24%, 45%, 0.92));
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    box-shadow: 0 6px 16px rgba(47, 65, 86, 0.18);
+  }
+
+  .app-shell-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsla(207, 29%, 30%, 0.96), hsla(197, 24%, 40%, 0.98));
+  }
+
   /* Safe area for bottom nav */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);
@@ -306,5 +336,20 @@
   .dark .pull-indicator {
     background: hsla(207, 35%, 20%, 0.85);
     border: 1px solid hsla(197, 24%, 45%, 0.2);
+  }
+  .dark .app-shell-scroll {
+    scrollbar-color: hsla(197, 24%, 55%, 0.8) hsla(207, 25%, 22%, 0.52);
+  }
+  .dark .app-shell-scroll::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, hsla(207, 24%, 20%, 0.75), hsla(207, 25%, 16%, 0.9));
+    border-color: hsla(197, 24%, 45%, 0.14);
+    box-shadow: inset 0 1px 0 hsla(255, 255%, 255%, 0.04);
+  }
+  .dark .app-shell-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsla(197, 24%, 60%, 0.9), hsla(207, 29%, 42%, 0.9));
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  }
+  .dark .app-shell-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsla(197, 24%, 65%, 0.94), hsla(207, 29%, 48%, 0.94));
   }
 }

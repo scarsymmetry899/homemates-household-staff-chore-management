@@ -37,9 +37,11 @@ export async function getFirebaseAuth() {
   if (_auth) return _auth as import("firebase/auth").Auth;
   try {
     const { initializeApp, getApps, getApp } = await import("firebase/app");
-    const { getAuth } = await import("firebase/auth");
+    const { browserLocalPersistence, getAuth, setPersistence } = await import("firebase/auth");
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig as import("firebase/app").FirebaseOptions);
-    _auth = getAuth(app);
+    const auth = getAuth(app);
+    await setPersistence(auth, browserLocalPersistence);
+    _auth = auth;
     return _auth as import("firebase/auth").Auth;
   } catch {
     return null;
@@ -203,6 +205,13 @@ export async function signOutFirebase(): Promise<void> {
   } catch {
     // ignore
   }
+}
+
+export async function getCurrentAuthUser(): Promise<AuthResult> {
+  const auth = await getFirebaseAuth();
+  const user = auth?.currentUser;
+  if (!user) return null;
+  return { uid: user.uid, displayName: user.displayName, email: user.email };
 }
 
 // Listen to auth state changes

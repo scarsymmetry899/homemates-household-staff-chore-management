@@ -1,0 +1,13 @@
+specVersion: "v1"
+serviceId: homemaker
+location: us-central1
+schema:
+  source: ./schema
+  datasource:
+    postgresql:
+      database: homemaker
+      cloudSql:
+        instanceId: homemaker-postgres
+        schemaValidation: COMPATIBLE
+connectorDirs:
+  - ./web
