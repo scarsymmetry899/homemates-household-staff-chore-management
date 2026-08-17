@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Circle, Clock, Plus, X, Trash2, CalendarDays, Send, AlertTriangle, RotateCcw, ArrowRightLeft } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/components/animations/MotionComponents";
+import StaffAvatar from "@/components/StaffAvatar";
 import { toast } from "sonner";
 
 type TaskFilter = "all" | "pending" | "done" | "bydate";
@@ -134,11 +135,11 @@ const TasksPage = () => {
             <p className={`text-sm font-medium transition-all ${task.done ? "text-muted-foreground line-through" : "text-card-foreground"}`}>
               {task.task}
             </p>
-            <div className="flex items-center gap-2 mt-1.5">
-              <img src={task.staffPhoto} alt={task.staffName} className="w-5 h-5 rounded-lg object-cover" loading="lazy" />
+            <div className="flex items-center gap-2 mt-1.5 min-w-0">
+              <StaffAvatar name={task.staffName} src={task.staffPhoto} className="w-5 h-5 rounded-lg shrink-0" textClassName="text-[9px]" />
               <span className="text-xs text-muted-foreground">{task.staffName}</span>
               <span className="text-xs text-muted-foreground">·</span>
-              <span className="text-xs text-muted-foreground">{task.staffRole}</span>
+              <span className="text-xs text-muted-foreground truncate">{task.staffRole}</span>
             </div>
             {task.dueDate && (
               <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
@@ -187,7 +188,7 @@ const TasksPage = () => {
             <span className="label-sm text-status-late bg-status-late/10 px-2 py-0.5 rounded-lg shrink-0">Overdue</span>
           </div>
           <div className="flex items-center gap-2">
-            <img src={task.staffPhoto} alt={task.staffName} className="w-4 h-4 rounded-md object-cover" loading="lazy" />
+            <StaffAvatar name={task.staffName} src={task.staffPhoto} className="w-4 h-4 rounded-md shrink-0" textClassName="text-[8px]" />
             <span className="text-xs text-muted-foreground">{task.staffName}</span>
             {task.dueDate && (
               <span className="text-xs text-destructive">· Due {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
@@ -244,7 +245,7 @@ const TasksPage = () => {
                   onClick={() => handleReassignTask(task, s.id)}
                   className="w-full flex items-center gap-2 glass rounded-xl px-3 py-2 text-left"
                 >
-                  <img src={s.photo} alt={s.name} className="w-7 h-7 rounded-lg object-cover" />
+                  <StaffAvatar name={s.name} src={s.photo} className="w-7 h-7 rounded-lg shrink-0" textClassName="text-[10px]" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-card-foreground truncate">{s.name}</p>
                     <p className="text-xs text-muted-foreground">{s.role}</p>

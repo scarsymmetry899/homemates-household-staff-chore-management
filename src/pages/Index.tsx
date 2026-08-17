@@ -4,6 +4,7 @@ import { ArrowRight, TrendingUp, Bell, MapPin, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
+import StaffAvatar from "@/components/StaffAvatar";
 import { toast } from "sonner";
 
 const statusLabel: Record<string, string> = {
@@ -118,7 +119,7 @@ const Index = () => {
                     onClick={() => navigate(`/staff/${s.id}`)}
                     className="glass-card rounded-2xl p-4 flex items-center gap-4 cursor-pointer"
                   >
-                    <img src={s.photo} alt={s.name} className="w-12 h-12 rounded-xl object-cover shadow-card" loading="lazy" />
+                    <StaffAvatar name={s.name} src={s.photo} className="w-12 h-12 shrink-0" textClassName="text-sm" />
                     <div className="flex-1 min-w-0">
                       <p className="label-sm text-muted-foreground">{s.role}</p>
                       <p className="font-display text-base text-card-foreground font-medium">{s.name}</p>

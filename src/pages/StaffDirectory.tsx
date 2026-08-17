@@ -5,6 +5,7 @@ import { Phone, MessageCircle, Eye, Plus, X, Camera, UserPlus } from "lucide-rea
 import { useAppState } from "@/context/AppContext";
 import { departments, type Department } from "@/data/staff";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/components/animations/MotionComponents";
+import StaffAvatar from "@/components/StaffAvatar";
 import { toast } from "sonner";
 
 const statusLabel: Record<string, string> = {
@@ -300,7 +301,7 @@ const StaffDirectory = () => {
             <StaggerItem key={s.id}>
                 <PressableCard className="glass-card rounded-2xl overflow-hidden">
                   <div className="flex gap-4 p-5">
-                    <img src={s.photo} alt={s.name} className="w-20 h-20 rounded-2xl object-cover shadow-card" loading="lazy" />
+                    <StaffAvatar name={s.name} src={s.photo} className="w-20 h-20 rounded-2xl shrink-0" textClassName="text-xl" />
                     <div className="flex-1 min-w-0">
                       <span className={`label-sm px-2.5 py-1 rounded-xl ${statusStyle[s.status]}`}>
                         {statusLabel[s.status]}

@@ -5,9 +5,22 @@ import { TrendingUp, Clock, Users, Calendar, ChevronDown, Download } from "lucid
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import StaffAvatar from "@/components/StaffAvatar";
 import { toast } from "sonner";
 
 type ViewMode = "daily" | "weekly" | "monthly";
+
+function dateKey(date: Date) {
+  return date.toISOString().split("T")[0];
+}
+
+function entryStatus(type: string) {
+  const normalized = type.toLowerCase();
+  if (normalized.includes("late")) return "late";
+  if (normalized.includes("absent") || normalized.includes("leave")) return "absent";
+  if (normalized.includes("check-in") || normalized.includes("on-site") || normalized.includes("present")) return "present";
+  return "";
+}
 
 const InsightsPage = () => {
   const { staff, expenses, alerts } = useAppState();
@@ -108,6 +121,49 @@ const InsightsPage = () => {
         }),
       })),
     [staff, viewMode, columnHeaders.length, selectedMonth, selectedWeek, selectedDay]
+  );
+
+  const getDateForColumn = useCallback((dayIndex: number) => {
+    const now = new Date();
+    if (viewMode === "daily") {
+      const date = new Date(now);
+      date.setDate(date.getDate() - selectedDay);
+      return date;
+    }
+    if (viewMode === "weekly") {
+      const start = new Date(now);
+      start.setDate(start.getDate() - (selectedWeek * 7) - start.getDay() + 1);
+      start.setHours(0, 0, 0, 0);
+      const date = new Date(start);
+      date.setDate(start.getDate() + dayIndex);
+      return date;
+    }
+    return new Date(now.getFullYear(), now.getMonth() - selectedMonth, dayIndex + 1);
+  }, [selectedDay, selectedMonth, selectedWeek, viewMode]);
+
+  const displayedAttendanceData = useMemo(
+    () =>
+      staff.map((s) => ({
+        name: s.name,
+        photo: s.photo,
+        role: s.role,
+        days: Array.from({ length: columnHeaders.length }, (_, dayIndex) => {
+          const key = dateKey(getDateForColumn(dayIndex));
+          if (key === dateKey(new Date())) {
+            const statusMap: Record<string, string> = {
+              "on-duty": "present",
+              "en-route": "present",
+              late: "late",
+              absent: "absent",
+              "off-duty": "off-duty",
+            };
+            return statusMap[s.status] ?? "off-duty";
+          }
+          const matchingEntry = s.attendance.find((entry) => entry.date.startsWith(key));
+          return matchingEntry ? entryStatus(matchingEntry.type) || "present" : "off-duty";
+        }),
+      })),
+    [columnHeaders.length, getDateForColumn, staff]
   );
 
   // Which column index corresponds to today (for highlighting)
@@ -355,10 +411,10 @@ const InsightsPage = () => {
                     </span>
                   ))}
 
-                  {attendanceData.map((s) => (
+                  {displayedAttendanceData.map((s) => (
                     <div key={s.name} className="contents">
                       <div className="flex items-center gap-2 py-2 sticky left-0 z-10 bg-card/95 backdrop-blur-sm px-2 rounded-md">
-                        <img src={s.photo} alt={s.name} className="w-7 h-7 rounded-lg object-cover shrink-0" loading="lazy" />
+                        <StaffAvatar name={s.name} src={s.photo} className="w-7 h-7 rounded-lg shrink-0" textClassName="text-[10px]" />
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-card-foreground truncate">{s.name}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{s.role}</p>

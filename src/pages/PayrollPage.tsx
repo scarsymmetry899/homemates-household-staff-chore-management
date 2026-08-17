@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Download, TrendingUp } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
+import StaffAvatar from "@/components/StaffAvatar";
 import { toast } from "sonner";
 
 const PayrollPage = () => {
@@ -64,7 +65,7 @@ const PayrollPage = () => {
             <StaggerItem key={s.id}>
               <PressableCard className="glass-card rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-3">
-                  <img src={s.photo} alt={s.name} className="w-10 h-10 rounded-xl object-cover shadow-card" loading="lazy" />
+                  <StaffAvatar name={s.name} src={s.photo} className="w-10 h-10 shrink-0" textClassName="text-xs" />
                   <div>
                     <p className="text-sm font-semibold text-card-foreground">{s.name}</p>
                     <p className="label-sm text-muted-foreground">{s.role}</p>

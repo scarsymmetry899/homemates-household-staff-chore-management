@@ -5,6 +5,7 @@ import type {
   HouseholdProfile,
   InventorySetupItem,
   RoomZoneProfile,
+  type AppLanguage,
 } from "@/context/AppContext";
 import type { StaffMember } from "@/data/staff";
 import { getCurrentAuthUser, getFirebaseFirestore, isFirebaseConfigured } from "@/lib/firebase";
@@ -19,6 +20,7 @@ export interface HouseholdStateSnapshot {
   rooms?: RoomZoneProfile[];
   inventoryItems?: InventorySetupItem[];
   ownerName: string;
+  language?: AppLanguage;
   isDarkMode: boolean;
   nfcEnabled: boolean;
 }
@@ -81,6 +83,7 @@ export async function subscribeToHouseholdState(
           rooms: data.rooms || [],
           inventoryItems: data.inventoryItems || [],
           ownerName: data.ownerName || "Boss",
+          language: data.language || "en",
           isDarkMode: !!data.isDarkMode,
           nfcEnabled: !!data.nfcEnabled,
         });

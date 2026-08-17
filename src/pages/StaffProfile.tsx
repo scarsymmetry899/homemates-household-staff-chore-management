@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, CalendarDays, Shield, Pencil, Download, Trash2, Clock, MessageCircle, Camera, X, Check, Send } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/animations/MotionComponents";
+import StaffAvatar from "@/components/StaffAvatar";
 import { toast } from "sonner";
 import { sendMessage as sendTelegram } from "@/lib/telegram";
 
@@ -109,7 +110,7 @@ const StaffProfile = () => {
           transition={{ duration: 0.5 }}
           className="h-56 bg-secondary-container overflow-hidden relative"
         >
-          <img src={s.photo} alt={s.name} className="w-full h-full object-cover" />
+          <StaffAvatar name={s.name} src={s.photo} className="w-full h-full rounded-none shadow-none" textClassName="text-6xl" />
 
           {/* Camera overlay button */}
           <button
