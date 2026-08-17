@@ -5,6 +5,7 @@ import {
   subscribeToHouseholdState,
   type HouseholdStateSnapshot,
 } from "@/lib/householdStore";
+import { isFirebaseConfigured } from "@/lib/firebase";
 import { bootstrapSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
 import {
   addExpenseEntry as sqlAddExpenseEntry,
@@ -141,6 +142,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [sqlHouseholdId, setSqlHouseholdId] = useState<string | null>(null);
   const [hasLoadedRemoteState, setHasLoadedRemoteState] = useState(false);
+  const [hasBootstrappedSql, setHasBootstrappedSql] = useState(false);
   const isApplyingRemoteStateRef = useRef(false);
   const lastSavedStateRef = useRef("");
   const [ownerName, setOwnerNameState] = useState<string>(() => {
@@ -171,10 +173,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let cancelled = false;
     let unsubscribe: (() => void) | undefined;
+    let remoteStateSettled = false;
+
+    const remoteLoadTimeout = setTimeout(() => {
+      if (cancelled || remoteStateSettled) return;
+      remoteStateSettled = true;
+      lastSavedStateRef.current = currentHouseholdStateJson;
+      setHasLoadedRemoteState(true);
+    }, 8000);
 
     subscribeToHouseholdState(
       (state) => {
         if (cancelled) return;
+        remoteStateSettled = true;
         isApplyingRemoteStateRef.current = true;
         lastSavedStateRef.current = JSON.stringify(state);
         setStaff(state.staff);
@@ -193,14 +204,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       },
       () => {
         if (cancelled) return;
+        remoteStateSettled = true;
         setHasLoadedRemoteState(true);
         lastSavedStateRef.current = currentHouseholdStateJson;
-        saveHouseholdState(currentHouseholdState).catch((error) => {
-          console.warn("Unable to seed Firebase household state", error);
-        });
       },
       (error) => {
         console.warn("Firebase household sync unavailable", error);
+        remoteStateSettled = true;
+        lastSavedStateRef.current = currentHouseholdStateJson;
         setHasLoadedRemoteState(true);
       }
     ).then((unsub) => {
@@ -209,6 +220,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       cancelled = true;
+      clearTimeout(remoteLoadTimeout);
       unsubscribe?.();
     };
   }, []);
@@ -231,6 +243,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!hasLoadedRemoteState) return;
 
     let cancelled = false;
+    const sqlBootstrapTimeout = setTimeout(() => {
+      if (!cancelled) setHasBootstrappedSql(true);
+    }, 12000);
+
     bootstrapSqlConnectHousehold({
       staff,
       expenses,
@@ -251,10 +267,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       })
       .catch((error) => {
         console.warn("Firebase SQL Connect household bootstrap unavailable", error);
+      })
+      .finally(() => {
+        clearTimeout(sqlBootstrapTimeout);
+        if (!cancelled) setHasBootstrappedSql(true);
       });
 
     return () => {
       cancelled = true;
+      clearTimeout(sqlBootstrapTimeout);
     };
   }, [hasLoadedRemoteState]);
 
@@ -671,6 +692,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     schedule();
     return () => clearTimeout(timeoutId);
   }, []);
+
+  if (isFirebaseConfigured && (!hasLoadedRemoteState || !hasBootstrappedSql)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-6">
+        <div className="glass-card rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-card">
+          <div className="mx-auto h-12 w-12 rounded-2xl border border-border/40 bg-surface-low flex items-center justify-center">
+            <div className="h-5 w-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          </div>
+          <div className="space-y-1">
+            <p className="headline-sm text-foreground">Syncing your household</p>
+            <p className="text-sm text-muted-foreground">
+              We are loading your saved staff, tasks, expenses, and alerts before opening the dashboard.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AppContext.Provider

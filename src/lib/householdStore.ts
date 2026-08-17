@@ -43,7 +43,10 @@ export async function subscribeToHouseholdState(
   onError?: (error: unknown) => void
 ): Promise<Unsubscribe> {
   const ref = await getHouseholdDocRef();
-  if (!ref) return () => {};
+  if (!ref) {
+    onMissing();
+    return () => {};
+  }
 
   const { onSnapshot } = await import("firebase/firestore");
   return onSnapshot(
