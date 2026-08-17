@@ -6,8 +6,53 @@ A full-featured household staff management app built for homeowners who manage d
 
 ---
 
+## Current Production Snapshot
+
+- Live app: <https://homemates.vercel.app>
+- Repository: <https://github.com/scarsymmetry899/homemates-household-staff-chore-management>
+- Status: active production migration from demo-style UI to real household data app
+- Auth: Firebase Authentication with Google and email/password sign-in
+- Data direction: Firebase SQL Connect with Cloud SQL Postgres as the production source of truth
+- Deployment: Vercel production deployment
+- Roadmap: see [docs/project-roadmap.md](docs/project-roadmap.md)
+
+### What Works Today
+
+- Per-account sign-in gate and fresh household onboarding.
+- Setup wizard for household, owner, homemates, rooms, staff, payroll base, inventory, and initial task assignments.
+- Combined staff responsibilities such as Cook + Cleaner + Nanny.
+- SQL Connect/Postgres foundations for staff, tasks, attendance, payroll, expenses, inventory, NFC tags, alerts, cash requests, AI logs, and CCTV scaffolding.
+- Vercel API routes for server-side Gemini and Telegram integration.
+- Staff avatar fallback for members without uploaded photos.
+- Attendance grid no longer shows fake historical attendance before real records exist.
+- Language preference foundation for English, Hindi, Telugu, Kannada, and Malayalam.
+- Core shell, Home, Tasks, and Settings are partially wired into the central language layer.
+
+### Still In Progress
+
+- Full owner vs staff gated experience.
+- Staff-only mobile view for today's tasks, attendance, payment, and cash/expense requests.
+- Complete app-wide translations across all screens, forms, toasts, onboarding, and AI chat.
+- Staff cash request UI and approval workflow.
+- Expense request to purchase to receipt upload to monthly ledger linking.
+- Attendance discrepancy requests and owner approval.
+- Payroll auto-deductions from attendance rules.
+- Realtime sync for all operational modules.
+- NFC room/task/staff tag setup UI.
+- Server-grounded Gemini data queries.
+- CCTV monitoring dashboard and camera health reporting.
+
+### Phase Plan
+
+- Phase 1: make the current app trustworthy by removing demo assumptions, completing onboarding, role gating, language support, and SQL-backed actions.
+- Phase 2: make the app operational with staff mode, cash requests, grocery/fuel/supply workflows, NFC setup, realtime sync, Telegram alerts, and grounded Gemini responses.
+- Phase 3: make the app advanced with CCTV monitoring, analytics, multi-household support, documents, audit logs, pets/vehicles/vendors, and AI monthly reports.
+
+---
+
 ## Table of Contents
 
+- [Current Production Snapshot](#current-production-snapshot)
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
