@@ -5,7 +5,7 @@ import {
   subscribeToHouseholdState,
   type HouseholdStateSnapshot,
 } from "@/lib/householdStore";
-import { isFirebaseConfigured } from "@/lib/firebase";
+import { getCurrentAuthUser, isFirebaseConfigured } from "@/lib/firebase";
 import { bootstrapSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
 import { createConfiguredSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
 import {
@@ -206,6 +206,20 @@ const initialAlerts: Alert[] = [
   },
 ];
 
+const onboardingDoneKey = "homemaker_onboarding_done";
+
+function hasLocalOnboardingCompletion(): boolean {
+  return localStorage.getItem(onboardingDoneKey) === "true";
+}
+
+async function rememberOnboardingCompletion(): Promise<void> {
+  localStorage.setItem(onboardingDoneKey, "true");
+  const user = await getCurrentAuthUser();
+  if (user?.uid) {
+    localStorage.setItem(`${onboardingDoneKey}_${user.uid}`, "true");
+  }
+}
+
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [staff, setStaff] = useState<StaffMember[]>(() => isFirebaseConfigured ? [] : initialStaff);
   const [expenses, setExpenses] = useState<Expense[]>(() => isFirebaseConfigured ? [] : initialExpenses);
@@ -283,13 +297,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     subscribeToHouseholdState(
       (state) => {
         if (cancelled) return;
+        const locallyCompletedSetup = hasLocalOnboardingCompletion();
+        const nextSetupComplete = !!state.setupComplete || locallyCompletedSetup;
         remoteStateSettled = true;
         isApplyingRemoteStateRef.current = true;
-        lastSavedStateRef.current = JSON.stringify(state);
+        const nextState = { ...state, setupComplete: nextSetupComplete };
+        lastSavedStateRef.current = JSON.stringify(nextState);
         setStaff(state.staff);
         setExpenses(state.expenses);
         setAlerts(state.alerts);
-        setSetupComplete(!!state.setupComplete);
+        setSetupComplete(nextSetupComplete);
         setHouseholdProfile(state.householdProfile || null);
         setHomemates(state.homemates || []);
         setRooms(state.rooms || []);
@@ -336,6 +353,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!hasLoadedRemoteState || isApplyingRemoteStateRef.current) return;
+    if (isFirebaseConfigured && !hasBootstrappedSql) return;
     if (lastSavedStateRef.current === currentHouseholdStateJson) return;
 
     const timeout = setTimeout(() => {
@@ -346,7 +364,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [currentHouseholdStateJson, hasLoadedRemoteState]);
+  }, [currentHouseholdStateJson, hasBootstrappedSql, hasLoadedRemoteState]);
 
   useEffect(() => {
     if (!hasLoadedRemoteState) return;
@@ -363,7 +381,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       ownerName,
     })
       .then((snapshot) => {
-        if (cancelled || !snapshot) return;
+        if (cancelled) return;
+        if (!snapshot) {
+          if (hasLocalOnboardingCompletion()) {
+            setSetupComplete(true);
+          }
+          return;
+        }
         isApplyingRemoteStateRef.current = true;
         setStaff(snapshot.staff);
         setExpenses(snapshot.expenses);
@@ -371,6 +395,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setOwnerNameState(snapshot.ownerName);
         setSqlHouseholdId(snapshot.householdId);
         setSetupComplete(true);
+        rememberOnboardingCompletion().catch(() => undefined);
         setHouseholdProfile((current) => current || {
           name: `${snapshot.ownerName || "My"} Household`,
           ownerName: snapshot.ownerName,
@@ -382,6 +407,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       })
       .catch((error) => {
         console.warn("Firebase SQL Connect household bootstrap unavailable", error);
+        if (!cancelled && hasLocalOnboardingCompletion()) {
+          setSetupComplete(true);
+        }
       })
       .finally(() => {
         clearTimeout(sqlBootstrapTimeout);
@@ -923,6 +951,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setAlerts([]);
     setSetupComplete(true);
     localStorage.setItem("homemaker_owner_name", setup.ownerName);
+    rememberOnboardingCompletion().catch(() => undefined);
 
     let persistedStaff = setup.staff;
     let persistedExpenses: Expense[] = [];
