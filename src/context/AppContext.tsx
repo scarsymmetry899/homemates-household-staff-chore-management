@@ -122,12 +122,15 @@ interface AppState {
   activeStaffId: string | null;
   isDarkMode: boolean;
   nfcEnabled: boolean;
+  isDemoMode: boolean;
   setOwnerName: (name: string) => void;
   setLanguage: (language: AppLanguage) => void;
   setAppRole: (role: AppRole) => void;
   setActiveStaffId: (staffId: string | null) => void;
   setDarkMode: (v: boolean) => void;
   setNfcEnabled: (v: boolean) => void;
+  enableDemoMode: () => void;
+  disableDemoMode: () => void;
   toggleTask: (staffId: string, taskIndex: number) => void;
   updateStaffStatus: (staffId: string, status: StaffStatus) => void;
   updateStaffRole: (staffId: string, role: string) => void;
@@ -207,6 +210,8 @@ const initialAlerts: Alert[] = [
 ];
 
 const onboardingDoneKey = "homemaker_onboarding_done";
+const demoModeKey = "homemaker_demo_mode";
+const demoBackupKey = "homemaker_demo_backup";
 
 function hasLocalOnboardingCompletion(): boolean {
   return localStorage.getItem(onboardingDoneKey) === "true";
@@ -218,6 +223,53 @@ async function rememberOnboardingCompletion(): Promise<void> {
   if (user?.uid) {
     localStorage.setItem(`${onboardingDoneKey}_${user.uid}`, "true");
   }
+}
+
+function cloneStaff(members: StaffMember[]): StaffMember[] {
+  return members.map((member) => ({
+    ...member,
+    skills: [...member.skills],
+    assignments: member.assignments.map((assignment) => ({ ...assignment })),
+    attendance: member.attendance.map((entry) => ({ ...entry })),
+    payroll: { ...member.payroll },
+  }));
+}
+
+function getDemoHouseholdState(ownerName: string): HouseholdStateSnapshot {
+  return {
+    staff: cloneStaff(initialStaff),
+    expenses: initialExpenses.map((expense) => ({ ...expense })),
+    alerts: initialAlerts.map((alert) => ({ ...alert, actions: [...alert.actions] })),
+    setupComplete: true,
+    householdProfile: {
+      name: "Homemaker Demo Residence",
+      ownerName,
+      addressLabel: "Secunderabad, Telangana",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata",
+    },
+    homemates: [
+      { id: "demo-mate-1", name: "Aarav", relationLabel: "Son", phone: "+91 90000 00001" },
+      { id: "demo-mate-2", name: "Meera", relationLabel: "Parent", phone: "+91 90000 00002" },
+    ],
+    rooms: [
+      { id: "demo-room-1", name: "Kitchen", floorLabel: "Ground floor" },
+      { id: "demo-room-2", name: "Living Room", floorLabel: "Ground floor" },
+      { id: "demo-room-3", name: "Garden", floorLabel: "Outdoor" },
+      { id: "demo-room-4", name: "Kids Room", floorLabel: "First floor" },
+    ],
+    inventoryItems: [
+      { id: "demo-item-1", name: "Rice", category: "Groceries", unit: "kg", currentQuantity: 18, minimumQuantity: 5, roomId: "demo-room-1" },
+      { id: "demo-item-2", name: "Tomatoes", category: "Vegetables", unit: "kg", currentQuantity: 2, minimumQuantity: 3, roomId: "demo-room-1" },
+      { id: "demo-item-3", name: "Cleaning liquid", category: "Household", unit: "bottle", currentQuantity: 4, minimumQuantity: 2, roomId: "demo-room-2" },
+      { id: "demo-item-4", name: "Dog food", category: "Pet supplies", unit: "bag", currentQuantity: 1, minimumQuantity: 1 },
+    ],
+    ownerName,
+    language: "en",
+    appRole: "owner",
+    activeStaffId: null,
+    isDarkMode: false,
+    nfcEnabled: false,
+  };
 }
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
@@ -253,6 +305,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   });
   const [nfcEnabled, setNfcEnabledState] = useState<boolean>(() => {
     return localStorage.getItem("homemaker_nfc_enabled") === "true";
+  });
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
+    return localStorage.getItem(demoModeKey) === "true";
   });
 
   const currentHouseholdState: HouseholdStateSnapshot = {
@@ -297,6 +352,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     subscribeToHouseholdState(
       (state) => {
         if (cancelled) return;
+        if (localStorage.getItem(demoModeKey) === "true") {
+          remoteStateSettled = true;
+          setHasLoadedRemoteState(true);
+          return;
+        }
         const locallyCompletedSetup = hasLocalOnboardingCompletion();
         const nextSetupComplete = !!state.setupComplete || locallyCompletedSetup;
         remoteStateSettled = true;
@@ -354,6 +414,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!hasLoadedRemoteState || isApplyingRemoteStateRef.current) return;
     if (isFirebaseConfigured && !hasBootstrappedSql) return;
+    if (isDemoMode) return;
     if (lastSavedStateRef.current === currentHouseholdStateJson) return;
 
     const timeout = setTimeout(() => {
@@ -364,10 +425,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [currentHouseholdStateJson, hasBootstrappedSql, hasLoadedRemoteState]);
+  }, [currentHouseholdStateJson, hasBootstrappedSql, hasLoadedRemoteState, isDemoMode]);
 
   useEffect(() => {
     if (!hasLoadedRemoteState) return;
+    if (isDemoMode) {
+      setHasBootstrappedSql(true);
+      return;
+    }
 
     let cancelled = false;
     const sqlBootstrapTimeout = setTimeout(() => {
@@ -420,14 +485,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       cancelled = true;
       clearTimeout(sqlBootstrapTimeout);
     };
-  }, [hasLoadedRemoteState]);
+  }, [hasLoadedRemoteState, isDemoMode]);
 
   const persistSql = useCallback((operation: () => Promise<unknown>) => {
+    if (isDemoMode) return;
     if (!sqlHouseholdId) return;
     operation().catch((error) => {
       console.warn("SQL Connect persistence failed", error);
     });
-  }, [sqlHouseholdId]);
+  }, [isDemoMode, sqlHouseholdId]);
 
   const getNfcTagStorageKey = useCallback((staffId: string) => `homemaker_nfc_tag_id_${staffId}`, []);
 
@@ -467,6 +533,95 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const setNfcEnabled = useCallback((v: boolean) => {
     setNfcEnabledState(v);
     localStorage.setItem("homemaker_nfc_enabled", String(v));
+  }, []);
+
+  const applyHouseholdSnapshot = useCallback((snapshot: HouseholdStateSnapshot) => {
+    isApplyingRemoteStateRef.current = true;
+    setStaff(cloneStaff(snapshot.staff));
+    setExpenses(snapshot.expenses.map((expense) => ({ ...expense })));
+    setAlerts(snapshot.alerts.map((alert) => ({ ...alert, actions: [...alert.actions] })));
+    setSetupComplete(!!snapshot.setupComplete);
+    setHouseholdProfile(snapshot.householdProfile || null);
+    setHomemates(snapshot.homemates || []);
+    setRooms(snapshot.rooms || []);
+    setInventoryItems(snapshot.inventoryItems || []);
+    setOwnerNameState(snapshot.ownerName || "Boss");
+    setLanguageState(snapshot.language || "en");
+    setAppRoleState(snapshot.appRole || "owner");
+    setActiveStaffIdState(snapshot.activeStaffId || null);
+    setIsDarkModeState(!!snapshot.isDarkMode);
+    setNfcEnabledState(!!snapshot.nfcEnabled);
+    lastSavedStateRef.current = JSON.stringify(snapshot);
+    queueMicrotask(() => {
+      isApplyingRemoteStateRef.current = false;
+    });
+  }, []);
+
+  const enableDemoMode = useCallback(() => {
+    const liveSnapshot: HouseholdStateSnapshot = {
+      staff,
+      expenses,
+      alerts,
+      setupComplete,
+      householdProfile,
+      homemates,
+      rooms,
+      inventoryItems,
+      ownerName,
+      language,
+      appRole,
+      activeStaffId,
+      isDarkMode,
+      nfcEnabled,
+    };
+    localStorage.setItem(demoBackupKey, JSON.stringify(liveSnapshot));
+    localStorage.setItem(demoModeKey, "true");
+    setIsDemoMode(true);
+    setSqlHouseholdId(null);
+    applyHouseholdSnapshot(getDemoHouseholdState(ownerName === "Boss" ? "Demo Owner" : ownerName));
+  }, [
+    activeStaffId,
+    alerts,
+    appRole,
+    applyHouseholdSnapshot,
+    expenses,
+    homemates,
+    householdProfile,
+    inventoryItems,
+    isDarkMode,
+    language,
+    nfcEnabled,
+    ownerName,
+    rooms,
+    setupComplete,
+    staff,
+  ]);
+
+  const disableDemoMode = useCallback(() => {
+    const backupJson = localStorage.getItem(demoBackupKey);
+    localStorage.removeItem(demoModeKey);
+    localStorage.removeItem(demoBackupKey);
+    setIsDemoMode(false);
+
+    if (backupJson) {
+      try {
+        applyHouseholdSnapshot(JSON.parse(backupJson) as HouseholdStateSnapshot);
+        setHasLoadedRemoteState(false);
+        setHasBootstrappedSql(false);
+        return;
+      } catch {
+        // Fall through to a full reload when the backup is unavailable or invalid.
+      }
+    }
+
+    window.location.reload();
+  }, [applyHouseholdSnapshot]);
+
+  useEffect(() => {
+    if (!isDemoMode) return;
+    applyHouseholdSnapshot(getDemoHouseholdState(ownerName === "Boss" ? "Demo Owner" : ownerName));
+    setHasLoadedRemoteState(true);
+    setHasBootstrappedSql(true);
   }, []);
 
   // Fetch GPS location
@@ -1017,8 +1172,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     <AppContext.Provider
       value={{
         staff, expenses, alerts, setupComplete, householdProfile, homemates, rooms, inventoryItems,
-        ownerName, ownerLocation, language, appRole, activeStaffId, isDarkMode, nfcEnabled,
+        ownerName, ownerLocation, language, appRole, activeStaffId, isDarkMode, nfcEnabled, isDemoMode,
         setOwnerName, setLanguage, setAppRole, setActiveStaffId, setDarkMode, setNfcEnabled, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
+        enableDemoMode, disableDemoMode,
         addExpense, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
         markAttendance, registerStaffNfcTag, recordNfcTap, reassignTask, extendTaskDeadlineByName,

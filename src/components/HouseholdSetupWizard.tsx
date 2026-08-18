@@ -76,7 +76,7 @@ function emptyStaff(): StaffMember {
 const inputClass = "w-full rounded-2xl border border-border/40 bg-surface-low px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/30";
 
 export default function HouseholdSetupWizard() {
-  const { ownerName, completeHouseholdSetup } = useAppState();
+  const { ownerName, completeHouseholdSetup, enableDemoMode } = useAppState();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [householdName, setHouseholdName] = useState("My Household");
@@ -252,6 +252,16 @@ export default function HouseholdSetupWizard() {
             <p className="text-sm text-muted-foreground mt-1">
               No demo data. Add only the people, rooms, payroll and supplies you want to track.
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                enableDemoMode();
+                toast.success("Demo data enabled", { description: "Sample household loaded for testing." });
+              }}
+              className="mt-3 glass-btn rounded-2xl px-4 py-2 text-xs font-semibold text-primary"
+            >
+              Use demo data instead
+            </button>
           </div>
         </div>
 

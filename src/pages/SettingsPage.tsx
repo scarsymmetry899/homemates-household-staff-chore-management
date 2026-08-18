@@ -68,6 +68,9 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
     staff,
     nfcEnabled,
     setNfcEnabled,
+    isDemoMode,
+    enableDemoMode,
+    disableDemoMode,
     registerStaffNfcTag,
   } = useAppState();
   const { t } = useI18n();
@@ -273,6 +276,48 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                 </select>
               )}
             </div>
+          </div>
+        </AnimatedCard>
+
+        <AnimatedCard delay={0.06} className="glass-card rounded-2xl p-5 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+              <Beaker size={18} className="text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="label-sm text-muted-foreground">Demo Data</p>
+              <p className="text-sm font-semibold text-card-foreground">
+                {isDemoMode ? "Demo household is active" : "Use sample household for testing"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Toggle this on to test staff, tasks, payroll, expenses, alerts, and NFC flows with sample data.
+                Demo mode is local-only and will not overwrite your real backend household.
+              </p>
+            </div>
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.96 }}
+              onClick={() => {
+                if (isDemoMode) {
+                  disableDemoMode();
+                  toast.success("Demo data disabled", { description: "Restoring your real household data." });
+                } else {
+                  enableDemoMode();
+                  toast.success("Demo data enabled", { description: "Sample household loaded for testing." });
+                }
+              }}
+              className={`w-14 h-8 rounded-full p-1 transition-colors duration-200 shrink-0 ${
+                isDemoMode ? "bg-primary" : "bg-muted"
+              }`}
+              aria-pressed={isDemoMode}
+              aria-label={isDemoMode ? "Disable demo data" : "Enable demo data"}
+            >
+              <motion.span
+                animate={{ x: isDemoMode ? 24 : 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                className="block w-6 h-6 rounded-full bg-primary-foreground shadow-card"
+              />
+            </motion.button>
           </div>
         </AnimatedCard>
 
