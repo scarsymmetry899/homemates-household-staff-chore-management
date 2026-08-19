@@ -52,6 +52,43 @@ mutation CreateHomemateProfile(
   )
 }
 
+mutation UpdateHomemateProfile(
+  $homemateId: UUID!
+  $name: String!
+  $relationLabel: String
+  $phone: String
+  $notes: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    homemateProfile(id: $homemateId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this homemate")
+      }
+    }
+  }
+  homemateProfile_update(
+    id: $homemateId
+    data: {
+      name: $name
+      relationLabel: $relationLabel
+      phone: $phone
+      notes: $notes
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation DeleteHomemateProfile($homemateId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    homemateProfile(id: $homemateId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this homemate")
+      }
+    }
+  }
+  homemateProfile_delete(id: $homemateId)
+}
+
 mutation CreateRoomZone(
   $householdId: UUID!
   $name: String!
@@ -72,6 +109,41 @@ mutation CreateRoomZone(
       updatedAt_expr: "request.time"
     }
   )
+}
+
+mutation UpdateRoomZone(
+  $roomId: UUID!
+  $name: String!
+  $floorLabel: String
+  $notes: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    roomZone(id: $roomId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this room")
+      }
+    }
+  }
+  roomZone_update(
+    id: $roomId
+    data: {
+      name: $name
+      floorLabel: $floorLabel
+      notes: $notes
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation DeleteRoomZone($roomId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    roomZone(id: $roomId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this room")
+      }
+    }
+  }
+  roomZone_delete(id: $roomId)
 }
 
 mutation CreateInventoryItem(

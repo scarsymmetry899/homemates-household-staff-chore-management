@@ -150,6 +150,26 @@ export interface CreateHomemateProfileVariables {
   notes?: string | null;
 }
 
+export interface UpdateHomemateProfileData {
+  homemateProfile_update?: HomemateProfile_Key | null;
+}
+
+export interface UpdateHomemateProfileVariables {
+  homemateId: UUIDString;
+  name: string;
+  relationLabel?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+}
+
+export interface DeleteHomemateProfileData {
+  homemateProfile_delete?: HomemateProfile_Key | null;
+}
+
+export interface DeleteHomemateProfileVariables {
+  homemateId: UUIDString;
+}
+
 export interface CreateHouseholdData {
   user_upsert: User_Key;
   household_insert: Household_Key;
@@ -204,6 +224,25 @@ export interface CreateRoomZoneVariables {
   name: string;
   floorLabel?: string | null;
   notes?: string | null;
+}
+
+export interface UpdateRoomZoneData {
+  roomZone_update?: RoomZone_Key | null;
+}
+
+export interface UpdateRoomZoneVariables {
+  roomId: UUIDString;
+  name: string;
+  floorLabel?: string | null;
+  notes?: string | null;
+}
+
+export interface DeleteRoomZoneData {
+  roomZone_delete?: RoomZone_Key | null;
+}
+
+export interface DeleteRoomZoneVariables {
+  roomId: UUIDString;
 }
 
 export interface CreateStaffCashRequestData {
@@ -775,6 +814,30 @@ export const createHomemateProfileRef: CreateHomemateProfileRef;
 export function createHomemateProfile(vars: CreateHomemateProfileVariables): MutationPromise<CreateHomemateProfileData, CreateHomemateProfileVariables>;
 export function createHomemateProfile(dc: DataConnect, vars: CreateHomemateProfileVariables): MutationPromise<CreateHomemateProfileData, CreateHomemateProfileVariables>;
 
+interface UpdateHomemateProfileRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateHomemateProfileVariables): MutationRef<UpdateHomemateProfileData, UpdateHomemateProfileVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateHomemateProfileVariables): MutationRef<UpdateHomemateProfileData, UpdateHomemateProfileVariables>;
+  operationName: string;
+}
+export const updateHomemateProfileRef: UpdateHomemateProfileRef;
+
+export function updateHomemateProfile(vars: UpdateHomemateProfileVariables): MutationPromise<UpdateHomemateProfileData, UpdateHomemateProfileVariables>;
+export function updateHomemateProfile(dc: DataConnect, vars: UpdateHomemateProfileVariables): MutationPromise<UpdateHomemateProfileData, UpdateHomemateProfileVariables>;
+
+interface DeleteHomemateProfileRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteHomemateProfileVariables): MutationRef<DeleteHomemateProfileData, DeleteHomemateProfileVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteHomemateProfileVariables): MutationRef<DeleteHomemateProfileData, DeleteHomemateProfileVariables>;
+  operationName: string;
+}
+export const deleteHomemateProfileRef: DeleteHomemateProfileRef;
+
+export function deleteHomemateProfile(vars: DeleteHomemateProfileVariables): MutationPromise<DeleteHomemateProfileData, DeleteHomemateProfileVariables>;
+export function deleteHomemateProfile(dc: DataConnect, vars: DeleteHomemateProfileVariables): MutationPromise<DeleteHomemateProfileData, DeleteHomemateProfileVariables>;
+
 interface CreateRoomZoneRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: CreateRoomZoneVariables): MutationRef<CreateRoomZoneData, CreateRoomZoneVariables>;
@@ -786,6 +849,30 @@ export const createRoomZoneRef: CreateRoomZoneRef;
 
 export function createRoomZone(vars: CreateRoomZoneVariables): MutationPromise<CreateRoomZoneData, CreateRoomZoneVariables>;
 export function createRoomZone(dc: DataConnect, vars: CreateRoomZoneVariables): MutationPromise<CreateRoomZoneData, CreateRoomZoneVariables>;
+
+interface UpdateRoomZoneRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateRoomZoneVariables): MutationRef<UpdateRoomZoneData, UpdateRoomZoneVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateRoomZoneVariables): MutationRef<UpdateRoomZoneData, UpdateRoomZoneVariables>;
+  operationName: string;
+}
+export const updateRoomZoneRef: UpdateRoomZoneRef;
+
+export function updateRoomZone(vars: UpdateRoomZoneVariables): MutationPromise<UpdateRoomZoneData, UpdateRoomZoneVariables>;
+export function updateRoomZone(dc: DataConnect, vars: UpdateRoomZoneVariables): MutationPromise<UpdateRoomZoneData, UpdateRoomZoneVariables>;
+
+interface DeleteRoomZoneRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteRoomZoneVariables): MutationRef<DeleteRoomZoneData, DeleteRoomZoneVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteRoomZoneVariables): MutationRef<DeleteRoomZoneData, DeleteRoomZoneVariables>;
+  operationName: string;
+}
+export const deleteRoomZoneRef: DeleteRoomZoneRef;
+
+export function deleteRoomZone(vars: DeleteRoomZoneVariables): MutationPromise<DeleteRoomZoneData, DeleteRoomZoneVariables>;
+export function deleteRoomZone(dc: DataConnect, vars: DeleteRoomZoneVariables): MutationPromise<DeleteRoomZoneData, DeleteRoomZoneVariables>;
 
 interface CreateInventoryItemRef {
   /* Allow users to create refs without passing in DataConnect */

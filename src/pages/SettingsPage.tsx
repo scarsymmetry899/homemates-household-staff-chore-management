@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil, Wifi, MessageCircle, Check, X, Nfc, Send, Beaker, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil, Wifi, MessageCircle, Check, X, Nfc, Send, Beaker, ChevronDown, Home } from "lucide-react";
 import { PageTransition, AnimatedCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { useAppState, type AppLanguage } from "@/context/AppContext";
 import { isNfcSupported, writeNfcTag } from "@/lib/nfc";
@@ -55,6 +56,7 @@ const appLanguages: { code: AppLanguage; label: string }[] = [
 ];
 
 const SettingsPage = ({ onLogout }: SettingsPageProps) => {
+  const navigate = useNavigate();
   const {
     ownerName,
     setOwnerName,
@@ -211,6 +213,26 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
               </button>
             )}
           </div>
+        </AnimatedCard>
+
+        <AnimatedCard delay={0.03} className="glass-card rounded-2xl overflow-hidden">
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={() => navigate("/household")}
+            className="w-full p-5 flex items-center gap-3 text-left"
+          >
+            <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+              <Home size={18} className="text-secondary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="label-sm text-muted-foreground">Household Management</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Edit homemates, rooms, and household zones after onboarding.
+              </p>
+            </div>
+            <ChevronRight size={18} className="text-muted-foreground" />
+          </motion.button>
         </AnimatedCard>
 
         <AnimatedCard delay={0.04} className="glass-card rounded-2xl p-5 space-y-3">

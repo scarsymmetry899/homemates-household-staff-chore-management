@@ -14,8 +14,12 @@ import {
   addTaskInstance as sqlAddTaskInstance,
   createAlert as sqlCreateAlert,
   createAttendanceCorrectionRequest as sqlCreateAttendanceCorrectionRequest,
+  createHomemateProfile as sqlCreateHomemateProfile,
   createInventoryItem as sqlCreateInventoryItem,
+  createRoomZone as sqlCreateRoomZone,
+  deleteHomemateProfile as sqlDeleteHomemateProfile,
   deleteInventoryItem as sqlDeleteInventoryItem,
+  deleteRoomZone as sqlDeleteRoomZone,
   deleteExpenseEntry as sqlDeleteExpenseEntry,
   deleteTaskInstance as sqlDeleteTaskInstance,
   dismissAlert as sqlDismissAlert,
@@ -36,7 +40,9 @@ import {
   updateStaffShift as sqlUpdateStaffShift,
   updateStaffStatus as sqlUpdateStaffStatus,
   updateStaffTelegramId as sqlUpdateStaffTelegramId,
+  updateHomemateProfile as sqlUpdateHomemateProfile,
   updateInventoryItem as sqlUpdateInventoryItem,
+  updateRoomZone as sqlUpdateRoomZone,
   updateTaskDueDate as sqlUpdateTaskDueDate,
 } from "@homemaker/dataconnect";
 
@@ -206,6 +212,12 @@ interface AppState {
   addInventoryItem: (item: Omit<InventorySetupItem, "id">) => void;
   updateInventoryItem: (itemId: string, updates: Partial<Omit<InventorySetupItem, "id">>) => void;
   deleteInventoryItem: (itemId: string) => void;
+  addHomemate: (profile: Omit<HomemateProfile, "id">) => void;
+  updateHomemate: (homemateId: string, updates: Partial<Omit<HomemateProfile, "id">>) => void;
+  deleteHomemate: (homemateId: string) => void;
+  addRoom: (room: Omit<RoomZoneProfile, "id">) => void;
+  updateRoom: (roomId: string, updates: Partial<Omit<RoomZoneProfile, "id">>) => void;
+  deleteRoom: (roomId: string) => void;
   markAttendance: (staffId: string, type: string, detail: string) => void;
   registerStaffNfcTag: (staffId: string, label?: string) => Promise<string | null>;
   recordNfcTap: (staffId: string, actionType: string, deviceLabel?: string) => void;
@@ -1295,6 +1307,93 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     persistSql(() => sqlDeleteInventoryItem({ itemId }));
   }, [persistSql]);
 
+  const addHomemate = useCallback((profile: Omit<HomemateProfile, "id">) => {
+    const tempId = `homemate-${Date.now()}`;
+    const nextProfile: HomemateProfile = {
+      id: tempId,
+      name: profile.name.trim(),
+      relationLabel: profile.relationLabel.trim(),
+      phone: profile.phone?.trim() || undefined,
+      notes: profile.notes?.trim() || undefined,
+    };
+    setHomemates((prev) => [...prev, nextProfile]);
+    persistSql(async () => {
+      const result = await sqlCreateHomemateProfile({
+        householdId: sqlHouseholdId!,
+        name: nextProfile.name,
+        relationLabel: nextProfile.relationLabel || null,
+        phone: nextProfile.phone || null,
+        notes: nextProfile.notes || null,
+      });
+      setHomemates((prev) => prev.map((existing) => (
+        existing.id === tempId ? { ...existing, id: result.data.homemateProfile_insert.id } : existing
+      )));
+    });
+  }, [persistSql, sqlHouseholdId]);
+
+  const updateHomemate = useCallback((homemateId: string, updates: Partial<Omit<HomemateProfile, "id">>) => {
+    const current = homemates.find((profile) => profile.id === homemateId);
+    setHomemates((prev) => prev.map((profile) => (
+      profile.id === homemateId ? { ...profile, ...updates } : profile
+    )));
+    if (!current) return;
+    const nextProfile = { ...current, ...updates };
+    persistSql(() => sqlUpdateHomemateProfile({
+      homemateId,
+      name: nextProfile.name.trim(),
+      relationLabel: nextProfile.relationLabel?.trim() || null,
+      phone: nextProfile.phone?.trim() || null,
+      notes: nextProfile.notes?.trim() || null,
+    }));
+  }, [homemates, persistSql]);
+
+  const deleteHomemate = useCallback((homemateId: string) => {
+    setHomemates((prev) => prev.filter((profile) => profile.id !== homemateId));
+    persistSql(() => sqlDeleteHomemateProfile({ homemateId }));
+  }, [persistSql]);
+
+  const addRoom = useCallback((room: Omit<RoomZoneProfile, "id">) => {
+    const tempId = `room-${Date.now()}`;
+    const nextRoom: RoomZoneProfile = {
+      id: tempId,
+      name: room.name.trim(),
+      floorLabel: room.floorLabel?.trim() || undefined,
+      notes: room.notes?.trim() || undefined,
+    };
+    setRooms((prev) => [...prev, nextRoom]);
+    persistSql(async () => {
+      const result = await sqlCreateRoomZone({
+        householdId: sqlHouseholdId!,
+        name: nextRoom.name,
+        floorLabel: nextRoom.floorLabel || null,
+        notes: nextRoom.notes || null,
+      });
+      setRooms((prev) => prev.map((existing) => (
+        existing.id === tempId ? { ...existing, id: result.data.roomZone_insert.id } : existing
+      )));
+    });
+  }, [persistSql, sqlHouseholdId]);
+
+  const updateRoom = useCallback((roomId: string, updates: Partial<Omit<RoomZoneProfile, "id">>) => {
+    const current = rooms.find((room) => room.id === roomId);
+    setRooms((prev) => prev.map((room) => (
+      room.id === roomId ? { ...room, ...updates } : room
+    )));
+    if (!current) return;
+    const nextRoom = { ...current, ...updates };
+    persistSql(() => sqlUpdateRoomZone({
+      roomId,
+      name: nextRoom.name.trim(),
+      floorLabel: nextRoom.floorLabel?.trim() || null,
+      notes: nextRoom.notes?.trim() || null,
+    }));
+  }, [persistSql, rooms]);
+
+  const deleteRoom = useCallback((roomId: string) => {
+    setRooms((prev) => prev.filter((room) => room.id !== roomId));
+    persistSql(() => sqlDeleteRoomZone({ roomId }));
+  }, [persistSql]);
+
   const markAttendance = useCallback((staffId: string, type: string, detail: string) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
@@ -1619,6 +1718,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         addExpense, createCashRequest, reviewCashRequest, markCashRequestPurchased, createAttendanceCorrectionRequest, reviewAttendanceCorrectionRequest, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
         addInventoryItem, updateInventoryItem, deleteInventoryItem,
+        addHomemate, updateHomemate, deleteHomemate, addRoom, updateRoom, deleteRoom,
         markAttendance, registerStaffNfcTag, recordNfcTap, reassignTask, extendTaskDeadlineByName,
         updatePunctualityScore, updateReliabilityScore,
         completeHouseholdSetup,

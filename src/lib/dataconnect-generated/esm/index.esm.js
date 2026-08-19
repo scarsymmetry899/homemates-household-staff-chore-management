@@ -66,6 +66,30 @@ export function createHomemateProfile(dcOrVars, vars) {
   return executeMutation(createHomemateProfileRef(dcInstance, inputVars));
 }
 
+export const updateHomemateProfileRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateHomemateProfile', inputVars);
+}
+updateHomemateProfileRef.operationName = 'UpdateHomemateProfile';
+
+export function updateHomemateProfile(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updateHomemateProfileRef(dcInstance, inputVars));
+}
+
+export const deleteHomemateProfileRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeleteHomemateProfile', inputVars);
+}
+deleteHomemateProfileRef.operationName = 'DeleteHomemateProfile';
+
+export function deleteHomemateProfile(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(deleteHomemateProfileRef(dcInstance, inputVars));
+}
+
 export const createRoomZoneRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
@@ -76,6 +100,30 @@ createRoomZoneRef.operationName = 'CreateRoomZone';
 export function createRoomZone(dcOrVars, vars) {
   const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
   return executeMutation(createRoomZoneRef(dcInstance, inputVars));
+}
+
+export const updateRoomZoneRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateRoomZone', inputVars);
+}
+updateRoomZoneRef.operationName = 'UpdateRoomZone';
+
+export function updateRoomZone(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updateRoomZoneRef(dcInstance, inputVars));
+}
+
+export const deleteRoomZoneRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeleteRoomZone', inputVars);
+}
+deleteRoomZoneRef.operationName = 'DeleteRoomZone';
+
+export function deleteRoomZone(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(deleteRoomZoneRef(dcInstance, inputVars));
 }
 
 export const createInventoryItemRef = (dcOrVars, vars) => {
