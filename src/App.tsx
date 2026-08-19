@@ -15,6 +15,7 @@ import TasksPage from "./pages/TasksPage";
 import PayrollPage from "./pages/PayrollPage";
 import InsightsPage from "./pages/InsightsPage";
 import ExpensesPage from "./pages/ExpensesPage";
+import InventoryPage from "./pages/InventoryPage";
 import AlertsPage from "./pages/AlertsPage";
 import SettingsPage from "./pages/SettingsPage";
 import StaffWorkspace from "./pages/StaffWorkspace";
@@ -64,6 +65,7 @@ function AppInner({ onLogout }: { onLogout: () => void }) {
             <Route path="/payroll" element={<PayrollPage />} />
             <Route path="/insights" element={ownerOnly(<InsightsPage />)} />
             <Route path="/expenses" element={ownerOnly(<ExpensesPage />)} />
+            <Route path="/inventory" element={ownerOnly(<InventoryPage />)} />
             <Route path="/alerts" element={ownerOnly(<AlertsPage />)} />
             <Route path="/settings" element={<SettingsPage onLogout={onLogout} />} />
           </Route>

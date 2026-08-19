@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Users, ClipboardList, Wallet, BarChart3, Receipt, Settings } from "lucide-react";
+import { Home, Users, ClipboardList, Wallet, BarChart3, Receipt, Settings, Boxes } from "lucide-react";
 import { motion } from "framer-motion";
 import { useI18n } from "@/lib/i18n";
 import { useAppState } from "@/context/AppContext";
@@ -9,6 +9,7 @@ const navItems = [
   { icon: Users, labelKey: "nav.staff", path: "/staff" },
   { icon: ClipboardList, labelKey: "nav.tasks", path: "/tasks" },
   { icon: Receipt, labelKey: "nav.expenses", path: "/expenses" },
+  { icon: Boxes, labelKey: "nav.inventory", path: "/inventory" },
   { icon: Wallet, labelKey: "nav.payroll", path: "/payroll" },
   { icon: BarChart3, labelKey: "nav.insights", path: "/insights" },
 ];

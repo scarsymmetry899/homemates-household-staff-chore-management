@@ -14,6 +14,7 @@ import {
   addTaskInstance as sqlAddTaskInstance,
   createAlert as sqlCreateAlert,
   createAttendanceCorrectionRequest as sqlCreateAttendanceCorrectionRequest,
+  createInventoryItem as sqlCreateInventoryItem,
   deleteExpenseEntry as sqlDeleteExpenseEntry,
   deleteTaskInstance as sqlDeleteTaskInstance,
   dismissAlert as sqlDismissAlert,
@@ -200,6 +201,9 @@ interface AppState {
   updateTaskDueDate: (staffId: string, taskIndex: number, newDueDate: string) => void;
   addAlert: (alert: Omit<Alert, "id" | "dismissed">) => void;
   updateStaffTelegramId: (staffId: string, telegramChatId: string) => void;
+  addInventoryItem: (item: Omit<InventorySetupItem, "id">) => void;
+  updateInventoryItem: (itemId: string, updates: Partial<Omit<InventorySetupItem, "id">>) => void;
+  deleteInventoryItem: (itemId: string) => void;
   markAttendance: (staffId: string, type: string, detail: string) => void;
   registerStaffNfcTag: (staffId: string, label?: string) => Promise<string | null>;
   recordNfcTap: (staffId: string, actionType: string, deviceLabel?: string) => void;
@@ -1229,6 +1233,48 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     persistSql(() => sqlUpdateStaffTelegramId({ staffId, telegramChatId }));
   }, [persistSql]);
 
+  const addInventoryItem = useCallback((item: Omit<InventorySetupItem, "id">) => {
+    const tempId = `item-${Date.now()}`;
+    const nextItem: InventorySetupItem = {
+      ...item,
+      id: tempId,
+      currentQuantity: Number(item.currentQuantity) || 0,
+      minimumQuantity: item.minimumQuantity === undefined ? undefined : Number(item.minimumQuantity) || 0,
+    };
+    setInventoryItems((prev) => [...prev, nextItem]);
+    persistSql(async () => {
+      const result = await sqlCreateInventoryItem({
+        householdId: sqlHouseholdId!,
+        roomId: item.roomId || null,
+        name: item.name,
+        category: item.category,
+        unit: item.unit,
+        currentQuantity: nextItem.currentQuantity,
+        minimumQuantity: nextItem.minimumQuantity ?? null,
+      });
+      setInventoryItems((prev) => prev.map((existing) => (
+        existing.id === tempId ? { ...existing, id: result.data.inventoryItem_insert.id } : existing
+      )));
+    });
+  }, [persistSql, sqlHouseholdId]);
+
+  const updateInventoryItem = useCallback((itemId: string, updates: Partial<Omit<InventorySetupItem, "id">>) => {
+    setInventoryItems((prev) => prev.map((item) => (
+      item.id === itemId
+        ? {
+            ...item,
+            ...updates,
+            currentQuantity: updates.currentQuantity === undefined ? item.currentQuantity : Number(updates.currentQuantity) || 0,
+            minimumQuantity: updates.minimumQuantity === undefined ? item.minimumQuantity : Number(updates.minimumQuantity) || 0,
+          }
+        : item
+    )));
+  }, []);
+
+  const deleteInventoryItem = useCallback((itemId: string) => {
+    setInventoryItems((prev) => prev.filter((item) => item.id !== itemId));
+  }, []);
+
   const markAttendance = useCallback((staffId: string, type: string, detail: string) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
@@ -1552,6 +1598,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         enableDemoMode, disableDemoMode,
         addExpense, createCashRequest, reviewCashRequest, markCashRequestPurchased, createAttendanceCorrectionRequest, reviewAttendanceCorrectionRequest, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
+        addInventoryItem, updateInventoryItem, deleteInventoryItem,
         markAttendance, registerStaffNfcTag, recordNfcTap, reassignTask, extendTaskDeadlineByName,
         updatePunctualityScore, updateReliabilityScore,
         completeHouseholdSetup,

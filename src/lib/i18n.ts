@@ -452,6 +452,7 @@ const supplementalDictionaries: Record<AppLanguage, Dictionary> = {
     "payroll.refreshed": "Payroll data refreshed",
     "payroll.exportStarted": "Export started",
     "payroll.exportDescription": "Payroll report generating...",
+    "nav.inventory": "Inventory",
   },
   hi: {
     "settings.viewMode": "दृश्य मोड",
@@ -523,6 +524,7 @@ const supplementalDictionaries: Record<AppLanguage, Dictionary> = {
     "payroll.refreshed": "वेतन डेटा रिफ्रेश हुआ",
     "payroll.exportStarted": "एक्सपोर्ट शुरू हुआ",
     "payroll.exportDescription": "वेतन रिपोर्ट बन रही है...",
+    "nav.inventory": "इन्वेंटरी",
   },
   te: {
     "settings.viewMode": "వీక్షణ మోడ్",
@@ -594,6 +596,7 @@ const supplementalDictionaries: Record<AppLanguage, Dictionary> = {
     "payroll.refreshed": "పేరోల్ డేటా రిఫ్రెష్ అయింది",
     "payroll.exportStarted": "ఎగుమతి ప్రారంభమైంది",
     "payroll.exportDescription": "పేరోల్ రిపోర్ట్ తయారవుతోంది...",
+    "nav.inventory": "ఇన్వెంటరీ",
   },
   kn: {
     "settings.viewMode": "ವೀಕ್ಷಣೆ ಮೋಡ್",
@@ -665,6 +668,7 @@ const supplementalDictionaries: Record<AppLanguage, Dictionary> = {
     "payroll.refreshed": "ವೇತನ ಡೇಟಾ ರಿಫ್ರೆಶ್ ಆಯಿತು",
     "payroll.exportStarted": "ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಆರಂಭವಾಯಿತು",
     "payroll.exportDescription": "ವೇತನ ವರದಿ ಸಿದ್ಧವಾಗುತ್ತಿದೆ...",
+    "nav.inventory": "ಇನ್ವೆಂಟರಿ",
   },
   ml: {
     "settings.viewMode": "കാഴ്ച മോഡ്",
@@ -736,6 +740,7 @@ const supplementalDictionaries: Record<AppLanguage, Dictionary> = {
     "payroll.refreshed": "വേതന ഡാറ്റ റിഫ്രെഷ് ചെയ്തു",
     "payroll.exportStarted": "എക്സ്പോർട്ട് തുടങ്ങി",
     "payroll.exportDescription": "വേതന റിപ്പോർട്ട് തയ്യാറാകുന്നു...",
+    "nav.inventory": "ഇൻവെന്ററി",
   },
 };
 
