@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactElement } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HashRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,6 +39,7 @@ function AppInner({ onLogout }: { onLogout: () => void }) {
   // Toggled from Settings via AppContext's nfcEnabled.
   const { appRole, nfcEnabled, staff, setupComplete } = useAppState();
   const { lastEvent, simulateTap } = useNfcAttendance(nfcEnabled && setupComplete);
+  const ownerOnly = (page: ReactElement) => appRole === "owner" ? page : <Navigate to="/" replace />;
 
   // Expose simulateTap to SettingsPage via the module-level bridge
   useEffect(() => {
@@ -57,13 +58,13 @@ function AppInner({ onLogout }: { onLogout: () => void }) {
           <Route element={<AppLayout />}>
             <Route path="/" element={appRole === "staff" ? <StaffWorkspace /> : <Index />} />
             <Route path="/my-day" element={<StaffWorkspace />} />
-            <Route path="/staff" element={<StaffDirectory />} />
-            <Route path="/staff/:id" element={<StaffProfile />} />
+            <Route path="/staff" element={ownerOnly(<StaffDirectory />)} />
+            <Route path="/staff/:id" element={ownerOnly(<StaffProfile />)} />
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/payroll" element={<PayrollPage />} />
-            <Route path="/insights" element={<InsightsPage />} />
-            <Route path="/expenses" element={<ExpensesPage />} />
-            <Route path="/alerts" element={<AlertsPage />} />
+            <Route path="/insights" element={ownerOnly(<InsightsPage />)} />
+            <Route path="/expenses" element={ownerOnly(<ExpensesPage />)} />
+            <Route path="/alerts" element={ownerOnly(<AlertsPage />)} />
             <Route path="/settings" element={<SettingsPage onLogout={onLogout} />} />
           </Route>
           <Route path="*" element={<NotFound />} />

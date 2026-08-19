@@ -21,7 +21,7 @@ interface TaskItem {
 }
 
 const TasksPage = () => {
-  const { staff, toggleTask, addTask, deleteTask, updateTaskDueDate, reassignTask } = useAppState();
+  const { staff, appRole, activeStaffId, toggleTask, addTask, deleteTask, updateTaskDueDate, reassignTask } = useAppState();
   const { t } = useI18n();
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [showForm, setShowForm] = useState(false);
@@ -34,8 +34,12 @@ const TasksPage = () => {
   const [reassignPickerTask, setReassignPickerTask] = useState<TaskItem | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
+  const visibleStaff = appRole === "staff"
+    ? staff.filter((member) => member.id === activeStaffId)
+    : staff;
+  const canManageTasks = appRole === "owner";
 
-  const allTasks: TaskItem[] = staff.flatMap((s) =>
+  const allTasks: TaskItem[] = visibleStaff.flatMap((s) =>
     s.assignments.map((t, i) => ({
       ...t,
       staffId: s.id,
@@ -68,6 +72,7 @@ const TasksPage = () => {
   };
 
   const handleAddTask = async () => {
+    if (!canManageTasks) return;
     if (!newTask.staffId || !newTask.task.trim()) return;
 
     const cleanTask = newTask.task.trim();
@@ -151,17 +156,19 @@ const TasksPage = () => {
             )}
           </div>
           {!task.done && <Clock size={14} className="text-status-late shrink-0 mt-1" />}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteTask(task.staffId, task.taskIndex);
-              toast.success("Task deleted", { description: task.task });
-            }}
-            className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-1"
-          >
-            <Trash2 size={13} />
-          </motion.button>
+          {canManageTasks && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteTask(task.staffId, task.taskIndex);
+                toast.success("Task deleted", { description: task.task });
+              }}
+              className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-1"
+            >
+              <Trash2 size={13} />
+            </motion.button>
+          )}
         </div>
       </PressableCard>
   );
@@ -198,39 +205,40 @@ const TasksPage = () => {
           </div>
         </div>
       </div>
-      {/* Action row */}
-      <div className="flex gap-2 flex-wrap pl-7">
-        <button
-          onClick={() => handleCarryForward(task)}
-          className="flex items-center gap-1.5 label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl"
-        >
-          <RotateCcw size={11} /> Today
-        </button>
-        <button
-          onClick={() => handleExtendDeadline(task, 7)}
-          className="flex items-center gap-1.5 label-sm text-muted-foreground glass-btn px-3 py-1.5 rounded-xl"
-        >
-          <CalendarDays size={11} /> +7 Days
-        </button>
-        <button
-          onClick={() => setReassignPickerTask(task)}
-          className="flex items-center gap-1.5 label-sm text-muted-foreground glass-btn px-3 py-1.5 rounded-xl"
-        >
-          <ArrowRightLeft size={11} /> Reassign
-        </button>
-        <button
-          onClick={() => {
-            deleteTask(task.staffId, task.taskIndex);
-            toast.success("Task removed", { description: task.task });
-          }}
-          className="flex items-center gap-1.5 label-sm text-destructive glass-btn px-3 py-1.5 rounded-xl"
-        >
-          <Trash2 size={11} /> Delete
-        </button>
-      </div>
+      {canManageTasks && (
+        <div className="flex gap-2 flex-wrap pl-7">
+          <button
+            onClick={() => handleCarryForward(task)}
+            className="flex items-center gap-1.5 label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl"
+          >
+            <RotateCcw size={11} /> Today
+          </button>
+          <button
+            onClick={() => handleExtendDeadline(task, 7)}
+            className="flex items-center gap-1.5 label-sm text-muted-foreground glass-btn px-3 py-1.5 rounded-xl"
+          >
+            <CalendarDays size={11} /> +7 Days
+          </button>
+          <button
+            onClick={() => setReassignPickerTask(task)}
+            className="flex items-center gap-1.5 label-sm text-muted-foreground glass-btn px-3 py-1.5 rounded-xl"
+          >
+            <ArrowRightLeft size={11} /> Reassign
+          </button>
+          <button
+            onClick={() => {
+              deleteTask(task.staffId, task.taskIndex);
+              toast.success("Task removed", { description: task.task });
+            }}
+            className="flex items-center gap-1.5 label-sm text-destructive glass-btn px-3 py-1.5 rounded-xl"
+          >
+            <Trash2 size={11} /> Delete
+          </button>
+        </div>
+      )}
 
       {/* Inline reassign picker */}
-      <AnimatePresence>
+      {canManageTasks && <AnimatePresence>
         {reassignPickerTask?.task === task.task && reassignPickerTask?.staffId === task.staffId && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
@@ -263,7 +271,7 @@ const TasksPage = () => {
             </button>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>}
     </div>
   );
 
@@ -305,17 +313,18 @@ const TasksPage = () => {
           ))}
         </div>
 
-        {/* Add Task */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowForm(!showForm)}
-          className="w-full glass-card text-card-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
-        >
-          <Plus size={16} /> {t("tasks.queueTask")}
-        </motion.button>
+        {canManageTasks && (
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowForm(!showForm)}
+            className="w-full glass-card text-card-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
+          >
+            <Plus size={16} /> {t("tasks.queueTask")}
+          </motion.button>
+        )}
 
         <AnimatePresence>
-          {showForm && (
+          {showForm && canManageTasks && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -336,7 +345,7 @@ const TasksPage = () => {
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
                 >
                   <option value="">{t("tasks.assignTo")}</option>
-                  {staff.map((s) => (
+                  {visibleStaff.map((s) => (
                     <option key={s.id} value={s.id}>{s.name} — {s.role}</option>
                   ))}
                 </select>
@@ -467,6 +476,12 @@ const TasksPage = () => {
                 <TaskCard task={task} />
               </StaggerItem>
             ))}
+            {filtered.length === 0 && (
+              <div className="text-center py-10 text-muted-foreground">
+                <CheckCircle2 size={32} className="mx-auto mb-3 text-status-on-time/50" />
+                <p className="text-sm">{appRole === "staff" ? "No tasks assigned to you yet." : t("tasks.allCompleted")}</p>
+              </div>
+            )}
           </StaggerContainer>
         )}
       </PageTransition>

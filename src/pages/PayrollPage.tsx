@@ -7,9 +7,12 @@ import StaffAvatar from "@/components/StaffAvatar";
 import { toast } from "sonner";
 
 const PayrollPage = () => {
-  const { staff } = useAppState();
-  const totalPayroll = staff.reduce((a, s) => a + s.payroll.netPay, 0);
-  const totalDeductions = staff.reduce((a, s) => a + s.payroll.deductions, 0);
+  const { staff, appRole, activeStaffId } = useAppState();
+  const visibleStaff = appRole === "staff"
+    ? staff.filter((member) => member.id === activeStaffId)
+    : staff;
+  const totalPayroll = visibleStaff.reduce((a, s) => a + s.payroll.netPay, 0);
+  const totalDeductions = visibleStaff.reduce((a, s) => a + s.payroll.deductions, 0);
 
   const handleRefresh = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 800));
@@ -20,7 +23,7 @@ const PayrollPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Compensation Hub</p>
+          <p className="label-sm text-muted-foreground">{appRole === "staff" ? "My Compensation" : "Compensation Hub"}</p>
           <h1 className="display-sm text-foreground">
             Payroll
             <br />
@@ -40,7 +43,7 @@ const PayrollPage = () => {
           <div className="flex gap-6 pt-2">
             <div>
               <p className="label-sm text-primary-foreground/50">Total Base</p>
-              <p className="text-primary-foreground font-semibold text-sm">₹{staff.reduce((a, s) => a + s.payroll.baseSalary, 0).toLocaleString("en-IN")}</p>
+              <p className="text-primary-foreground font-semibold text-sm">₹{visibleStaff.reduce((a, s) => a + s.payroll.baseSalary, 0).toLocaleString("en-IN")}</p>
             </div>
             {totalDeductions > 0 && (
               <div>
@@ -53,15 +56,17 @@ const PayrollPage = () => {
 
         <StaggerContainer className="space-y-3 pb-4">
           <div className="flex items-center justify-between">
-            <h3 className="headline-sm text-foreground">Homemaker Compensation</h3>
-            <button
-              onClick={() => toast.success("Export started", { description: "Payroll report generating..." })}
-              className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl flex items-center gap-1"
-            >
-              <Download size={12} /> Export
-            </button>
+            <h3 className="headline-sm text-foreground">{appRole === "staff" ? "My Pay" : "Homemaker Compensation"}</h3>
+            {appRole === "owner" && (
+              <button
+                onClick={() => toast.success("Export started", { description: "Payroll report generating..." })}
+                className="label-sm text-secondary glass-btn px-3 py-1.5 rounded-xl flex items-center gap-1"
+              >
+                <Download size={12} /> Export
+              </button>
+            )}
           </div>
-          {staff.map((s) => (
+          {visibleStaff.map((s) => (
             <StaggerItem key={s.id}>
               <PressableCard className="glass-card rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-3">
