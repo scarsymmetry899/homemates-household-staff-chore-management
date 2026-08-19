@@ -22,6 +22,9 @@ import {
   reassignTaskInstance as sqlReassignTaskInstance,
   registerNfcTag as sqlRegisterNfcTag,
   removeStaffMember as sqlRemoveStaffMember,
+  createStaffCashRequest as sqlCreateStaffCashRequest,
+  markStaffCashRequestPurchased as sqlMarkStaffCashRequestPurchased,
+  reviewStaffCashRequest as sqlReviewStaffCashRequest,
   setTaskCompletion as sqlSetTaskCompletion,
   updateExpenseEntry as sqlUpdateExpenseEntry,
   updateStaffPhoto as sqlUpdateStaffPhoto,
@@ -56,6 +59,29 @@ export interface Alert {
   time: string;
   dismissed: boolean;
   actions: string[];
+}
+
+export type StaffCashRequestStatus = "pending" | "approved" | "rejected" | "purchased";
+
+export interface StaffCashRequest {
+  id: string;
+  category: Expense["category"] | string;
+  amountRequested: number;
+  amountApproved?: number;
+  reason: string;
+  status: StaffCashRequestStatus;
+  neededBy?: string;
+  requestedAt: string;
+  approvedAt?: string;
+  purchasedAt?: string;
+  receiptUrl?: string;
+  notes?: string;
+  staffId?: string;
+  staffName?: string;
+  staffRole?: string;
+  inventoryItemId?: string;
+  inventoryItemName?: string;
+  linkedExpenseId?: string;
 }
 
 export interface HouseholdProfile {
@@ -109,6 +135,7 @@ export interface HouseholdSetupPayload {
 interface AppState {
   staff: StaffMember[];
   expenses: Expense[];
+  cashRequests: StaffCashRequest[];
   alerts: Alert[];
   setupComplete: boolean;
   householdProfile: HouseholdProfile | null;
@@ -136,6 +163,9 @@ interface AppState {
   updateStaffRole: (staffId: string, role: string) => void;
   updateStaffShift: (staffId: string, shiftStart: string, shiftEnd: string) => void;
   addExpense: (expense: Omit<Expense, "id">) => void;
+  createCashRequest: (request: Omit<StaffCashRequest, "id" | "status" | "requestedAt">) => void;
+  reviewCashRequest: (requestId: string, status: "approved" | "rejected", amountApproved?: number, notes?: string) => void;
+  markCashRequestPurchased: (requestId: string, linkedExpenseId?: string, receiptUrl?: string, notes?: string) => void;
   editExpense: (id: string, updates: Partial<Omit<Expense, "id">>) => void;
   deleteExpense: (id: string) => void;
   dismissAlert: (alertId: string) => void;
@@ -209,6 +239,36 @@ const initialAlerts: Alert[] = [
   },
 ];
 
+const initialCashRequests: StaffCashRequest[] = [
+  {
+    id: "cr1",
+    category: "Groceries",
+    amountRequested: 2500,
+    reason: "Weekly vegetables, fruits, and dairy restock",
+    status: "pending",
+    neededBy: "Tomorrow",
+    requestedAt: "Today",
+    staffId: "4",
+    staffName: "Sienna Brooks",
+    staffRole: "Cook",
+    inventoryItemName: "Vegetables",
+  },
+  {
+    id: "cr2",
+    category: "Fuel",
+    amountRequested: 1800,
+    amountApproved: 1500,
+    reason: "Fuel for school pickup and airport run",
+    status: "approved",
+    neededBy: "Today",
+    requestedAt: "Yesterday",
+    approvedAt: "Today",
+    staffId: "2",
+    staffName: "Marcus Thorne",
+    staffRole: "Chauffeur",
+  },
+];
+
 const onboardingDoneKey = "homemaker_onboarding_done";
 const demoModeKey = "homemaker_demo_mode";
 const demoBackupKey = "homemaker_demo_backup";
@@ -239,6 +299,7 @@ function getDemoHouseholdState(ownerName: string): HouseholdStateSnapshot {
   return {
     staff: cloneStaff(initialStaff),
     expenses: initialExpenses.map((expense) => ({ ...expense })),
+    cashRequests: initialCashRequests.map((request) => ({ ...request })),
     alerts: initialAlerts.map((alert) => ({ ...alert, actions: [...alert.actions] })),
     setupComplete: true,
     householdProfile: {
@@ -275,6 +336,7 @@ function getDemoHouseholdState(ownerName: string): HouseholdStateSnapshot {
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [staff, setStaff] = useState<StaffMember[]>(() => isFirebaseConfigured ? [] : initialStaff);
   const [expenses, setExpenses] = useState<Expense[]>(() => isFirebaseConfigured ? [] : initialExpenses);
+  const [cashRequests, setCashRequests] = useState<StaffCashRequest[]>(() => isFirebaseConfigured ? [] : initialCashRequests);
   const [alerts, setAlerts] = useState<Alert[]>(() => isFirebaseConfigured ? [] : initialAlerts);
   const [setupComplete, setSetupComplete] = useState(() => !isFirebaseConfigured);
   const [householdProfile, setHouseholdProfile] = useState<HouseholdProfile | null>(null);
@@ -313,6 +375,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const currentHouseholdState: HouseholdStateSnapshot = {
     staff,
     expenses,
+    cashRequests,
     alerts,
     setupComplete,
     householdProfile,
@@ -365,6 +428,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         lastSavedStateRef.current = JSON.stringify(nextState);
         setStaff(state.staff);
         setExpenses(state.expenses);
+        setCashRequests(state.cashRequests || []);
         setAlerts(state.alerts);
         setSetupComplete(nextSetupComplete);
         setHouseholdProfile(state.householdProfile || null);
@@ -456,6 +520,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         isApplyingRemoteStateRef.current = true;
         setStaff(snapshot.staff);
         setExpenses(snapshot.expenses);
+        setCashRequests(snapshot.cashRequests);
         setAlerts(snapshot.alerts);
         setOwnerNameState(snapshot.ownerName);
         setSqlHouseholdId(snapshot.householdId);
@@ -539,6 +604,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     isApplyingRemoteStateRef.current = true;
     setStaff(cloneStaff(snapshot.staff));
     setExpenses(snapshot.expenses.map((expense) => ({ ...expense })));
+    setCashRequests((snapshot.cashRequests || []).map((request) => ({ ...request })));
     setAlerts(snapshot.alerts.map((alert) => ({ ...alert, actions: [...alert.actions] })));
     setSetupComplete(!!snapshot.setupComplete);
     setHouseholdProfile(snapshot.householdProfile || null);
@@ -561,6 +627,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const liveSnapshot: HouseholdStateSnapshot = {
       staff,
       expenses,
+      cashRequests,
       alerts,
       setupComplete,
       householdProfile,
@@ -584,6 +651,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     alerts,
     appRole,
     applyHouseholdSnapshot,
+    cashRequests,
     expenses,
     homemates,
     householdProfile,
@@ -709,6 +777,73 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       )));
     });
   }, [persistSql, sqlHouseholdId, staff]);
+
+  const createCashRequest = useCallback((request: Omit<StaffCashRequest, "id" | "status" | "requestedAt">) => {
+    const tempId = `cr${Date.now()}`;
+    const requestedAt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const nextRequest: StaffCashRequest = {
+      ...request,
+      id: tempId,
+      status: "pending",
+      requestedAt,
+    };
+    setCashRequests((prev) => [nextRequest, ...prev]);
+    persistSql(async () => {
+      const result = await sqlCreateStaffCashRequest({
+        householdId: sqlHouseholdId!,
+        staffId: request.staffId || null,
+        inventoryItemId: request.inventoryItemId || null,
+        category: request.category,
+        amountRequested: request.amountRequested,
+        reason: request.reason,
+        neededBy: request.neededBy ? `${request.neededBy}T00:00:00.000Z` : null,
+        notes: request.notes || null,
+      });
+      setCashRequests((prev) => prev.map((item) => (
+        item.id === tempId ? { ...item, id: result.data.staffCashRequest_insert.id } : item
+      )));
+    });
+  }, [persistSql, sqlHouseholdId]);
+
+  const reviewCashRequest = useCallback((
+    requestId: string,
+    status: "approved" | "rejected",
+    amountApproved?: number,
+    notes?: string
+  ) => {
+    const reviewedAt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    setCashRequests((prev) => prev.map((request) => (
+      request.id === requestId
+        ? { ...request, status, amountApproved, notes: notes || request.notes, approvedAt: reviewedAt }
+        : request
+    )));
+    persistSql(() => sqlReviewStaffCashRequest({
+      requestId,
+      status,
+      amountApproved: amountApproved ?? null,
+      notes: notes || null,
+    }));
+  }, [persistSql]);
+
+  const markCashRequestPurchased = useCallback((
+    requestId: string,
+    linkedExpenseId?: string,
+    receiptUrl?: string,
+    notes?: string
+  ) => {
+    const purchasedAt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    setCashRequests((prev) => prev.map((request) => (
+      request.id === requestId
+        ? { ...request, status: "purchased", linkedExpenseId, receiptUrl, notes: notes || request.notes, purchasedAt }
+        : request
+    )));
+    persistSql(() => sqlMarkStaffCashRequestPurchased({
+      requestId,
+      linkedExpenseId: linkedExpenseId || null,
+      receiptUrl: receiptUrl || null,
+      notes: notes || null,
+    }));
+  }, [persistSql]);
 
   const editExpense = useCallback((id: string, updates: Partial<Omit<Expense, "id">>) => {
     const current = expenses.find((e) => e.id === id);
@@ -1103,6 +1238,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setOwnerNameState(setup.ownerName);
     setStaff(setup.staff);
     setExpenses([]);
+    setCashRequests([]);
     setAlerts([]);
     setSetupComplete(true);
     localStorage.setItem("homemaker_owner_name", setup.ownerName);
@@ -1110,6 +1246,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     let persistedStaff = setup.staff;
     let persistedExpenses: Expense[] = [];
+    let persistedCashRequests: StaffCashRequest[] = [];
     let persistedAlerts: Alert[] = [];
 
     try {
@@ -1118,9 +1255,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setSqlHouseholdId(snapshot.householdId);
         setStaff(snapshot.staff);
         setExpenses(snapshot.expenses);
+        setCashRequests(snapshot.cashRequests);
         setAlerts(snapshot.alerts);
         persistedStaff = snapshot.staff;
         persistedExpenses = snapshot.expenses;
+        persistedCashRequests = snapshot.cashRequests;
         persistedAlerts = snapshot.alerts;
       }
     } finally {
@@ -1129,6 +1268,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const nextState: HouseholdStateSnapshot = {
           staff: persistedStaff,
           expenses: persistedExpenses,
+          cashRequests: persistedCashRequests,
           alerts: persistedAlerts,
           setupComplete: true,
           householdProfile: profile,
@@ -1173,9 +1313,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={{
         staff, expenses, alerts, setupComplete, householdProfile, homemates, rooms, inventoryItems,
         ownerName, ownerLocation, language, appRole, activeStaffId, isDarkMode, nfcEnabled, isDemoMode,
+        cashRequests,
         setOwnerName, setLanguage, setAppRole, setActiveStaffId, setDarkMode, setNfcEnabled, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
         enableDemoMode, disableDemoMode,
-        addExpense, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
+        addExpense, createCashRequest, reviewCashRequest, markCashRequestPurchased, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
         markAttendance, registerStaffNfcTag, recordNfcTap, reassignTask, extendTaskDeadlineByName,
         updatePunctualityScore, updateReliabilityScore,

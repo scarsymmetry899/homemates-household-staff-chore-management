@@ -7,6 +7,7 @@ import type {
   RoomZoneProfile,
   type AppRole,
   type AppLanguage,
+  type StaffCashRequest,
 } from "@/context/AppContext";
 import type { StaffMember } from "@/data/staff";
 import { getCurrentAuthUser, getFirebaseFirestore, isFirebaseConfigured } from "@/lib/firebase";
@@ -14,6 +15,7 @@ import { getCurrentAuthUser, getFirebaseFirestore, isFirebaseConfigured } from "
 export interface HouseholdStateSnapshot {
   staff: StaffMember[];
   expenses: Expense[];
+  cashRequests?: StaffCashRequest[];
   alerts: Alert[];
   setupComplete?: boolean;
   householdProfile?: HouseholdProfile | null;
@@ -79,6 +81,7 @@ export async function subscribeToHouseholdState(
         onState({
           staff: data.staff,
           expenses: data.expenses,
+          cashRequests: data.cashRequests || [],
           alerts: data.alerts,
           setupComplete: !!data.setupComplete,
           householdProfile: data.householdProfile || null,

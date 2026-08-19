@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Fuel, ShoppingCart, Wrench, Banknote, Home as HomeIcon, TrendingUp, Camera, Check, Pencil } from "lucide-react";
+import { X, Plus, Fuel, ShoppingCart, Wrench, Banknote, Home as HomeIcon, TrendingUp, Camera, Check, Pencil, ClipboardCheck } from "lucide-react";
 import { useAppState, type Expense } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { toast } from "sonner";
@@ -25,9 +25,10 @@ interface ScanItem {
 }
 
 const ExpensesPage = () => {
-  const { expenses, addExpense, editExpense, deleteExpense } = useAppState();
+  const { expenses, cashRequests, addExpense, editExpense, deleteExpense, reviewCashRequest, markCashRequestPurchased } = useAppState();
   const [showForm, setShowForm] = useState(false);
   const [newExpense, setNewExpense] = useState({ category: "Fuel" as Expense["category"], amount: "", description: "", staffName: "" });
+  const [approvalAmounts, setApprovalAmounts] = useState<Record<string, string>>({});
 
   // Edit modal
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -46,6 +47,8 @@ const ExpensesPage = () => {
     acc[e.category] = (acc[e.category] || 0) + e.amount;
     return acc;
   }, {});
+  const activeCashRequests = cashRequests.filter((request) => request.status !== "purchased");
+  const pendingCashRequests = cashRequests.filter((request) => request.status === "pending").length;
 
   const handleAdd = () => {
     if (!newExpense.amount || !newExpense.description) return;
@@ -59,6 +62,30 @@ const ExpensesPage = () => {
     setNewExpense({ category: "Fuel", amount: "", description: "", staffName: "" });
     setShowForm(false);
     toast.success("Expense added");
+  };
+
+  const approveRequest = (requestId: string, fallbackAmount: number) => {
+    const amount = Number(approvalAmounts[requestId]) || fallbackAmount;
+    reviewCashRequest(requestId, "approved", amount);
+    toast.success("Cash request approved", { description: `Approved ₹${amount.toLocaleString("en-IN")}` });
+  };
+
+  const rejectRequest = (requestId: string) => {
+    reviewCashRequest(requestId, "rejected", undefined, "Rejected by owner");
+    toast.success("Cash request rejected");
+  };
+
+  const convertRequestToExpense = (request: (typeof cashRequests)[number]) => {
+    const amount = request.amountApproved || request.amountRequested;
+    addExpense({
+      category: categoryList.includes(request.category as Expense["category"]) ? request.category as Expense["category"] : "Household",
+      amount,
+      description: request.reason,
+      staffName: request.staffName,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    });
+    markCashRequestPurchased(request.id, undefined, request.receiptUrl, "Added to household expenses");
+    toast.success("Request moved to expenses", { description: request.reason });
   };
 
   const openEditModal = (expense: Expense) => {
@@ -218,6 +245,92 @@ const ExpensesPage = () => {
             <Camera size={16} /> Scan Receipt
           </motion.button>
         </div>
+
+        {activeCashRequests.length > 0 && (
+          <section className="glass-card rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="label-sm text-muted-foreground">Owner Approval Queue</p>
+                <h2 className="headline-sm text-card-foreground">Staff Cash Requests</h2>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
+                <ClipboardCheck size={18} className="text-secondary" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              {activeCashRequests.map((request) => (
+                <div key={request.id} className="rounded-2xl bg-surface-low border border-border/30 p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-card-foreground">{request.reason}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {request.staffName || "Unassigned"} · {request.category} · requested {request.requestedAt}
+                      </p>
+                      {request.neededBy && (
+                        <p className="text-xs text-muted-foreground mt-0.5">Needed by {request.neededBy}</p>
+                      )}
+                    </div>
+                    <span className={`label-sm rounded-full px-2.5 py-1 capitalize ${
+                      request.status === "approved"
+                        ? "bg-status-on-time/10 text-status-on-time"
+                        : request.status === "rejected"
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-status-late/10 text-status-late"
+                    }`}>
+                      {request.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-display text-xl text-card-foreground">
+                      ₹{request.amountRequested.toLocaleString("en-IN")}
+                    </p>
+                    {request.amountApproved && request.amountApproved !== request.amountRequested && (
+                      <p className="text-xs text-muted-foreground">
+                        approved ₹{request.amountApproved.toLocaleString("en-IN")}
+                      </p>
+                    )}
+                  </div>
+                  {request.status === "pending" ? (
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+                      <input
+                        type="number"
+                        placeholder="Approve amount"
+                        value={approvalAmounts[request.id] || ""}
+                        onChange={(event) => setApprovalAmounts((prev) => ({ ...prev, [request.id]: event.target.value }))}
+                        className="bg-background/70 rounded-xl px-3 py-2 text-sm text-card-foreground border border-border/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => approveRequest(request.id, request.amountRequested)}
+                        className="btn-estate text-primary-foreground label-sm px-3 py-2 rounded-xl"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => rejectRequest(request.id)}
+                        className="glass-btn text-destructive label-sm px-3 py-2 rounded-xl"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ) : request.status === "approved" ? (
+                    <button
+                      type="button"
+                      onClick={() => convertRequestToExpense(request)}
+                      className="w-full glass-btn text-foreground label-sm py-3 rounded-xl"
+                    >
+                      Mark Purchased & Add To Expenses
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {pendingCashRequests} pending request{pendingCashRequests === 1 ? "" : "s"} awaiting owner review.
+            </p>
+          </section>
+        )}
 
         {/* Add Expense Form */}
         <AnimatePresence>

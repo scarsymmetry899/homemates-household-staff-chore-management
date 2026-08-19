@@ -1,12 +1,21 @@
-import { CalendarCheck, CheckCircle2, Circle, Clock, CreditCard, IndianRupee, MessageSquareWarning, ReceiptText } from "lucide-react";
+import { useState } from "react";
+import { CalendarCheck, CheckCircle2, Circle, Clock, CreditCard, MessageSquareWarning, ReceiptText, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { useAppState } from "@/context/AppContext";
+import { useAppState, type Expense } from "@/context/AppContext";
 import StaffAvatar from "@/components/StaffAvatar";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/components/animations/MotionComponents";
 
 export default function StaffWorkspace() {
-  const { staff, activeStaffId, setActiveStaffId, toggleTask } = useAppState();
+  const { staff, activeStaffId, setActiveStaffId, toggleTask, createCashRequest, cashRequests } = useAppState();
+  const [showCashForm, setShowCashForm] = useState(false);
+  const [cashForm, setCashForm] = useState({
+    category: "Groceries" as Expense["category"],
+    amountRequested: "",
+    reason: "",
+    neededBy: "",
+    notes: "",
+  });
   const activeStaff = staff.find((member) => member.id === activeStaffId) || staff[0];
 
   if (!activeStaff) {
@@ -22,6 +31,27 @@ export default function StaffWorkspace() {
 
   const completedTasks = activeStaff.assignments.filter((task) => task.done).length;
   const attendanceEntry = activeStaff.attendance[0];
+  const myCashRequests = cashRequests.filter((request) => request.staffId === activeStaff.id);
+
+  const submitCashRequest = () => {
+    if (!cashForm.amountRequested || !cashForm.reason.trim()) {
+      toast.error("Amount and reason are required");
+      return;
+    }
+    createCashRequest({
+      category: cashForm.category,
+      amountRequested: Number(cashForm.amountRequested),
+      reason: cashForm.reason.trim(),
+      neededBy: cashForm.neededBy || undefined,
+      notes: cashForm.notes.trim() || undefined,
+      staffId: activeStaff.id,
+      staffName: activeStaff.name,
+      staffRole: activeStaff.role,
+    });
+    setCashForm({ category: "Groceries", amountRequested: "", reason: "", neededBy: "", notes: "" });
+    setShowCashForm(false);
+    toast.success("Cash request sent", { description: "The owner can approve or reject it from Expenses." });
+  };
 
   return (
     <PageTransition className="px-5 space-y-6">
@@ -104,7 +134,7 @@ export default function StaffWorkspace() {
       <section className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => toast.info("Cash request workflow is next", { description: "This will create owner-approved grocery/fuel/supply requests." })}
+          onClick={() => setShowCashForm((value) => !value)}
           className="glass-card rounded-2xl p-4 text-left space-y-2"
         >
           <ReceiptText size={18} className="text-secondary" />
@@ -121,6 +151,85 @@ export default function StaffWorkspace() {
           <p className="text-xs text-muted-foreground">Attendance discrepancy</p>
         </button>
       </section>
+
+      {showCashForm && (
+        <section className="glass-card rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="label-sm text-muted-foreground">Owner Approval</p>
+              <h2 className="headline-sm text-foreground">Request Cash</h2>
+            </div>
+            <button type="button" onClick={() => setShowCashForm(false)} className="glass-btn w-8 h-8 rounded-xl flex items-center justify-center">
+              <X size={16} className="text-muted-foreground" />
+            </button>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {(["Groceries", "Fuel", "Household", "Repairs", "Advances"] as Expense["category"][]).map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setCashForm((form) => ({ ...form, category }))}
+                className={`label-sm px-3 py-2 rounded-xl transition-all ${
+                  cashForm.category === category ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+          <input
+            type="number"
+            placeholder="Amount needed"
+            value={cashForm.amountRequested}
+            onChange={(event) => setCashForm((form) => ({ ...form, amountRequested: event.target.value }))}
+            className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground border border-border/30"
+          />
+          <input
+            type="text"
+            placeholder="Reason, e.g. vegetables, fuel, baby supplies"
+            value={cashForm.reason}
+            onChange={(event) => setCashForm((form) => ({ ...form, reason: event.target.value }))}
+            className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground border border-border/30"
+          />
+          <input
+            type="date"
+            value={cashForm.neededBy}
+            onChange={(event) => setCashForm((form) => ({ ...form, neededBy: event.target.value }))}
+            className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground border border-border/30"
+          />
+          <textarea
+            placeholder="Notes for owner (optional)"
+            value={cashForm.notes}
+            onChange={(event) => setCashForm((form) => ({ ...form, notes: event.target.value }))}
+            className="w-full min-h-20 bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground border border-border/30"
+          />
+          <button type="button" onClick={submitCashRequest} className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl">
+            Send Request
+          </button>
+        </section>
+      )}
+
+      {myCashRequests.length > 0 && (
+        <section className="glass-card rounded-2xl p-5 space-y-3">
+          <div>
+            <p className="label-sm text-muted-foreground">Cash Requests</p>
+            <h2 className="headline-sm text-foreground">My Requests</h2>
+          </div>
+          {myCashRequests.slice(0, 4).map((request) => (
+            <div key={request.id} className="rounded-xl bg-surface-low border border-border/30 p-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-card-foreground truncate">{request.reason}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {request.category} · ₹{request.amountRequested.toLocaleString("en-IN")} · {request.requestedAt}
+                </p>
+              </div>
+              <span className="label-sm rounded-full bg-muted px-2.5 py-1 capitalize text-muted-foreground">
+                {request.status}
+              </span>
+            </div>
+          ))}
+        </section>
+      )}
 
       <section className="glass-card rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
