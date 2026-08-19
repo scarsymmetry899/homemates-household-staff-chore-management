@@ -352,6 +352,14 @@ function cloneStaff(members: StaffMember[]): StaffMember[] {
 }
 
 function getDemoHouseholdState(ownerName: string): HouseholdStateSnapshot {
+  const savedLanguage = localStorage.getItem("homemaker_language");
+  const savedRole = localStorage.getItem("homemaker_app_role");
+  const savedStaffId = localStorage.getItem("homemaker_active_staff_id");
+  const language: AppLanguage = savedLanguage === "hi" || savedLanguage === "te" || savedLanguage === "kn" || savedLanguage === "ml"
+    ? savedLanguage
+    : "en";
+  const appRole: AppRole = savedRole === "staff" ? "staff" : "owner";
+
   return {
     staff: cloneStaff(initialStaff),
     expenses: initialExpenses.map((expense) => ({ ...expense })),
@@ -382,9 +390,9 @@ function getDemoHouseholdState(ownerName: string): HouseholdStateSnapshot {
       { id: "demo-item-4", name: "Dog food", category: "Pet supplies", unit: "bag", currentQuantity: 1, minimumQuantity: 1 },
     ],
     ownerName,
-    language: "en",
-    appRole: "owner",
-    activeStaffId: null,
+    language,
+    appRole,
+    activeStaffId: appRole === "staff" ? savedStaffId || initialStaff[0]?.id || null : savedStaffId,
     isDarkMode: false,
     nfcEnabled: false,
   };
