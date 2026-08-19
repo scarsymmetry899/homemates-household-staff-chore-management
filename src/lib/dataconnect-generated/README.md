@@ -42,6 +42,8 @@ This README will guide you through the process of using the generated JavaScript
   - [*CreateStaffCashRequest*](#createstaffcashrequest)
   - [*ReviewStaffCashRequest*](#reviewstaffcashrequest)
   - [*MarkStaffCashRequestPurchased*](#markstaffcashrequestpurchased)
+  - [*CreateAttendanceCorrectionRequest*](#createattendancecorrectionrequest)
+  - [*ReviewAttendanceCorrectionRequest*](#reviewattendancecorrectionrequest)
   - [*CreateCctvCamera*](#createcctvcamera)
   - [*RecordCctvHealthEvent*](#recordcctvhealthevent)
 
@@ -188,6 +190,22 @@ export interface MyHouseholdsData {
         description: string;
       } & ExpenseEntry_Key;
     } & StaffCashRequest_Key)[];
+    attendanceCorrectionRequests_on_household: ({
+      id: UUIDString;
+      currentStatus?: string | null;
+      requestedStatus: string;
+      reason: string;
+      status: string;
+      requestedFor: DateString;
+      requestedAt: TimestampString;
+      reviewedAt?: TimestampString | null;
+      notes?: string | null;
+      staff: {
+        id: UUIDString;
+        name: string;
+        role: string;
+      } & StaffMember_Key;
+    } & AttendanceCorrectionRequest_Key)[];
     cctvCameras_on_household: ({
       id: UUIDString;
       name: string;
@@ -4108,6 +4126,245 @@ console.log(data.staffCashRequest_update);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.staffCashRequest_update);
+});
+```
+
+## CreateAttendanceCorrectionRequest
+You can execute the `CreateAttendanceCorrectionRequest` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createAttendanceCorrectionRequest(vars: CreateAttendanceCorrectionRequestVariables): MutationPromise<CreateAttendanceCorrectionRequestData, CreateAttendanceCorrectionRequestVariables>;
+
+interface CreateAttendanceCorrectionRequestRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateAttendanceCorrectionRequestVariables): MutationRef<CreateAttendanceCorrectionRequestData, CreateAttendanceCorrectionRequestVariables>;
+}
+export const createAttendanceCorrectionRequestRef: CreateAttendanceCorrectionRequestRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createAttendanceCorrectionRequest(dc: DataConnect, vars: CreateAttendanceCorrectionRequestVariables): MutationPromise<CreateAttendanceCorrectionRequestData, CreateAttendanceCorrectionRequestVariables>;
+
+interface CreateAttendanceCorrectionRequestRef {
+  ...
+  (dc: DataConnect, vars: CreateAttendanceCorrectionRequestVariables): MutationRef<CreateAttendanceCorrectionRequestData, CreateAttendanceCorrectionRequestVariables>;
+}
+export const createAttendanceCorrectionRequestRef: CreateAttendanceCorrectionRequestRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createAttendanceCorrectionRequestRef:
+```typescript
+const name = createAttendanceCorrectionRequestRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateAttendanceCorrectionRequest` mutation requires an argument of type `CreateAttendanceCorrectionRequestVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateAttendanceCorrectionRequestVariables {
+  householdId: UUIDString;
+  staffId: UUIDString;
+  currentStatus?: string | null;
+  requestedStatus: string;
+  requestedFor: DateString;
+  reason: string;
+}
+```
+### Return Type
+Recall that executing the `CreateAttendanceCorrectionRequest` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateAttendanceCorrectionRequestData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateAttendanceCorrectionRequestData {
+  attendanceCorrectionRequest_insert: AttendanceCorrectionRequest_Key;
+}
+```
+### Using `CreateAttendanceCorrectionRequest`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createAttendanceCorrectionRequest, CreateAttendanceCorrectionRequestVariables } from '@homemaker/dataconnect';
+
+// The `CreateAttendanceCorrectionRequest` mutation requires an argument of type `CreateAttendanceCorrectionRequestVariables`:
+const createAttendanceCorrectionRequestVars: CreateAttendanceCorrectionRequestVariables = {
+  householdId: ..., 
+  staffId: ..., 
+  currentStatus: ..., // optional
+  requestedStatus: ..., 
+  requestedFor: ..., 
+  reason: ..., 
+};
+
+// Call the `createAttendanceCorrectionRequest()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createAttendanceCorrectionRequest(createAttendanceCorrectionRequestVars);
+// Variables can be defined inline as well.
+const { data } = await createAttendanceCorrectionRequest({ householdId: ..., staffId: ..., currentStatus: ..., requestedStatus: ..., requestedFor: ..., reason: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createAttendanceCorrectionRequest(dataConnect, createAttendanceCorrectionRequestVars);
+
+console.log(data.attendanceCorrectionRequest_insert);
+
+// Or, you can use the `Promise` API.
+createAttendanceCorrectionRequest(createAttendanceCorrectionRequestVars).then((response) => {
+  const data = response.data;
+  console.log(data.attendanceCorrectionRequest_insert);
+});
+```
+
+### Using `CreateAttendanceCorrectionRequest`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createAttendanceCorrectionRequestRef, CreateAttendanceCorrectionRequestVariables } from '@homemaker/dataconnect';
+
+// The `CreateAttendanceCorrectionRequest` mutation requires an argument of type `CreateAttendanceCorrectionRequestVariables`:
+const createAttendanceCorrectionRequestVars: CreateAttendanceCorrectionRequestVariables = {
+  householdId: ..., 
+  staffId: ..., 
+  currentStatus: ..., // optional
+  requestedStatus: ..., 
+  requestedFor: ..., 
+  reason: ..., 
+};
+
+// Call the `createAttendanceCorrectionRequestRef()` function to get a reference to the mutation.
+const ref = createAttendanceCorrectionRequestRef(createAttendanceCorrectionRequestVars);
+// Variables can be defined inline as well.
+const ref = createAttendanceCorrectionRequestRef({ householdId: ..., staffId: ..., currentStatus: ..., requestedStatus: ..., requestedFor: ..., reason: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createAttendanceCorrectionRequestRef(dataConnect, createAttendanceCorrectionRequestVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.attendanceCorrectionRequest_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.attendanceCorrectionRequest_insert);
+});
+```
+
+## ReviewAttendanceCorrectionRequest
+You can execute the `ReviewAttendanceCorrectionRequest` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+reviewAttendanceCorrectionRequest(vars: ReviewAttendanceCorrectionRequestVariables): MutationPromise<ReviewAttendanceCorrectionRequestData, ReviewAttendanceCorrectionRequestVariables>;
+
+interface ReviewAttendanceCorrectionRequestRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ReviewAttendanceCorrectionRequestVariables): MutationRef<ReviewAttendanceCorrectionRequestData, ReviewAttendanceCorrectionRequestVariables>;
+}
+export const reviewAttendanceCorrectionRequestRef: ReviewAttendanceCorrectionRequestRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+reviewAttendanceCorrectionRequest(dc: DataConnect, vars: ReviewAttendanceCorrectionRequestVariables): MutationPromise<ReviewAttendanceCorrectionRequestData, ReviewAttendanceCorrectionRequestVariables>;
+
+interface ReviewAttendanceCorrectionRequestRef {
+  ...
+  (dc: DataConnect, vars: ReviewAttendanceCorrectionRequestVariables): MutationRef<ReviewAttendanceCorrectionRequestData, ReviewAttendanceCorrectionRequestVariables>;
+}
+export const reviewAttendanceCorrectionRequestRef: ReviewAttendanceCorrectionRequestRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the reviewAttendanceCorrectionRequestRef:
+```typescript
+const name = reviewAttendanceCorrectionRequestRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ReviewAttendanceCorrectionRequest` mutation requires an argument of type `ReviewAttendanceCorrectionRequestVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ReviewAttendanceCorrectionRequestVariables {
+  requestId: UUIDString;
+  status: string;
+  notes?: string | null;
+}
+```
+### Return Type
+Recall that executing the `ReviewAttendanceCorrectionRequest` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ReviewAttendanceCorrectionRequestData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ReviewAttendanceCorrectionRequestData {
+  attendanceCorrectionRequest_update?: AttendanceCorrectionRequest_Key | null;
+}
+```
+### Using `ReviewAttendanceCorrectionRequest`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, reviewAttendanceCorrectionRequest, ReviewAttendanceCorrectionRequestVariables } from '@homemaker/dataconnect';
+
+// The `ReviewAttendanceCorrectionRequest` mutation requires an argument of type `ReviewAttendanceCorrectionRequestVariables`:
+const reviewAttendanceCorrectionRequestVars: ReviewAttendanceCorrectionRequestVariables = {
+  requestId: ..., 
+  status: ..., 
+  notes: ..., // optional
+};
+
+// Call the `reviewAttendanceCorrectionRequest()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await reviewAttendanceCorrectionRequest(reviewAttendanceCorrectionRequestVars);
+// Variables can be defined inline as well.
+const { data } = await reviewAttendanceCorrectionRequest({ requestId: ..., status: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await reviewAttendanceCorrectionRequest(dataConnect, reviewAttendanceCorrectionRequestVars);
+
+console.log(data.attendanceCorrectionRequest_update);
+
+// Or, you can use the `Promise` API.
+reviewAttendanceCorrectionRequest(reviewAttendanceCorrectionRequestVars).then((response) => {
+  const data = response.data;
+  console.log(data.attendanceCorrectionRequest_update);
+});
+```
+
+### Using `ReviewAttendanceCorrectionRequest`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, reviewAttendanceCorrectionRequestRef, ReviewAttendanceCorrectionRequestVariables } from '@homemaker/dataconnect';
+
+// The `ReviewAttendanceCorrectionRequest` mutation requires an argument of type `ReviewAttendanceCorrectionRequestVariables`:
+const reviewAttendanceCorrectionRequestVars: ReviewAttendanceCorrectionRequestVariables = {
+  requestId: ..., 
+  status: ..., 
+  notes: ..., // optional
+};
+
+// Call the `reviewAttendanceCorrectionRequestRef()` function to get a reference to the mutation.
+const ref = reviewAttendanceCorrectionRequestRef(reviewAttendanceCorrectionRequestVars);
+// Variables can be defined inline as well.
+const ref = reviewAttendanceCorrectionRequestRef({ requestId: ..., status: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = reviewAttendanceCorrectionRequestRef(dataConnect, reviewAttendanceCorrectionRequestVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.attendanceCorrectionRequest_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.attendanceCorrectionRequest_update);
 });
 ```
 

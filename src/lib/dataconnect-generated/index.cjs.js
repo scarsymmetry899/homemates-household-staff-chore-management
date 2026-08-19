@@ -470,6 +470,34 @@ exports.markStaffCashRequestPurchased = function markStaffCashRequestPurchased(d
 }
 ;
 
+const createAttendanceCorrectionRequestRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateAttendanceCorrectionRequest', inputVars);
+}
+createAttendanceCorrectionRequestRef.operationName = 'CreateAttendanceCorrectionRequest';
+exports.createAttendanceCorrectionRequestRef = createAttendanceCorrectionRequestRef;
+
+exports.createAttendanceCorrectionRequest = function createAttendanceCorrectionRequest(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createAttendanceCorrectionRequestRef(dcInstance, inputVars));
+}
+;
+
+const reviewAttendanceCorrectionRequestRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'ReviewAttendanceCorrectionRequest', inputVars);
+}
+reviewAttendanceCorrectionRequestRef.operationName = 'ReviewAttendanceCorrectionRequest';
+exports.reviewAttendanceCorrectionRequestRef = reviewAttendanceCorrectionRequestRef;
+
+exports.reviewAttendanceCorrectionRequest = function reviewAttendanceCorrectionRequest(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(reviewAttendanceCorrectionRequestRef(dcInstance, inputVars));
+}
+;
+
 const createCctvCameraRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();

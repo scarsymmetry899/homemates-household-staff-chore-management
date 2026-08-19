@@ -1,4 +1,11 @@
-import type { Alert, Expense, StaffCashRequest, StaffCashRequestStatus } from "@/context/AppContext";
+import type {
+  Alert,
+  AttendanceCorrectionRequest,
+  AttendanceCorrectionStatus,
+  Expense,
+  StaffCashRequest,
+  StaffCashRequestStatus,
+} from "@/context/AppContext";
 import type { Department, StaffMember, StaffStatus } from "@/data/staff";
 import { getCurrentAuthUser, isFirebaseConfigured } from "@/lib/firebase";
 import {
@@ -24,6 +31,7 @@ export interface SqlConnectHouseholdSnapshot {
   staff: StaffMember[];
   expenses: Expense[];
   cashRequests: StaffCashRequest[];
+  attendanceRequests: AttendanceCorrectionRequest[];
   alerts: Alert[];
   ownerName: string;
 }
@@ -56,6 +64,10 @@ function formatDate(value: string): string {
 
 function toCashRequestStatus(value: string): StaffCashRequestStatus {
   return value === "approved" || value === "rejected" || value === "purchased" ? value : "pending";
+}
+
+function toAttendanceRequestStatus(value: string): AttendanceCorrectionStatus {
+  return value === "approved" || value === "rejected" ? value : "pending";
 }
 
 function mapHousehold(household: SqlHousehold, ownerName: string): SqlConnectHouseholdSnapshot {
@@ -141,6 +153,20 @@ function mapHousehold(household: SqlHousehold, ownerName: string): SqlConnectHou
       inventoryItemId: request.inventoryItem?.id,
       inventoryItemName: request.inventoryItem?.name,
       linkedExpenseId: request.linkedExpense?.id,
+    })),
+    attendanceRequests: household.attendanceCorrectionRequests_on_household.map((request) => ({
+      id: request.id,
+      staffId: request.staff.id,
+      staffName: request.staff.name,
+      staffRole: request.staff.role,
+      date: request.requestedFor,
+      currentStatus: request.currentStatus || undefined,
+      requestedStatus: request.requestedStatus as AttendanceCorrectionRequest["requestedStatus"],
+      reason: request.reason,
+      status: toAttendanceRequestStatus(request.status),
+      requestedAt: formatDate(request.requestedAt),
+      reviewedAt: request.reviewedAt ? formatDate(request.reviewedAt) : undefined,
+      notes: request.notes || undefined,
     })),
     alerts: household.alerts_on_household.map((alert) => ({
       id: alert.id,

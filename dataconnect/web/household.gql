@@ -84,6 +84,22 @@ query MyHouseholds @auth(level: USER)
         description
       }
     }
+    attendanceCorrectionRequests_on_household(limit: 100, orderBy: [{ requestedAt: DESC }]) {
+      id
+      currentStatus
+      requestedStatus
+      reason
+      status
+      requestedFor
+      requestedAt
+      reviewedAt
+      notes
+      staff {
+        id
+        name
+        role
+      }
+    }
     cctvCameras_on_household(limit: 100, orderBy: [{ name: ASC }]) {
       id
       name

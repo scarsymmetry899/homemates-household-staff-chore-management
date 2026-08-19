@@ -101,6 +101,21 @@ type AttendanceEvent @table {
   createdAt: Timestamp! @default(expr: "request.time")
 }
 
+type AttendanceCorrectionRequest @table {
+  household: Household!
+  staff: StaffMember!
+  currentStatus: String
+  requestedStatus: String!
+  reason: String!
+  status: String! @default(value: "pending")
+  requestedFor: Date!
+  requestedAt: Timestamp! @default(expr: "request.time")
+  reviewedAt: Timestamp
+  notes: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
 type PayrollProfile @table {
   household: Household!
   staff: StaffMember!

@@ -69,6 +69,11 @@ export interface Alert_Key {
   __typename?: 'Alert_Key';
 }
 
+export interface AttendanceCorrectionRequest_Key {
+  id: UUIDString;
+  __typename?: 'AttendanceCorrectionRequest_Key';
+}
+
 export interface AttendanceEvent_Key {
   id: UUIDString;
   __typename?: 'AttendanceEvent_Key';
@@ -105,6 +110,19 @@ export interface CreateAlertVariables {
   severity: string;
   title: string;
   description: string;
+}
+
+export interface CreateAttendanceCorrectionRequestData {
+  attendanceCorrectionRequest_insert: AttendanceCorrectionRequest_Key;
+}
+
+export interface CreateAttendanceCorrectionRequestVariables {
+  householdId: UUIDString;
+  staffId: UUIDString;
+  currentStatus?: string | null;
+  requestedStatus: string;
+  requestedFor: DateString;
+  reason: string;
 }
 
 export interface CreateCctvCameraData {
@@ -331,6 +349,22 @@ export interface MyHouseholdsData {
         description: string;
       } & ExpenseEntry_Key;
     } & StaffCashRequest_Key)[];
+    attendanceCorrectionRequests_on_household: ({
+      id: UUIDString;
+      currentStatus?: string | null;
+      requestedStatus: string;
+      reason: string;
+      status: string;
+      requestedFor: DateString;
+      requestedAt: TimestampString;
+      reviewedAt?: TimestampString | null;
+      notes?: string | null;
+      staff: {
+        id: UUIDString;
+        name: string;
+        role: string;
+      } & StaffMember_Key;
+    } & AttendanceCorrectionRequest_Key)[];
     cctvCameras_on_household: ({
       id: UUIDString;
       name: string;
@@ -515,6 +549,16 @@ export interface RemoveStaffMemberData {
 
 export interface RemoveStaffMemberVariables {
   staffId: UUIDString;
+}
+
+export interface ReviewAttendanceCorrectionRequestData {
+  attendanceCorrectionRequest_update?: AttendanceCorrectionRequest_Key | null;
+}
+
+export interface ReviewAttendanceCorrectionRequestVariables {
+  requestId: UUIDString;
+  status: string;
+  notes?: string | null;
 }
 
 export interface ReviewStaffCashRequestData {
@@ -1044,6 +1088,30 @@ export const markStaffCashRequestPurchasedRef: MarkStaffCashRequestPurchasedRef;
 
 export function markStaffCashRequestPurchased(vars: MarkStaffCashRequestPurchasedVariables): MutationPromise<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
 export function markStaffCashRequestPurchased(dc: DataConnect, vars: MarkStaffCashRequestPurchasedVariables): MutationPromise<MarkStaffCashRequestPurchasedData, MarkStaffCashRequestPurchasedVariables>;
+
+interface CreateAttendanceCorrectionRequestRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateAttendanceCorrectionRequestVariables): MutationRef<CreateAttendanceCorrectionRequestData, CreateAttendanceCorrectionRequestVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateAttendanceCorrectionRequestVariables): MutationRef<CreateAttendanceCorrectionRequestData, CreateAttendanceCorrectionRequestVariables>;
+  operationName: string;
+}
+export const createAttendanceCorrectionRequestRef: CreateAttendanceCorrectionRequestRef;
+
+export function createAttendanceCorrectionRequest(vars: CreateAttendanceCorrectionRequestVariables): MutationPromise<CreateAttendanceCorrectionRequestData, CreateAttendanceCorrectionRequestVariables>;
+export function createAttendanceCorrectionRequest(dc: DataConnect, vars: CreateAttendanceCorrectionRequestVariables): MutationPromise<CreateAttendanceCorrectionRequestData, CreateAttendanceCorrectionRequestVariables>;
+
+interface ReviewAttendanceCorrectionRequestRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ReviewAttendanceCorrectionRequestVariables): MutationRef<ReviewAttendanceCorrectionRequestData, ReviewAttendanceCorrectionRequestVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: ReviewAttendanceCorrectionRequestVariables): MutationRef<ReviewAttendanceCorrectionRequestData, ReviewAttendanceCorrectionRequestVariables>;
+  operationName: string;
+}
+export const reviewAttendanceCorrectionRequestRef: ReviewAttendanceCorrectionRequestRef;
+
+export function reviewAttendanceCorrectionRequest(vars: ReviewAttendanceCorrectionRequestVariables): MutationPromise<ReviewAttendanceCorrectionRequestData, ReviewAttendanceCorrectionRequestVariables>;
+export function reviewAttendanceCorrectionRequest(dc: DataConnect, vars: ReviewAttendanceCorrectionRequestVariables): MutationPromise<ReviewAttendanceCorrectionRequestData, ReviewAttendanceCorrectionRequestVariables>;
 
 interface CreateCctvCameraRef {
   /* Allow users to create refs without passing in DataConnect */

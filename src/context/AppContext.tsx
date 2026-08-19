@@ -13,6 +13,7 @@ import {
   addStaffMember as sqlAddStaffMember,
   addTaskInstance as sqlAddTaskInstance,
   createAlert as sqlCreateAlert,
+  createAttendanceCorrectionRequest as sqlCreateAttendanceCorrectionRequest,
   deleteExpenseEntry as sqlDeleteExpenseEntry,
   deleteTaskInstance as sqlDeleteTaskInstance,
   dismissAlert as sqlDismissAlert,
@@ -24,6 +25,7 @@ import {
   removeStaffMember as sqlRemoveStaffMember,
   createStaffCashRequest as sqlCreateStaffCashRequest,
   markStaffCashRequestPurchased as sqlMarkStaffCashRequestPurchased,
+  reviewAttendanceCorrectionRequest as sqlReviewAttendanceCorrectionRequest,
   reviewStaffCashRequest as sqlReviewStaffCashRequest,
   setTaskCompletion as sqlSetTaskCompletion,
   updateExpenseEntry as sqlUpdateExpenseEntry,
@@ -560,7 +562,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setStaff(snapshot.staff);
         setExpenses(snapshot.expenses);
         setCashRequests(snapshot.cashRequests);
-        setAttendanceRequests([]);
+        setAttendanceRequests(snapshot.attendanceRequests || []);
         setAlerts(snapshot.alerts);
         setOwnerNameState(snapshot.ownerName);
         setSqlHouseholdId(snapshot.householdId);
@@ -891,15 +893,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const createAttendanceCorrectionRequest = useCallback((
     request: Omit<AttendanceCorrectionRequest, "id" | "status" | "requestedAt">
   ) => {
+    const tempId = `ar${Date.now()}`;
     const requestedAt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     const nextRequest: AttendanceCorrectionRequest = {
       ...request,
-      id: `ar${Date.now()}`,
+      id: tempId,
       status: "pending",
       requestedAt,
     };
     setAttendanceRequests((prev) => [nextRequest, ...prev]);
-  }, []);
+    persistSql(async () => {
+      const result = await sqlCreateAttendanceCorrectionRequest({
+        householdId: sqlHouseholdId!,
+        staffId: request.staffId,
+        currentStatus: request.currentStatus || null,
+        requestedStatus: request.requestedStatus,
+        requestedFor: request.date,
+        reason: request.reason,
+      });
+      setAttendanceRequests((prev) => prev.map((item) => (
+        item.id === tempId ? { ...item, id: result.data.attendanceCorrectionRequest_insert.id } : item
+      )));
+    });
+  }, [persistSql, sqlHouseholdId]);
 
   const reviewAttendanceCorrectionRequest = useCallback((
     requestId: string,
@@ -911,6 +927,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setAttendanceRequests((prev) => prev.map((item) => (
       item.id === requestId ? { ...item, status, reviewedAt, notes: notes || item.notes } : item
     )));
+    persistSql(() => sqlReviewAttendanceCorrectionRequest({
+      requestId,
+      status,
+      notes: notes || null,
+    }));
 
     if (!request || status !== "approved") return;
 

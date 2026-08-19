@@ -587,6 +587,55 @@ mutation MarkStaffCashRequestPurchased(
   )
 }
 
+mutation CreateAttendanceCorrectionRequest(
+  $householdId: UUID!
+  $staffId: UUID!
+  $currentStatus: String
+  $requestedStatus: String!
+  $requestedFor: Date!
+  $reason: String!
+) @auth(level: USER) {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  attendanceCorrectionRequest_insert(
+    data: {
+      household: { id: $householdId }
+      staff: { id: $staffId }
+      currentStatus: $currentStatus
+      requestedStatus: $requestedStatus
+      requestedFor: $requestedFor
+      reason: $reason
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation ReviewAttendanceCorrectionRequest(
+  $requestId: UUID!
+  $status: String!
+  $notes: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    attendanceCorrectionRequest(id: $requestId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this attendance request")
+      }
+    }
+  }
+  attendanceCorrectionRequest_update(
+    id: $requestId
+    data: {
+      status: $status
+      notes: $notes
+      reviewedAt_expr: "request.time"
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
 mutation CreateCctvCamera(
   $householdId: UUID!
   $roomId: UUID
