@@ -479,7 +479,7 @@ const TasksPage = () => {
             {filtered.length === 0 && (
               <div className="text-center py-10 text-muted-foreground">
                 <CheckCircle2 size={32} className="mx-auto mb-3 text-status-on-time/50" />
-                <p className="text-sm">{appRole === "staff" ? "No tasks assigned to you yet." : t("tasks.allCompleted")}</p>
+                <p className="text-sm">{appRole === "staff" ? t("tasks.noneAssigned") : t("tasks.allCompleted")}</p>
               </div>
             )}
           </StaggerContainer>

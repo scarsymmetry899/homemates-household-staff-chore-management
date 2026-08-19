@@ -244,9 +244,9 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
               <Shield size={18} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="label-sm text-muted-foreground">View Mode</p>
+              <p className="label-sm text-muted-foreground">{t("settings.viewMode")}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Owner sees the full household. Staff mode only shows the selected staff member's daily workspace.
+                {t("settings.viewModeDescription")}
               </p>
               <div className="grid grid-cols-2 gap-2 mt-3">
                 {(["owner", "staff"] as const).map((role) => (
@@ -254,11 +254,11 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                     key={role}
                     type="button"
                     onClick={() => setAppRole(role)}
-                    className={`rounded-xl px-3 py-2 text-sm font-semibold capitalize transition-all ${
+                    className={`rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
                       appRole === role ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
                     }`}
                   >
-                    {role}
+                    {t(`settings.role.${role}`)}
                   </button>
                 ))}
               </div>
@@ -285,13 +285,12 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
               <Beaker size={18} className="text-amber-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="label-sm text-muted-foreground">Demo Data</p>
+              <p className="label-sm text-muted-foreground">{t("settings.demoData")}</p>
               <p className="text-sm font-semibold text-card-foreground">
-                {isDemoMode ? "Demo household is active" : "Use sample household for testing"}
+                {isDemoMode ? t("settings.demoActive") : t("settings.demoInactive")}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Toggle this on to test staff, tasks, payroll, expenses, alerts, and NFC flows with sample data.
-                Demo mode is local-only and will not overwrite your real backend household.
+                {t("settings.demoDescription")}
               </p>
             </div>
             <motion.button
@@ -300,10 +299,10 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
               onClick={() => {
                 if (isDemoMode) {
                   disableDemoMode();
-                  toast.success("Demo data disabled", { description: "Restoring your real household data." });
+                  toast.success(t("settings.demoDisabled"), { description: t("settings.demoDisabledDescription") });
                 } else {
                   enableDemoMode();
-                  toast.success("Demo data enabled", { description: "Sample household loaded for testing." });
+                  toast.success(t("settings.demoEnabled"), { description: t("settings.demoEnabledDescription") });
                 }
               }}
               className={`w-14 h-8 rounded-full p-1 transition-colors duration-200 shrink-0 ${
