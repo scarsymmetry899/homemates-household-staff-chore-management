@@ -8,6 +8,7 @@ import type {
   type AppRole,
   type AppLanguage,
   type StaffCashRequest,
+  type AttendanceCorrectionRequest,
 } from "@/context/AppContext";
 import type { StaffMember } from "@/data/staff";
 import { getCurrentAuthUser, getFirebaseFirestore, isFirebaseConfigured } from "@/lib/firebase";
@@ -16,6 +17,7 @@ export interface HouseholdStateSnapshot {
   staff: StaffMember[];
   expenses: Expense[];
   cashRequests?: StaffCashRequest[];
+  attendanceRequests?: AttendanceCorrectionRequest[];
   alerts: Alert[];
   setupComplete?: boolean;
   householdProfile?: HouseholdProfile | null;
@@ -82,6 +84,7 @@ export async function subscribeToHouseholdState(
           staff: data.staff,
           expenses: data.expenses,
           cashRequests: data.cashRequests || [],
+          attendanceRequests: data.attendanceRequests || [],
           alerts: data.alerts,
           setupComplete: !!data.setupComplete,
           householdProfile: data.householdProfile || null,

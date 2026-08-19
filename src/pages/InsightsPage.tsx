@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { motion } from "framer-motion";
-import { TrendingUp, Clock, Users, Calendar, ChevronDown, Download } from "lucide-react";
+import { TrendingUp, Clock, Users, Calendar, ChevronDown, Download, MessageSquareWarning, Check, X } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -23,9 +23,10 @@ function entryStatus(type: string) {
 }
 
 const InsightsPage = () => {
-  const { staff, expenses, alerts } = useAppState();
+  const { staff, expenses, alerts, attendanceRequests, reviewAttendanceCorrectionRequest } = useAppState();
   const [viewMode, setViewMode] = useState<ViewMode>("monthly");
   const onDuty = staff.filter((s) => s.status === "on-duty").length;
+  const activeAttendanceRequests = attendanceRequests.filter((request) => request.status === "pending");
 
   // Generate last 12 months
   const monthOptions = useMemo(() => {
@@ -192,6 +193,16 @@ const InsightsPage = () => {
     const key = `${viewMode}-${currentSelection}-${staffName}-${dayIndex}`;
     setOverrides((prev) => ({ ...prev, [key]: nextStatus }));
     toast.success(`Attendance updated to ${nextStatus}`, { description: `${staffName} — ${columnHeaders[dayIndex]}` });
+  };
+
+  const approveAttendanceRequest = (requestId: string) => {
+    reviewAttendanceCorrectionRequest(requestId, "approved", "Approved from attendance insights");
+    toast.success("Attendance correction approved");
+  };
+
+  const rejectAttendanceRequest = (requestId: string) => {
+    reviewAttendanceCorrectionRequest(requestId, "rejected", "Rejected from attendance insights");
+    toast.success("Attendance correction rejected");
   };
 
   const cellColor: Record<string, string> = {
@@ -382,6 +393,55 @@ const InsightsPage = () => {
         </div>
 
         <p className="text-xs text-muted-foreground italic">💡 Long-press any cell to manually change attendance</p>
+
+        {activeAttendanceRequests.length > 0 && (
+          <AnimatedCard delay={0.08} className="glass-card rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="label-sm text-muted-foreground">Owner Review Queue</p>
+                <h2 className="headline-sm text-card-foreground">Attendance Correction Requests</h2>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-status-late/10 flex items-center justify-center">
+                <MessageSquareWarning size={18} className="text-status-late" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              {activeAttendanceRequests.map((request) => (
+                <div key={request.id} className="rounded-2xl bg-surface-low border border-border/30 p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-card-foreground">{request.staffName}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {request.date} · wants {request.requestedStatus.replace("-", " ")}
+                        {request.currentStatus ? ` instead of ${request.currentStatus}` : ""}
+                      </p>
+                    </div>
+                    <span className="label-sm rounded-full bg-status-late/10 text-status-late px-2.5 py-1">
+                      pending
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{request.reason}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => approveAttendanceRequest(request.id)}
+                      className="btn-estate text-primary-foreground label-sm py-2.5 rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <Check size={14} /> Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => rejectAttendanceRequest(request.id)}
+                      className="glass-btn text-destructive label-sm py-2.5 rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <X size={14} /> Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </AnimatedCard>
+        )}
 
         {/* Scrollable Attendance Grid */}
         <AnimatedCard delay={0.1} className="glass-card rounded-2xl overflow-hidden">

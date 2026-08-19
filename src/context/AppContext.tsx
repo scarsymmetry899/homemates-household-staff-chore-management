@@ -84,6 +84,23 @@ export interface StaffCashRequest {
   linkedExpenseId?: string;
 }
 
+export type AttendanceCorrectionStatus = "pending" | "approved" | "rejected";
+
+export interface AttendanceCorrectionRequest {
+  id: string;
+  staffId: string;
+  staffName: string;
+  staffRole?: string;
+  date: string;
+  currentStatus?: string;
+  requestedStatus: "present" | "late" | "absent" | "off-duty";
+  reason: string;
+  status: AttendanceCorrectionStatus;
+  requestedAt: string;
+  reviewedAt?: string;
+  notes?: string;
+}
+
 export interface HouseholdProfile {
   name: string;
   ownerName: string;
@@ -136,6 +153,7 @@ interface AppState {
   staff: StaffMember[];
   expenses: Expense[];
   cashRequests: StaffCashRequest[];
+  attendanceRequests: AttendanceCorrectionRequest[];
   alerts: Alert[];
   setupComplete: boolean;
   householdProfile: HouseholdProfile | null;
@@ -166,6 +184,8 @@ interface AppState {
   createCashRequest: (request: Omit<StaffCashRequest, "id" | "status" | "requestedAt">) => void;
   reviewCashRequest: (requestId: string, status: "approved" | "rejected", amountApproved?: number, notes?: string) => void;
   markCashRequestPurchased: (requestId: string, linkedExpenseId?: string, receiptUrl?: string, notes?: string) => void;
+  createAttendanceCorrectionRequest: (request: Omit<AttendanceCorrectionRequest, "id" | "status" | "requestedAt">) => void;
+  reviewAttendanceCorrectionRequest: (requestId: string, status: "approved" | "rejected", notes?: string) => void;
   editExpense: (id: string, updates: Partial<Omit<Expense, "id">>) => void;
   deleteExpense: (id: string) => void;
   dismissAlert: (alertId: string) => void;
@@ -269,6 +289,21 @@ const initialCashRequests: StaffCashRequest[] = [
   },
 ];
 
+const initialAttendanceRequests: AttendanceCorrectionRequest[] = [
+  {
+    id: "ar1",
+    staffId: "2",
+    staffName: "Marcus Thorne",
+    staffRole: "Chauffeur",
+    date: new Date().toISOString().split("T")[0],
+    currentStatus: "late",
+    requestedStatus: "present",
+    reason: "Reached the gate at 8:00 AM but NFC tap did not record because the phone battery was low.",
+    status: "pending",
+    requestedAt: "Today",
+  },
+];
+
 const onboardingDoneKey = "homemaker_onboarding_done";
 const demoModeKey = "homemaker_demo_mode";
 const demoBackupKey = "homemaker_demo_backup";
@@ -300,6 +335,7 @@ function getDemoHouseholdState(ownerName: string): HouseholdStateSnapshot {
     staff: cloneStaff(initialStaff),
     expenses: initialExpenses.map((expense) => ({ ...expense })),
     cashRequests: initialCashRequests.map((request) => ({ ...request })),
+    attendanceRequests: initialAttendanceRequests.map((request) => ({ ...request })),
     alerts: initialAlerts.map((alert) => ({ ...alert, actions: [...alert.actions] })),
     setupComplete: true,
     householdProfile: {
@@ -337,6 +373,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [staff, setStaff] = useState<StaffMember[]>(() => isFirebaseConfigured ? [] : initialStaff);
   const [expenses, setExpenses] = useState<Expense[]>(() => isFirebaseConfigured ? [] : initialExpenses);
   const [cashRequests, setCashRequests] = useState<StaffCashRequest[]>(() => isFirebaseConfigured ? [] : initialCashRequests);
+  const [attendanceRequests, setAttendanceRequests] = useState<AttendanceCorrectionRequest[]>(() => isFirebaseConfigured ? [] : initialAttendanceRequests);
   const [alerts, setAlerts] = useState<Alert[]>(() => isFirebaseConfigured ? [] : initialAlerts);
   const [setupComplete, setSetupComplete] = useState(() => !isFirebaseConfigured);
   const [householdProfile, setHouseholdProfile] = useState<HouseholdProfile | null>(null);
@@ -376,6 +413,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     staff,
     expenses,
     cashRequests,
+    attendanceRequests,
     alerts,
     setupComplete,
     householdProfile,
@@ -429,6 +467,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setStaff(state.staff);
         setExpenses(state.expenses);
         setCashRequests(state.cashRequests || []);
+        setAttendanceRequests(state.attendanceRequests || []);
         setAlerts(state.alerts);
         setSetupComplete(nextSetupComplete);
         setHouseholdProfile(state.householdProfile || null);
@@ -521,6 +560,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setStaff(snapshot.staff);
         setExpenses(snapshot.expenses);
         setCashRequests(snapshot.cashRequests);
+        setAttendanceRequests([]);
         setAlerts(snapshot.alerts);
         setOwnerNameState(snapshot.ownerName);
         setSqlHouseholdId(snapshot.householdId);
@@ -605,6 +645,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setStaff(cloneStaff(snapshot.staff));
     setExpenses(snapshot.expenses.map((expense) => ({ ...expense })));
     setCashRequests((snapshot.cashRequests || []).map((request) => ({ ...request })));
+    setAttendanceRequests((snapshot.attendanceRequests || []).map((request) => ({ ...request })));
     setAlerts(snapshot.alerts.map((alert) => ({ ...alert, actions: [...alert.actions] })));
     setSetupComplete(!!snapshot.setupComplete);
     setHouseholdProfile(snapshot.householdProfile || null);
@@ -628,6 +669,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       staff,
       expenses,
       cashRequests,
+      attendanceRequests,
       alerts,
       setupComplete,
       householdProfile,
@@ -652,6 +694,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     appRole,
     applyHouseholdSnapshot,
     cashRequests,
+    attendanceRequests,
     expenses,
     homemates,
     householdProfile,
@@ -844,6 +887,76 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       notes: notes || null,
     }));
   }, [persistSql]);
+
+  const createAttendanceCorrectionRequest = useCallback((
+    request: Omit<AttendanceCorrectionRequest, "id" | "status" | "requestedAt">
+  ) => {
+    const requestedAt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const nextRequest: AttendanceCorrectionRequest = {
+      ...request,
+      id: `ar${Date.now()}`,
+      status: "pending",
+      requestedAt,
+    };
+    setAttendanceRequests((prev) => [nextRequest, ...prev]);
+  }, []);
+
+  const reviewAttendanceCorrectionRequest = useCallback((
+    requestId: string,
+    status: "approved" | "rejected",
+    notes?: string
+  ) => {
+    const request = attendanceRequests.find((item) => item.id === requestId);
+    const reviewedAt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    setAttendanceRequests((prev) => prev.map((item) => (
+      item.id === requestId ? { ...item, status, reviewedAt, notes: notes || item.notes } : item
+    )));
+
+    if (!request || status !== "approved") return;
+
+    const statusByRequest: Record<AttendanceCorrectionRequest["requestedStatus"], StaffStatus> = {
+      present: "on-duty",
+      late: "late",
+      absent: "absent",
+      "off-duty": "off-duty",
+    };
+    const eventTypeByRequest: Record<AttendanceCorrectionRequest["requestedStatus"], string> = {
+      present: "check-in",
+      late: "late",
+      absent: "leave",
+      "off-duty": "check-out",
+    };
+    const correctedStatus = statusByRequest[request.requestedStatus];
+    const eventType = eventTypeByRequest[request.requestedStatus];
+    const detail = `Attendance correction approved by owner. Requested: ${request.requestedStatus}. Reason: ${request.reason}`;
+    const timeStr = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+
+    setStaff((prev) => prev.map((member) => (
+      member.id === request.staffId
+        ? {
+            ...member,
+            status: correctedStatus,
+            attendance: [
+              {
+                date: `${request.date}, ${timeStr}`,
+                type: eventType,
+                detail,
+              },
+              ...member.attendance,
+            ],
+          }
+        : member
+    )));
+
+    persistSql(() => sqlUpdateStaffStatus({ staffId: request.staffId, status: correctedStatus }));
+    persistSql(() => sqlRecordAttendanceEvent({
+      householdId: sqlHouseholdId!,
+      staffId: request.staffId,
+      eventType,
+      source: "owner-correction",
+      detail,
+    }));
+  }, [attendanceRequests, persistSql, sqlHouseholdId]);
 
   const editExpense = useCallback((id: string, updates: Partial<Omit<Expense, "id">>) => {
     const current = expenses.find((e) => e.id === id);
@@ -1239,6 +1352,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setStaff(setup.staff);
     setExpenses([]);
     setCashRequests([]);
+    setAttendanceRequests([]);
     setAlerts([]);
     setSetupComplete(true);
     localStorage.setItem("homemaker_owner_name", setup.ownerName);
@@ -1247,6 +1361,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     let persistedStaff = setup.staff;
     let persistedExpenses: Expense[] = [];
     let persistedCashRequests: StaffCashRequest[] = [];
+    let persistedAttendanceRequests: AttendanceCorrectionRequest[] = [];
     let persistedAlerts: Alert[] = [];
 
     try {
@@ -1269,6 +1384,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           staff: persistedStaff,
           expenses: persistedExpenses,
           cashRequests: persistedCashRequests,
+          attendanceRequests: persistedAttendanceRequests,
           alerts: persistedAlerts,
           setupComplete: true,
           householdProfile: profile,
@@ -1313,10 +1429,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={{
         staff, expenses, alerts, setupComplete, householdProfile, homemates, rooms, inventoryItems,
         ownerName, ownerLocation, language, appRole, activeStaffId, isDarkMode, nfcEnabled, isDemoMode,
-        cashRequests,
+        cashRequests, attendanceRequests,
         setOwnerName, setLanguage, setAppRole, setActiveStaffId, setDarkMode, setNfcEnabled, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
         enableDemoMode, disableDemoMode,
-        addExpense, createCashRequest, reviewCashRequest, markCashRequestPurchased, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
+        addExpense, createCashRequest, reviewCashRequest, markCashRequestPurchased, createAttendanceCorrectionRequest, reviewAttendanceCorrectionRequest, editExpense, deleteExpense, dismissAlert, addTask, removeStaff, deleteTask,
         addStaff, addDeduction, updateStaffPhoto, updateTaskDueDate, addAlert, updateStaffTelegramId,
         markAttendance, registerStaffNfcTag, recordNfcTap, reassignTask, extendTaskDeadlineByName,
         updatePunctualityScore, updateReliabilityScore,

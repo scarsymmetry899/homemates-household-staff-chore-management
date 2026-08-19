@@ -2,19 +2,34 @@ import { useState } from "react";
 import { CalendarCheck, CheckCircle2, Circle, Clock, CreditCard, MessageSquareWarning, ReceiptText, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { useAppState, type Expense } from "@/context/AppContext";
+import { useAppState, type AttendanceCorrectionRequest, type Expense } from "@/context/AppContext";
 import StaffAvatar from "@/components/StaffAvatar";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/components/animations/MotionComponents";
 
 export default function StaffWorkspace() {
-  const { staff, activeStaffId, setActiveStaffId, toggleTask, createCashRequest, cashRequests } = useAppState();
+  const {
+    staff,
+    activeStaffId,
+    setActiveStaffId,
+    toggleTask,
+    createCashRequest,
+    cashRequests,
+    attendanceRequests,
+    createAttendanceCorrectionRequest,
+  } = useAppState();
   const [showCashForm, setShowCashForm] = useState(false);
+  const [showAttendanceForm, setShowAttendanceForm] = useState(false);
   const [cashForm, setCashForm] = useState({
     category: "Groceries" as Expense["category"],
     amountRequested: "",
     reason: "",
     neededBy: "",
     notes: "",
+  });
+  const [attendanceForm, setAttendanceForm] = useState({
+    date: new Date().toISOString().split("T")[0],
+    requestedStatus: "present" as AttendanceCorrectionRequest["requestedStatus"],
+    reason: "",
   });
   const activeStaff = staff.find((member) => member.id === activeStaffId) || staff[0];
 
@@ -32,6 +47,7 @@ export default function StaffWorkspace() {
   const completedTasks = activeStaff.assignments.filter((task) => task.done).length;
   const attendanceEntry = activeStaff.attendance[0];
   const myCashRequests = cashRequests.filter((request) => request.staffId === activeStaff.id);
+  const myAttendanceRequests = attendanceRequests.filter((request) => request.staffId === activeStaff.id);
 
   const submitCashRequest = () => {
     if (!cashForm.amountRequested || !cashForm.reason.trim()) {
@@ -51,6 +67,29 @@ export default function StaffWorkspace() {
     setCashForm({ category: "Groceries", amountRequested: "", reason: "", neededBy: "", notes: "" });
     setShowCashForm(false);
     toast.success("Cash request sent", { description: "The owner can approve or reject it from Expenses." });
+  };
+
+  const submitAttendanceRequest = () => {
+    if (!attendanceForm.date || !attendanceForm.reason.trim()) {
+      toast.error("Date and reason are required");
+      return;
+    }
+    createAttendanceCorrectionRequest({
+      staffId: activeStaff.id,
+      staffName: activeStaff.name,
+      staffRole: activeStaff.role,
+      date: attendanceForm.date,
+      currentStatus: activeStaff.status.replace("-", " "),
+      requestedStatus: attendanceForm.requestedStatus,
+      reason: attendanceForm.reason.trim(),
+    });
+    setAttendanceForm({
+      date: new Date().toISOString().split("T")[0],
+      requestedStatus: "present",
+      reason: "",
+    });
+    setShowAttendanceForm(false);
+    toast.success("Attendance issue reported", { description: "The owner can review it from Insights." });
   };
 
   return (
@@ -143,7 +182,7 @@ export default function StaffWorkspace() {
         </button>
         <button
           type="button"
-          onClick={() => toast.info("Attendance correction workflow is next", { description: "Staff will request owner approval for disputed attendance." })}
+          onClick={() => setShowAttendanceForm((value) => !value)}
           className="glass-card rounded-2xl p-4 text-left space-y-2"
         >
           <MessageSquareWarning size={18} className="text-status-late" />
@@ -151,6 +190,49 @@ export default function StaffWorkspace() {
           <p className="text-xs text-muted-foreground">Attendance discrepancy</p>
         </button>
       </section>
+
+      {showAttendanceForm && (
+        <section className="glass-card rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="label-sm text-muted-foreground">Owner Review</p>
+              <h2 className="headline-sm text-foreground">Report Attendance Issue</h2>
+            </div>
+            <button type="button" onClick={() => setShowAttendanceForm(false)} className="glass-btn w-8 h-8 rounded-xl flex items-center justify-center">
+              <X size={16} className="text-muted-foreground" />
+            </button>
+          </div>
+          <input
+            type="date"
+            value={attendanceForm.date}
+            onChange={(event) => setAttendanceForm((form) => ({ ...form, date: event.target.value }))}
+            className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground border border-border/30"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            {(["present", "late", "absent", "off-duty"] as AttendanceCorrectionRequest["requestedStatus"][]).map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setAttendanceForm((form) => ({ ...form, requestedStatus: status }))}
+                className={`label-sm px-3 py-2 rounded-xl capitalize transition-all ${
+                  attendanceForm.requestedStatus === status ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
+                }`}
+              >
+                {status.replace("-", " ")}
+              </button>
+            ))}
+          </div>
+          <textarea
+            placeholder="Explain what happened, e.g. I arrived on time but the NFC tap did not register."
+            value={attendanceForm.reason}
+            onChange={(event) => setAttendanceForm((form) => ({ ...form, reason: event.target.value }))}
+            className="w-full min-h-24 bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground border border-border/30"
+          />
+          <button type="button" onClick={submitAttendanceRequest} className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl">
+            Send For Owner Review
+          </button>
+        </section>
+      )}
 
       {showCashForm && (
         <section className="glass-card rounded-2xl p-5 space-y-4">
@@ -221,6 +303,28 @@ export default function StaffWorkspace() {
                 <p className="text-sm font-semibold text-card-foreground truncate">{request.reason}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {request.category} · ₹{request.amountRequested.toLocaleString("en-IN")} · {request.requestedAt}
+                </p>
+              </div>
+              <span className="label-sm rounded-full bg-muted px-2.5 py-1 capitalize text-muted-foreground">
+                {request.status}
+              </span>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {myAttendanceRequests.length > 0 && (
+        <section className="glass-card rounded-2xl p-5 space-y-3">
+          <div>
+            <p className="label-sm text-muted-foreground">Attendance Review</p>
+            <h2 className="headline-sm text-foreground">My Reported Issues</h2>
+          </div>
+          {myAttendanceRequests.slice(0, 4).map((request) => (
+            <div key={request.id} className="rounded-xl bg-surface-low border border-border/30 p-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-card-foreground truncate">{request.reason}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {request.date} · requested {request.requestedStatus.replace("-", " ")}
                 </p>
               </div>
               <span className="label-sm rounded-full bg-muted px-2.5 py-1 capitalize text-muted-foreground">
