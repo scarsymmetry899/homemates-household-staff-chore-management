@@ -309,6 +309,25 @@ const initialAttendanceRequests: AttendanceCorrectionRequest[] = [
 const onboardingDoneKey = "homemaker_onboarding_done";
 const demoModeKey = "homemaker_demo_mode";
 const demoBackupKey = "homemaker_demo_backup";
+const absencePayrollMarker = "Auto payroll absence deduction";
+
+function attendanceDateKey(value: string): string {
+  return value.split(",")[0].trim();
+}
+
+function dailyAbsenceDeduction(member: StaffMember): number {
+  return Math.ceil(member.payroll.baseSalary / 30);
+}
+
+function hasAutoAbsenceDeduction(member: StaffMember, dateKey: string): boolean {
+  return member.attendance.some((entry) => (
+    attendanceDateKey(entry.date) === dateKey && entry.detail.includes(absencePayrollMarker)
+  ));
+}
+
+function shouldDeductForAttendance(type: string): boolean {
+  return type === "leave" || type === "absent";
+}
 
 function hasLocalOnboardingCompletion(): boolean {
   return localStorage.getItem(onboardingDoneKey) === "true";
@@ -935,6 +954,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     if (!request || status !== "approved") return;
 
+    const currentMember = staff.find((member) => member.id === request.staffId);
     const statusByRequest: Record<AttendanceCorrectionRequest["requestedStatus"], StaffStatus> = {
       present: "on-duty",
       late: "late",
@@ -951,17 +971,43 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const eventType = eventTypeByRequest[request.requestedStatus];
     const detail = `Attendance correction approved by owner. Requested: ${request.requestedStatus}. Reason: ${request.reason}`;
     const timeStr = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+    const dateKey = attendanceDateKey(request.date);
+    const requestedIsAbsent = request.requestedStatus === "absent";
+    const currentWasAbsent = request.currentStatus?.toLowerCase().includes("absent") || false;
+    const existingAutoDeduction = currentMember ? hasAutoAbsenceDeduction(currentMember, dateKey) : false;
+    const dailyDeduction = currentMember ? dailyAbsenceDeduction(currentMember) : 0;
+    const payrollAdjustment = currentMember && requestedIsAbsent && !existingAutoDeduction
+      ? dailyDeduction
+      : currentMember && currentWasAbsent && !requestedIsAbsent
+      ? -Math.min(dailyDeduction, currentMember.payroll.deductions)
+      : 0;
+    const nextDeductions = currentMember
+      ? Math.max(0, currentMember.payroll.deductions + payrollAdjustment)
+      : 0;
+    const payrollDetail = payrollAdjustment > 0
+      ? `${absencePayrollMarker}: ₹${payrollAdjustment.toLocaleString("en-IN")} applied.`
+      : payrollAdjustment < 0
+      ? `${absencePayrollMarker} reversed: ₹${Math.abs(payrollAdjustment).toLocaleString("en-IN")} restored.`
+      : "";
+    const detailWithPayroll = payrollDetail ? `${detail}\n${payrollDetail}` : detail;
 
     setStaff((prev) => prev.map((member) => (
       member.id === request.staffId
         ? {
             ...member,
             status: correctedStatus,
+            payroll: payrollAdjustment
+              ? {
+                  ...member.payroll,
+                  deductions: Math.max(0, member.payroll.deductions + payrollAdjustment),
+                  netPay: member.payroll.baseSalary - Math.max(0, member.payroll.deductions + payrollAdjustment),
+                }
+              : member.payroll,
             attendance: [
               {
                 date: `${request.date}, ${timeStr}`,
                 type: eventType,
-                detail,
+                detail: detailWithPayroll,
               },
               ...member.attendance,
             ],
@@ -975,9 +1021,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       staffId: request.staffId,
       eventType,
       source: "owner-correction",
-      detail,
+      detail: detailWithPayroll,
     }));
-  }, [attendanceRequests, persistSql, sqlHouseholdId]);
+    if (currentMember && payrollAdjustment) {
+      persistSql(() => sqlRecordPayrollDeduction({
+        householdId: sqlHouseholdId!,
+        staffId: request.staffId,
+        monthLabel: currentMember.payroll.month,
+        baseSalary: currentMember.payroll.baseSalary,
+        deductions: nextDeductions,
+        advances: 0,
+        netPay: currentMember.payroll.baseSalary - nextDeductions,
+        status: "draft",
+      }));
+    }
+  }, [attendanceRequests, persistSql, sqlHouseholdId, staff]);
 
   const editExpense = useCallback((id: string, updates: Partial<Omit<Expense, "id">>) => {
     const current = expenses.find((e) => e.id === id);
@@ -1167,11 +1225,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const markAttendance = useCallback((staffId: string, type: string, detail: string) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-    const dateStr = `${now.toISOString().split("T")[0]}, ${timeStr}`;
+    const todayKey = now.toISOString().split("T")[0];
+    const dateStr = `${todayKey}, ${timeStr}`;
+    const currentMember = staff.find((member) => member.id === staffId);
+    const shouldApplyDeduction = currentMember
+      ? shouldDeductForAttendance(type) && !hasAutoAbsenceDeduction(currentMember, todayKey)
+      : false;
+    const deductionAmount = currentMember && shouldApplyDeduction ? dailyAbsenceDeduction(currentMember) : 0;
+    const detailWithPayroll = deductionAmount
+      ? `${detail}\n${absencePayrollMarker}: ₹${deductionAmount.toLocaleString("en-IN")} applied.`
+      : detail;
     setStaff((prev) =>
       prev.map((s) =>
         s.id === staffId
-          ? { ...s, attendance: [{ date: dateStr, type, detail }, ...s.attendance] }
+          ? {
+              ...s,
+              payroll: deductionAmount
+                ? {
+                    ...s.payroll,
+                    deductions: s.payroll.deductions + deductionAmount,
+                    netPay: s.payroll.baseSalary - (s.payroll.deductions + deductionAmount),
+                  }
+                : s.payroll,
+              attendance: [{ date: dateStr, type, detail: detailWithPayroll }, ...s.attendance],
+            }
           : s
       )
     );
@@ -1180,9 +1257,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       staffId,
       eventType: type,
       source: "app",
-      detail,
+      detail: detailWithPayroll,
     }));
-  }, [persistSql, sqlHouseholdId]);
+    if (currentMember && deductionAmount) {
+      const deductions = currentMember.payroll.deductions + deductionAmount;
+      persistSql(() => sqlRecordPayrollDeduction({
+        householdId: sqlHouseholdId!,
+        staffId,
+        monthLabel: currentMember.payroll.month,
+        baseSalary: currentMember.payroll.baseSalary,
+        deductions,
+        advances: 0,
+        netPay: currentMember.payroll.baseSalary - deductions,
+        status: "draft",
+      }));
+    }
+  }, [persistSql, sqlHouseholdId, staff]);
 
   const registerStaffNfcTag = useCallback(async (staffId: string, label?: string): Promise<string | null> => {
     if (!sqlHouseholdId) return null;
