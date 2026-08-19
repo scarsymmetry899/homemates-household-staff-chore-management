@@ -346,7 +346,7 @@ export async function createConfiguredSqlConnectHousehold(
     });
   }
 
-  const householdsResult = await myHouseholds({ fetchPolicy: "network-only" });
+  const householdsResult = await myHouseholds();
   const household = householdsResult.data.households[0];
   return household ? mapHousehold(household, setup.ownerName || user.displayName || "Boss") : null;
 }
@@ -364,12 +364,12 @@ export async function bootstrapSqlConnectHousehold(
     email: user.email || null,
   });
 
-  let householdsResult = await myHouseholds({ fetchPolicy: "network-only" });
+  let householdsResult = await myHouseholds();
   let household = householdsResult.data.households[0];
 
   if (!household) {
     await createEmptyHousehold(user.displayName || seed.ownerName || "My");
-    householdsResult = await myHouseholds({ fetchPolicy: "network-only" });
+    householdsResult = await myHouseholds();
     household = householdsResult.data.households[0];
   }
 
