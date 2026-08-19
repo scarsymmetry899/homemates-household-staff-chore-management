@@ -175,6 +175,14 @@ export interface CreateInventoryItemVariables {
   minimumQuantity?: number | null;
 }
 
+export interface DeleteInventoryItemData {
+  inventoryItem_delete?: InventoryItem_Key | null;
+}
+
+export interface DeleteInventoryItemVariables {
+  itemId: UUIDString;
+}
+
 export interface CreatePayrollProfileData {
   payrollProfile_insert: PayrollProfile_Key;
 }
@@ -670,6 +678,20 @@ export interface UpdateStaffTelegramIdVariables {
   telegramChatId: string;
 }
 
+export interface UpdateInventoryItemData {
+  inventoryItem_update?: InventoryItem_Key | null;
+}
+
+export interface UpdateInventoryItemVariables {
+  itemId: UUIDString;
+  roomId?: UUIDString | null;
+  name: string;
+  category: string;
+  unit: string;
+  currentQuantity: number;
+  minimumQuantity?: number | null;
+}
+
 export interface UpdateTaskDueDateData {
   taskInstance_update?: TaskInstance_Key | null;
 }
@@ -776,6 +798,30 @@ export const createInventoryItemRef: CreateInventoryItemRef;
 
 export function createInventoryItem(vars: CreateInventoryItemVariables): MutationPromise<CreateInventoryItemData, CreateInventoryItemVariables>;
 export function createInventoryItem(dc: DataConnect, vars: CreateInventoryItemVariables): MutationPromise<CreateInventoryItemData, CreateInventoryItemVariables>;
+
+interface UpdateInventoryItemRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateInventoryItemVariables): MutationRef<UpdateInventoryItemData, UpdateInventoryItemVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateInventoryItemVariables): MutationRef<UpdateInventoryItemData, UpdateInventoryItemVariables>;
+  operationName: string;
+}
+export const updateInventoryItemRef: UpdateInventoryItemRef;
+
+export function updateInventoryItem(vars: UpdateInventoryItemVariables): MutationPromise<UpdateInventoryItemData, UpdateInventoryItemVariables>;
+export function updateInventoryItem(dc: DataConnect, vars: UpdateInventoryItemVariables): MutationPromise<UpdateInventoryItemData, UpdateInventoryItemVariables>;
+
+interface DeleteInventoryItemRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteInventoryItemVariables): MutationRef<DeleteInventoryItemData, DeleteInventoryItemVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteInventoryItemVariables): MutationRef<DeleteInventoryItemData, DeleteInventoryItemVariables>;
+  operationName: string;
+}
+export const deleteInventoryItemRef: DeleteInventoryItemRef;
+
+export function deleteInventoryItem(vars: DeleteInventoryItemVariables): MutationPromise<DeleteInventoryItemData, DeleteInventoryItemVariables>;
+export function deleteInventoryItem(dc: DataConnect, vars: DeleteInventoryItemVariables): MutationPromise<DeleteInventoryItemData, DeleteInventoryItemVariables>;
 
 interface CreatePayrollProfileRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -1136,4 +1182,3 @@ export const recordCctvHealthEventRef: RecordCctvHealthEventRef;
 
 export function recordCctvHealthEvent(vars: RecordCctvHealthEventVariables): MutationPromise<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
 export function recordCctvHealthEvent(dc: DataConnect, vars: RecordCctvHealthEventVariables): MutationPromise<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
-

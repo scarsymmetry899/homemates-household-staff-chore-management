@@ -102,6 +102,47 @@ mutation CreateInventoryItem(
   )
 }
 
+mutation UpdateInventoryItem(
+  $itemId: UUID!
+  $roomId: UUID
+  $name: String!
+  $category: String!
+  $unit: String!
+  $currentQuantity: Float!
+  $minimumQuantity: Float
+) @auth(level: USER) @transaction {
+  query @redact {
+    inventoryItem(id: $itemId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this inventory item")
+      }
+    }
+  }
+  inventoryItem_update(
+    id: $itemId
+    data: {
+      room: { id: $roomId }
+      name: $name
+      category: $category
+      unit: $unit
+      currentQuantity: $currentQuantity
+      minimumQuantity: $minimumQuantity
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation DeleteInventoryItem($itemId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    inventoryItem(id: $itemId) {
+      household {
+        ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this inventory item")
+      }
+    }
+  }
+  inventoryItem_delete(id: $itemId)
+}
+
 mutation CreatePayrollProfile(
   $householdId: UUID!
   $staffId: UUID!

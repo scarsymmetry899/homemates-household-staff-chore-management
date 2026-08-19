@@ -106,6 +106,34 @@ exports.createInventoryItem = function createInventoryItem(dcOrVars, vars) {
 }
 ;
 
+const updateInventoryItemRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateInventoryItem', inputVars);
+}
+updateInventoryItemRef.operationName = 'UpdateInventoryItem';
+exports.updateInventoryItemRef = updateInventoryItemRef;
+
+exports.updateInventoryItem = function updateInventoryItem(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updateInventoryItemRef(dcInstance, inputVars));
+}
+;
+
+const deleteInventoryItemRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeleteInventoryItem', inputVars);
+}
+deleteInventoryItemRef.operationName = 'DeleteInventoryItem';
+exports.deleteInventoryItemRef = deleteInventoryItemRef;
+
+exports.deleteInventoryItem = function deleteInventoryItem(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(deleteInventoryItemRef(dcInstance, inputVars));
+}
+;
+
 const createPayrollProfileRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();

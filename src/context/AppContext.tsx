@@ -15,6 +15,7 @@ import {
   createAlert as sqlCreateAlert,
   createAttendanceCorrectionRequest as sqlCreateAttendanceCorrectionRequest,
   createInventoryItem as sqlCreateInventoryItem,
+  deleteInventoryItem as sqlDeleteInventoryItem,
   deleteExpenseEntry as sqlDeleteExpenseEntry,
   deleteTaskInstance as sqlDeleteTaskInstance,
   dismissAlert as sqlDismissAlert,
@@ -35,6 +36,7 @@ import {
   updateStaffShift as sqlUpdateStaffShift,
   updateStaffStatus as sqlUpdateStaffStatus,
   updateStaffTelegramId as sqlUpdateStaffTelegramId,
+  updateInventoryItem as sqlUpdateInventoryItem,
   updateTaskDueDate as sqlUpdateTaskDueDate,
 } from "@homemaker/dataconnect";
 
@@ -1259,6 +1261,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [persistSql, sqlHouseholdId]);
 
   const updateInventoryItem = useCallback((itemId: string, updates: Partial<Omit<InventorySetupItem, "id">>) => {
+    const current = inventoryItems.find((item) => item.id === itemId);
     setInventoryItems((prev) => prev.map((item) => (
       item.id === itemId
         ? {
@@ -1269,11 +1272,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           }
         : item
     )));
-  }, []);
+    if (!current) return;
+    const nextItem = {
+      ...current,
+      ...updates,
+      currentQuantity: updates.currentQuantity === undefined ? current.currentQuantity : Number(updates.currentQuantity) || 0,
+      minimumQuantity: updates.minimumQuantity === undefined ? current.minimumQuantity : Number(updates.minimumQuantity) || 0,
+    };
+    persistSql(() => sqlUpdateInventoryItem({
+      itemId,
+      roomId: nextItem.roomId || null,
+      name: nextItem.name,
+      category: nextItem.category,
+      unit: nextItem.unit,
+      currentQuantity: nextItem.currentQuantity,
+      minimumQuantity: nextItem.minimumQuantity ?? null,
+    }));
+  }, [inventoryItems, persistSql]);
 
   const deleteInventoryItem = useCallback((itemId: string) => {
     setInventoryItems((prev) => prev.filter((item) => item.id !== itemId));
-  }, []);
+    persistSql(() => sqlDeleteInventoryItem({ itemId }));
+  }, [persistSql]);
 
   const markAttendance = useCallback((staffId: string, type: string, detail: string) => {
     const now = new Date();
