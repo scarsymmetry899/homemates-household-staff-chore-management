@@ -595,11 +595,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setSqlHouseholdId(snapshot.householdId);
         setSetupComplete(true);
         rememberOnboardingCompletion().catch(() => undefined);
-        setHouseholdProfile((current) => current || {
-          name: `${snapshot.ownerName || "My"} Household`,
-          ownerName: snapshot.ownerName,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata",
-        });
+        setHouseholdProfile(snapshot.householdProfile);
+        setHomemates(snapshot.homemates);
+        setRooms(snapshot.rooms);
+        setInventoryItems(snapshot.inventoryItems);
         queueMicrotask(() => {
           isApplyingRemoteStateRef.current = false;
         });

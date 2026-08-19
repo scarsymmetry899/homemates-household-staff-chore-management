@@ -3,6 +3,10 @@ import type {
   AttendanceCorrectionRequest,
   AttendanceCorrectionStatus,
   Expense,
+  HomemateProfile,
+  HouseholdProfile,
+  InventorySetupItem,
+  RoomZoneProfile,
   StaffCashRequest,
   StaffCashRequestStatus,
 } from "@/context/AppContext";
@@ -34,6 +38,10 @@ export interface SqlConnectHouseholdSnapshot {
   cashRequests: StaffCashRequest[];
   attendanceRequests: AttendanceCorrectionRequest[];
   alerts: Alert[];
+  householdProfile: HouseholdProfile;
+  homemates: HomemateProfile[];
+  rooms: RoomZoneProfile[];
+  inventoryItems: InventorySetupItem[];
   ownerName: string;
 }
 
@@ -97,6 +105,34 @@ function mapHousehold(household: SqlHousehold, ownerName: string): SqlConnectHou
   return {
     householdId: household.id,
     ownerName,
+    householdProfile: {
+      name: household.name,
+      ownerName,
+      addressLabel: household.addressLabel || undefined,
+      timezone: household.timezone,
+    },
+    homemates: household.homemateProfiles_on_household.map((homemate) => ({
+      id: homemate.id,
+      name: homemate.name,
+      relationLabel: homemate.relationLabel || "",
+      phone: homemate.phone || undefined,
+      notes: homemate.notes || undefined,
+    })),
+    rooms: household.roomZones_on_household.map((room) => ({
+      id: room.id,
+      name: room.name,
+      floorLabel: room.floorLabel || undefined,
+      notes: room.notes || undefined,
+    })),
+    inventoryItems: household.inventoryItems_on_household.map((item) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      unit: item.unit,
+      currentQuantity: item.currentQuantity,
+      minimumQuantity: item.minimumQuantity ?? undefined,
+      roomId: item.room?.id,
+    })),
     staff: household.staffMembers_on_household.map((member) => {
       const payrollRun = latestPayrollByStaffId.get(member.id);
       return {
@@ -351,7 +387,7 @@ export async function createConfiguredSqlConnectHousehold(
   }
 
   const householdsResult = await myHouseholds();
-  const household = householdsResult.data.households[0];
+  const household = householdsResult.data.households.find((item) => item.id === householdId) || householdsResult.data.households[0];
   return household ? mapHousehold(household, setup.ownerName || user.displayName || "Boss") : null;
 }
 
