@@ -6,6 +6,7 @@ import { PageTransition, StaggerContainer, StaggerItem } from "@/components/anim
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Alert } from "@/context/AppContext";
+import StaffAvatar from "@/components/StaffAvatar";
 
 const typeConfig = {
   attendance: { icon: Clock, color: "text-status-late", bgColor: "bg-status-late/10", label: "Attendance" },
@@ -234,7 +235,7 @@ const AlertsPage = () => {
                     onClick={() => handleReassignTo(s.id)}
                     className="w-full flex items-center gap-3 glass rounded-xl px-3 py-2.5 text-left"
                   >
-                    <img src={s.photo} alt={s.name} className="w-8 h-8 rounded-lg object-cover" />
+                          <StaffAvatar name={s.name} src={s.photo} className="w-8 h-8 rounded-lg shrink-0" textClassName="text-[10px]" />
                     <div>
                       <p className="text-sm font-semibold text-card-foreground">{s.name}</p>
                       <p className="text-xs text-muted-foreground">{s.role}</p>

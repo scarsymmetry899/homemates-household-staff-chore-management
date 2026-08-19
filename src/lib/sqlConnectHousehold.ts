@@ -20,6 +20,7 @@ import {
   createStaffSkill,
   myHouseholds,
   recordPayrollDeduction,
+  updateStaffPhoto,
   upsertCurrentUser,
   type MyHouseholdsData,
   type UUIDString,
@@ -304,6 +305,9 @@ export async function createConfiguredSqlConnectHousehold(
     });
     const staffId = inserted.data.staffMember_insert.id;
     staffIdByLocalId.set(member.id, staffId);
+    if (member.photo && member.photo !== "/placeholder.svg") {
+      await updateStaffPhoto({ staffId, photoUrl: member.photo });
+    }
     for (const skill of member.skills) {
       await createStaffSkill({ staffId, name: skill });
     }

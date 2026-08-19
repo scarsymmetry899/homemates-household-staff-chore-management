@@ -6,6 +6,7 @@ import { useAppState, type AppLanguage } from "@/context/AppContext";
 import { isNfcSupported, writeNfcTag } from "@/lib/nfc";
 import { getSimulateTap } from "@/lib/nfcTestBridge";
 import { useI18n } from "@/lib/i18n";
+import StaffAvatar from "@/components/StaffAvatar";
 import { toast } from "sonner";
 
 interface SettingToggle {
@@ -466,7 +467,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
               <div className="space-y-2">
                 {staff.map((s) => (
                   <div key={s.id} className="flex items-center gap-3">
-                    <img src={s.photo} alt={s.name} className="w-8 h-8 rounded-lg object-cover" />
+                    <StaffAvatar name={s.name} src={s.photo} className="w-8 h-8 rounded-lg shrink-0" textClassName="text-[10px]" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-card-foreground truncate">{s.name}</p>
                       <p className="text-xs text-muted-foreground">{s.role}</p>
@@ -578,7 +579,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                               onClick={() => handleSimulateTap(s.id)}
                               className="flex items-center gap-2 p-2 rounded-lg glass-btn text-left hover:bg-secondary/10 transition-colors"
                             >
-                              <img src={s.photo} alt={s.name} className="w-7 h-7 rounded-md object-cover shrink-0" />
+                              <StaffAvatar name={s.name} src={s.photo} className="w-7 h-7 rounded-md shrink-0" textClassName="text-[9px]" />
                               <div className="min-w-0 flex-1">
                                 <p className="text-[11px] font-semibold text-card-foreground truncate leading-tight">
                                   {s.name.split(" ")[0]}

@@ -5,6 +5,7 @@ import { Check, ChevronLeft, ChevronRight, Home, Package, UserRound, UsersRound 
 import { toast } from "sonner";
 import { departments, type Department, type StaffMember } from "@/data/staff";
 import { useAppState, type HomemateProfile, type HouseholdSetupPayload, type InventorySetupItem, type RoomZoneProfile } from "@/context/AppContext";
+import StaffAvatar from "@/components/StaffAvatar";
 
 const steps = ["Household", "Housemates", "Rooms", "Staff", "Inventory", "Review"];
 
@@ -42,6 +43,11 @@ const responsibilityPresets = [
 
 function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function cleanPhotoUrl(value: string) {
+  const trimmed = value.trim();
+  return trimmed && trimmed !== "/placeholder.svg" ? trimmed : "/placeholder.svg";
 }
 
 function emptyStaff(): StaffMember {
@@ -203,6 +209,7 @@ export default function HouseholdSetupWizard() {
           name: member.name.trim(),
           role: member.role.trim(),
           phone: member.phone.trim(),
+          photo: cleanPhotoUrl(member.photo),
           salary: Number(member.salary) || 0,
           payroll: {
             ...member.payroll,
@@ -342,6 +349,15 @@ export default function HouseholdSetupWizard() {
                     <select className={inputClass} value={member.department} onChange={(e) => updateStaff(member.id, { department: e.target.value as Department })}>
                       {departments.map((department) => <option key={department}>{department}</option>)}
                     </select>
+                  </div>
+                  <div className="grid md:grid-cols-[auto_1fr] gap-3 items-center">
+                    <StaffAvatar name={member.name || "Homemaker"} src={member.photo} className="w-14 h-14 rounded-2xl shrink-0" textClassName="text-sm" />
+                    <input
+                      className={inputClass}
+                      value={member.photo === "/placeholder.svg" ? "" : member.photo}
+                      onChange={(e) => updateStaff(member.id, { photo: cleanPhotoUrl(e.target.value) })}
+                      placeholder="Photo URL (optional)"
+                    />
                   </div>
                   <div className="space-y-2">
                     <p className="label-sm text-muted-foreground">Responsibilities</p>
