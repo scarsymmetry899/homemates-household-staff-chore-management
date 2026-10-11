@@ -286,11 +286,11 @@ const SmartCommandBox = () => {
       geminiHistoryRef.current = [
         ...geminiHistoryRef.current,
         { role: "user" as const, parts: trimmed },
-        { role: "model" as const, parts: rawResponse },
+        { role: "model" as const, parts: actions.length ? "I proposed a change and am waiting for owner confirmation." : rawResponse },
       ].slice(-20); // keep last 10 turns
 
       const responseMessages: ChatMessage[] = [];
-      if (displayText) responseMessages.push({
+      if (displayText && actions.length === 0) responseMessages.push({
         id: `a-${Date.now()}`,
         role: "assistant",
         content: displayText,
