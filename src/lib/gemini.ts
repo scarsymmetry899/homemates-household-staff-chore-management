@@ -71,6 +71,9 @@ export async function askGemini(
     }
   }
 
+  // The browser-key path is only for an explicitly unconfigured local demo.
+  // A signed-in production session must never downgrade to client-side Gemini.
+  if (isFirebaseConfigured) return "";
   const model = getModel();
   if (!model) return "";
 

@@ -91,12 +91,14 @@ const App = () => {
     onAuthStateChange((user) => {
       if (user) {
         localStorage.setItem("homemaker_auth", "true");
+        localStorage.setItem("homemaker_current_uid", user.uid);
         if (user.displayName) localStorage.setItem("homemaker_owner_name", user.displayName);
         setIsAuthenticated(true);
       } else {
         // Only log out if Firebase says so (prevents clearing local-only sessions)
         if (isFirebaseConfigured) {
           localStorage.removeItem("homemaker_auth");
+          localStorage.removeItem("homemaker_current_uid");
           setIsAuthenticated(false);
         }
       }
@@ -116,6 +118,7 @@ const App = () => {
   const handleLogout = async () => {
     await signOutFirebase();
     localStorage.removeItem("homemaker_auth");
+    localStorage.removeItem("homemaker_current_uid");
     setIsAuthenticated(false);
   };
 

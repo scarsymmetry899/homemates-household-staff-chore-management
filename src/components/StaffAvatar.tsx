@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface StaffAvatarProps {
@@ -22,14 +22,15 @@ function isUsablePhoto(src?: string) {
 
 export default function StaffAvatar({ name, src, className, textClassName }: StaffAvatarProps) {
   const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [src]);
   const initials = initialsFor(name);
   const gradient = useMemo(() => {
     const palettes = [
-      "from-[#36576a] to-[#6fa3ad]",
-      "from-[#7a5c3e] to-[#d7a968]",
-      "from-[#4d6751] to-[#9eb77b]",
-      "from-[#733f48] to-[#d88b8e]",
-      "from-[#3e4f7a] to-[#8ea4cf]",
+      "from-[#2F4156] to-[#567C8D]",
+      "from-[#38556A] to-[#7FA7B5]",
+      "from-[#4A6571] to-[#91ABB2]",
+      "from-[#405572] to-[#7897AD]",
+      "from-[#46616C] to-[#7DA0A9]",
     ];
     const index = name.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % palettes.length;
     return palettes[index];

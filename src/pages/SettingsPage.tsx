@@ -269,7 +269,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
             <div className="flex-1 min-w-0">
               <p className="label-sm text-muted-foreground">{t("settings.viewMode")}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {t("settings.viewModeDescription")}
+                Preview a staff member's daily workspace. This is an owner preview, not a separate staff sign-in.
               </p>
               <div className="grid grid-cols-2 gap-2 mt-3">
                 {(["owner", "staff"] as const).map((role) => (
@@ -287,6 +287,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
               </div>
               {appRole === "staff" && (
                 <select
+                  aria-label="Staff member to preview"
                   value={activeStaffId || staff[0]?.id || ""}
                   onChange={(event) => setActiveStaffId(event.target.value || null)}
                   className="mt-3 w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"

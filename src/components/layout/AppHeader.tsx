@@ -21,10 +21,11 @@ const AppHeader = () => {
   const activeLanguage = languages.find((item) => item.code === language) || languages[0];
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-md sticky top-0 z-40">
+    <header className="flex items-center justify-between gap-2 px-4 py-3 md:px-8 md:py-4 bg-background/85 backdrop-blur-md z-40 border-b border-border/20">
       <motion.button
         whileTap={{ scale: 0.95 }}
         onClick={() => navigate("/")}
+        aria-label="Go to household dashboard"
         className="flex items-center gap-3"
       >
         <img src={logoImg} alt="Homemaker" className="w-14 h-14 object-contain" />
@@ -36,7 +37,7 @@ const AppHeader = () => {
             aria-label={t("header.language")}
             value={language}
             onChange={(event) => setLanguage(event.target.value as AppLanguage)}
-            className="h-10 rounded-xl glass-btn pl-7 pr-2 text-xs font-semibold text-foreground outline-none appearance-none"
+            className="h-11 rounded-xl glass-btn pl-7 pr-2 text-xs font-semibold text-foreground focus-visible:outline-none"
             title={activeLanguage.label}
           >
             {languages.map((item) => (
@@ -49,7 +50,8 @@ const AppHeader = () => {
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate("/settings")}
-          className="w-10 h-10 flex items-center justify-center rounded-xl glass-btn text-foreground"
+          aria-label="Open settings"
+          className="w-11 h-11 flex items-center justify-center rounded-xl glass-btn text-foreground"
         >
           <Settings size={18} />
         </motion.button>
@@ -57,7 +59,8 @@ const AppHeader = () => {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate("/alerts")}
-            className="w-10 h-10 flex items-center justify-center rounded-xl glass-btn text-foreground relative"
+            aria-label={`Open alerts${activeAlerts.length ? `, ${activeAlerts.length} active` : ""}`}
+            className="w-11 h-11 flex items-center justify-center rounded-xl glass-btn text-foreground relative"
           >
             <Bell size={18} />
             {activeAlerts.length > 0 && (

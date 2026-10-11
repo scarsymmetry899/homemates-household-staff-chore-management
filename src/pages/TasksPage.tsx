@@ -125,26 +125,29 @@ const TasksPage = () => {
 
   const TaskCard = ({ task }: { task: TaskItem }) => (
       <PressableCard>
-        <div className="glass-card rounded-2xl p-4 flex items-start gap-3 select-none">
-          <motion.div
+        <div className="glass-card rounded-2xl p-3 sm:p-4 flex items-start gap-2 sm:gap-3 select-none">
+          <motion.button
+            type="button"
             animate={{ scale: task.done ? [1, 1.3, 1] : 1 }}
             transition={{ duration: 0.3 }}
             onClick={() => handleToggle(task.staffId, task.taskIndex, task.task, task.done)}
-            className="cursor-pointer touch-manipulation p-1 -m-1 shrink-0 mt-0.5"
+            aria-label={`${task.done ? "Mark pending" : "Mark complete"}: ${task.task}`}
+            aria-pressed={task.done}
+            className="cursor-pointer touch-manipulation w-11 h-11 rounded-xl shrink-0 flex items-center justify-center hover:bg-primary/5"
           >
             {task.done ? (
               <CheckCircle2 size={20} className="text-status-on-time" />
             ) : (
               <Circle size={20} className="text-surface-container" />
             )}
-          </motion.div>
+          </motion.button>
           <div className="flex-1 min-w-0">
             <p className={`text-sm font-medium transition-all ${task.done ? "text-muted-foreground line-through" : "text-card-foreground"}`}>
               {task.task}
             </p>
             <div className="flex items-center gap-2 mt-1.5 min-w-0">
               <StaffAvatar name={task.staffName} src={task.staffPhoto} className="w-5 h-5 rounded-lg shrink-0" textClassName="text-[9px]" />
-              <span className="text-xs text-muted-foreground">{task.staffName}</span>
+              <span className="text-xs text-muted-foreground truncate">{task.staffName}</span>
               <span className="text-xs text-muted-foreground">·</span>
               <span className="text-xs text-muted-foreground truncate">{task.staffRole}</span>
             </div>
@@ -155,7 +158,7 @@ const TasksPage = () => {
               </div>
             )}
           </div>
-          {!task.done && <Clock size={14} className="text-status-late shrink-0 mt-1" />}
+          {!task.done && task.dueDate && <Clock size={14} aria-label="Has a due date" className="text-status-late shrink-0 mt-3" />}
           {canManageTasks && (
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -164,9 +167,10 @@ const TasksPage = () => {
                 deleteTask(task.staffId, task.taskIndex);
                 toast.success("Task deleted", { description: task.task });
               }}
-              className="w-7 h-7 rounded-lg glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-1"
+              aria-label={`Delete task: ${task.task}`}
+              className="w-11 h-11 rounded-xl glass-btn flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors shrink-0"
             >
-              <Trash2 size={13} />
+              <Trash2 size={16} />
             </motion.button>
           )}
         </div>
@@ -276,7 +280,7 @@ const TasksPage = () => {
   );
 
   return (
-      <PageTransition className="px-5 space-y-6">
+      <PageTransition className="px-4 sm:px-6 md:px-8 space-y-6">
         <section className="space-y-2">
           <p className="label-sm text-muted-foreground">{t("tasks.missionControl")}</p>
           <h1 className="display-sm text-foreground">
@@ -304,7 +308,8 @@ const TasksPage = () => {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`label-sm px-4 py-2.5 rounded-xl capitalize transition-all ${
+              aria-pressed={filter === f}
+              className={`label-sm min-h-11 px-4 py-2.5 rounded-xl capitalize transition-all ${
                 filter === f ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
               }`}
             >
@@ -340,6 +345,7 @@ const TasksPage = () => {
                 </div>
 
                 <select
+                  aria-label={t("tasks.assignTo")}
                   value={newTask.staffId}
                   onChange={(e) => setNewTask({ ...newTask, staffId: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
@@ -352,6 +358,7 @@ const TasksPage = () => {
 
                 <input
                   type="text"
+                  aria-label={t("tasks.description")}
                   placeholder={t("tasks.description")}
                   value={newTask.task}
                   onChange={(e) => setNewTask({ ...newTask, task: e.target.value })}
@@ -376,6 +383,9 @@ const TasksPage = () => {
                   <button
                     type="button"
                     onClick={() => setNewTask((prev) => ({ ...prev, notifyTelegram: !prev.notifyTelegram }))}
+                    role="switch"
+                    aria-checked={newTask.notifyTelegram}
+                    aria-label={t("tasks.dispatchTelegram")}
                     className={`w-11 h-6 rounded-full p-1 transition-colors ${newTask.notifyTelegram ? "bg-secondary" : "bg-surface-container"}`}
                   >
                     <span

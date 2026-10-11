@@ -5,10 +5,10 @@ import type {
   HouseholdProfile,
   InventorySetupItem,
   RoomZoneProfile,
-  type AppRole,
-  type AppLanguage,
-  type StaffCashRequest,
-  type AttendanceCorrectionRequest,
+  AppRole,
+  AppLanguage,
+  StaffCashRequest,
+  AttendanceCorrectionRequest,
 } from "@/context/AppContext";
 import type { StaffMember } from "@/data/staff";
 import { getCurrentAuthUser, getFirebaseFirestore, isFirebaseConfigured } from "@/lib/firebase";

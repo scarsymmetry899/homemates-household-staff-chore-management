@@ -105,6 +105,9 @@ export default function StaffWorkspace() {
 
   return (
     <PageTransition className="px-5 space-y-6">
+      <p className="rounded-xl border border-secondary/20 bg-secondary/10 px-4 py-2 text-xs text-foreground">
+        Owner preview of the staff workspace. Individual staff sign-in is not connected yet.
+      </p>
       <section className="glass-card rounded-3xl p-5 space-y-4">
         <div className="flex items-center gap-4">
           <StaffAvatar name={activeStaff.name} src={activeStaff.photo} className="w-16 h-16 rounded-2xl shrink-0" textClassName="text-lg" />
@@ -117,6 +120,7 @@ export default function StaffWorkspace() {
 
         {staff.length > 1 && (
           <select
+            aria-label="Staff member to preview"
             value={activeStaff.id}
             onChange={(event) => setActiveStaffId(event.target.value)}
             className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"

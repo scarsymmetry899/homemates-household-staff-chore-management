@@ -6,6 +6,7 @@ import {
   type HouseholdStateSnapshot,
 } from "@/lib/householdStore";
 import { getCurrentAuthUser, isFirebaseConfigured } from "@/lib/firebase";
+import { toast } from "sonner";
 import { bootstrapSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
 import { createConfiguredSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
 import {
@@ -348,11 +349,11 @@ function shouldDeductForAttendance(type: string): boolean {
 }
 
 function hasLocalOnboardingCompletion(): boolean {
-  return localStorage.getItem(onboardingDoneKey) === "true";
+  const uid = localStorage.getItem("homemaker_current_uid");
+  return !!uid && localStorage.getItem(`${onboardingDoneKey}_${uid}`) === "true";
 }
 
 async function rememberOnboardingCompletion(): Promise<void> {
-  localStorage.setItem(onboardingDoneKey, "true");
   const user = await getCurrentAuthUser();
   if (user?.uid) {
     localStorage.setItem(`${onboardingDoneKey}_${user.uid}`, "true");
@@ -430,12 +431,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [sqlHouseholdId, setSqlHouseholdId] = useState<string | null>(null);
   const [hasLoadedRemoteState, setHasLoadedRemoteState] = useState(false);
   const [hasBootstrappedSql, setHasBootstrappedSql] = useState(false);
+  const [remoteLoadError, setRemoteLoadError] = useState(false);
+  const [sqlLoadError, setSqlLoadError] = useState(false);
+  const [pendingSqlWrites, setPendingSqlWrites] = useState(0);
+  const pendingSqlWritesRef = useRef(0);
   const isApplyingRemoteStateRef = useRef(false);
   const lastSavedStateRef = useRef("");
   const [ownerName, setOwnerNameState] = useState<string>(() => {
     return localStorage.getItem("homemaker_owner_name") || "Boss";
   });
-  const [ownerLocation, setOwnerLocation] = useState<string>("Fetching location...");
+  const ownerLocation = householdProfile?.addressLabel || householdProfile?.name || "Household";
   const [language, setLanguageState] = useState<AppLanguage>(() => {
     const saved = localStorage.getItem("homemaker_language");
     return saved === "hi" || saved === "te" || saved === "kn" || saved === "ml" ? saved : "en";
@@ -493,6 +498,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const remoteLoadTimeout = setTimeout(() => {
       if (cancelled || remoteStateSettled) return;
       remoteStateSettled = true;
+      setRemoteLoadError(true);
       lastSavedStateRef.current = currentHouseholdStateJson;
       setHasLoadedRemoteState(true);
     }, 8000);
@@ -508,6 +514,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const locallyCompletedSetup = hasLocalOnboardingCompletion();
         const nextSetupComplete = !!state.setupComplete || locallyCompletedSetup;
         remoteStateSettled = true;
+        setRemoteLoadError(false);
         isApplyingRemoteStateRef.current = true;
         const nextState = { ...state, setupComplete: nextSetupComplete };
         lastSavedStateRef.current = JSON.stringify(nextState);
@@ -541,12 +548,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       () => {
         if (cancelled) return;
         remoteStateSettled = true;
+        setRemoteLoadError(false);
         setHasLoadedRemoteState(true);
         lastSavedStateRef.current = currentHouseholdStateJson;
       },
       (error) => {
         console.warn("Firebase household sync unavailable", error);
         remoteStateSettled = true;
+        setRemoteLoadError(true);
         lastSavedStateRef.current = currentHouseholdStateJson;
         setHasLoadedRemoteState(true);
       }
@@ -564,18 +573,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!hasLoadedRemoteState || isApplyingRemoteStateRef.current) return;
     if (isFirebaseConfigured && !hasBootstrappedSql) return;
-    if (isDemoMode) return;
+    if (isDemoMode || sqlLoadError || pendingSqlWrites > 0) return;
     if (lastSavedStateRef.current === currentHouseholdStateJson) return;
 
     const timeout = setTimeout(() => {
       lastSavedStateRef.current = currentHouseholdStateJson;
       saveHouseholdState(currentHouseholdState).catch((error) => {
         console.warn("Unable to save Firebase household state", error);
+        toast.warning("Live sync is unavailable", { description: "Postgres saved the change, but other devices may not update yet." });
       });
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [currentHouseholdStateJson, hasBootstrappedSql, hasLoadedRemoteState, isDemoMode]);
+  }, [currentHouseholdStateJson, hasBootstrappedSql, hasLoadedRemoteState, isDemoMode, pendingSqlWrites, sqlLoadError]);
 
   useEffect(() => {
     if (!hasLoadedRemoteState) return;
@@ -586,7 +596,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     let cancelled = false;
     const sqlBootstrapTimeout = setTimeout(() => {
-      if (!cancelled) setHasBootstrappedSql(true);
+      if (!cancelled) {
+        setSqlLoadError(true);
+        setHasBootstrappedSql(true);
+      }
     }, 12000);
 
     bootstrapSqlConnectHousehold({
@@ -597,14 +610,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     })
       .then((snapshot) => {
         if (cancelled) return;
+        setSqlLoadError(false);
         if (!snapshot) {
-          if (hasLocalOnboardingCompletion()) {
-            setSetupComplete(true);
-          }
           return;
         }
         isApplyingRemoteStateRef.current = true;
-        setStaff(snapshot.staff);
+        setStaff((current) => snapshot.staff.map((member) => {
+          const cached = current.find((item) => item.id === member.id);
+          return cached ? { ...member, attendance: cached.attendance, skills: cached.skills } : member;
+        }));
         setExpenses(snapshot.expenses);
         setCashRequests(snapshot.cashRequests);
         setAttendanceRequests(snapshot.attendanceRequests || []);
@@ -623,9 +637,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       })
       .catch((error) => {
         console.warn("Firebase SQL Connect household bootstrap unavailable", error);
-        if (!cancelled && hasLocalOnboardingCompletion()) {
-          setSetupComplete(true);
-        }
+        if (!cancelled) setSqlLoadError(true);
       })
       .finally(() => {
         clearTimeout(sqlBootstrapTimeout);
@@ -640,9 +652,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const persistSql = useCallback((operation: () => Promise<unknown>) => {
     if (isDemoMode) return;
-    if (!sqlHouseholdId) return;
-    operation().catch((error) => {
+    if (!sqlHouseholdId) {
+      toast.error("Household is not connected", { description: "Your change was not saved to Postgres. Reload and try again." });
+      return;
+    }
+    pendingSqlWritesRef.current += 1;
+    setPendingSqlWrites(pendingSqlWritesRef.current);
+    Promise.resolve().then(operation).catch((error) => {
       console.warn("SQL Connect persistence failed", error);
+      setSqlLoadError(true);
+      toast.error("Change was not saved to Postgres", { description: "Reload after your connection recovers. The failed change was not synchronized." });
+    }).finally(() => {
+      pendingSqlWritesRef.current -= 1;
+      setPendingSqlWrites(pendingSqlWritesRef.current);
     });
   }, [isDemoMode, sqlHouseholdId]);
 
@@ -755,55 +777,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   ]);
 
   const disableDemoMode = useCallback(() => {
-    const backupJson = localStorage.getItem(demoBackupKey);
     localStorage.removeItem(demoModeKey);
     localStorage.removeItem(demoBackupKey);
-    setIsDemoMode(false);
-
-    if (backupJson) {
-      try {
-        applyHouseholdSnapshot(JSON.parse(backupJson) as HouseholdStateSnapshot);
-        setHasLoadedRemoteState(false);
-        setHasBootstrappedSql(false);
-        return;
-      } catch {
-        // Fall through to a full reload when the backup is unavailable or invalid.
-      }
-    }
-
     window.location.reload();
-  }, [applyHouseholdSnapshot]);
+  }, []);
 
   useEffect(() => {
     if (!isDemoMode) return;
     applyHouseholdSnapshot(getDemoHouseholdState(ownerName === "Boss" ? "Demo Owner" : ownerName));
     setHasLoadedRemoteState(true);
     setHasBootstrappedSql(true);
-  }, []);
-
-  // Fetch GPS location
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`
-            );
-            const data = await res.json();
-            const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
-            const state = data.address?.state || "";
-            setOwnerLocation(city ? `${city}, ${state}` : `${pos.coords.latitude.toFixed(2)}°N, ${pos.coords.longitude.toFixed(2)}°E`);
-          } catch {
-            setOwnerLocation("Location unavailable");
-          }
-        },
-        () => setOwnerLocation("Location access denied"),
-        { timeout: 10000 }
-      );
-    } else {
-      setOwnerLocation("GPS not supported");
-    }
   }, []);
 
   const toggleTask = useCallback((staffId: string, taskIndex: number) => {
@@ -1626,67 +1609,58 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       timezone: setup.timezone,
     };
 
-    isApplyingRemoteStateRef.current = true;
-    setHouseholdProfile(profile);
-    setHomemates(setup.homemates);
-    setRooms(setup.rooms);
-    setInventoryItems(setup.inventoryItems);
-    setOwnerNameState(setup.ownerName);
-    setStaff(setup.staff);
-    setExpenses([]);
-    setCashRequests([]);
-    setAttendanceRequests([]);
-    setAlerts([]);
-    setSetupComplete(true);
-    localStorage.setItem("homemaker_owner_name", setup.ownerName);
-    rememberOnboardingCompletion().catch(() => undefined);
+    const snapshot = await createConfiguredSqlConnectHousehold(setup);
+    if (isFirebaseConfigured && !snapshot) {
+      throw new Error("Postgres is unavailable. Check your connection and retry setup.");
+    }
 
-    let persistedStaff = setup.staff;
-    let persistedExpenses: Expense[] = [];
-    let persistedCashRequests: StaffCashRequest[] = [];
-    let persistedAttendanceRequests: AttendanceCorrectionRequest[] = [];
-    let persistedAlerts: Alert[] = [];
-
+    const nextState: HouseholdStateSnapshot = {
+      staff: snapshot?.staff || setup.staff,
+      expenses: snapshot?.expenses || [],
+      cashRequests: snapshot?.cashRequests || [],
+      attendanceRequests: snapshot?.attendanceRequests || [],
+      alerts: snapshot?.alerts || [],
+      setupComplete: true,
+      householdProfile: snapshot?.householdProfile || profile,
+      homemates: snapshot?.homemates || setup.homemates,
+      rooms: snapshot?.rooms || setup.rooms,
+      inventoryItems: snapshot?.inventoryItems || setup.inventoryItems,
+      ownerName: setup.ownerName,
+      language,
+      appRole,
+      activeStaffId,
+      isDarkMode,
+      nfcEnabled,
+    };
     try {
-      const snapshot = await createConfiguredSqlConnectHousehold(setup);
-      if (snapshot) {
-        setSqlHouseholdId(snapshot.householdId);
-        setStaff(snapshot.staff);
-        setExpenses(snapshot.expenses);
-        setCashRequests(snapshot.cashRequests);
-        setAlerts(snapshot.alerts);
-        persistedStaff = snapshot.staff;
-        persistedExpenses = snapshot.expenses;
-        persistedCashRequests = snapshot.cashRequests;
-        persistedAlerts = snapshot.alerts;
-      }
-    } finally {
-      queueMicrotask(() => {
-        isApplyingRemoteStateRef.current = false;
-        const nextState: HouseholdStateSnapshot = {
-          staff: persistedStaff,
-          expenses: persistedExpenses,
-          cashRequests: persistedCashRequests,
-          attendanceRequests: persistedAttendanceRequests,
-          alerts: persistedAlerts,
-          setupComplete: true,
-          householdProfile: profile,
-          homemates: setup.homemates,
-          rooms: setup.rooms,
-          inventoryItems: setup.inventoryItems,
-          ownerName: setup.ownerName,
-          language,
-          appRole,
-          activeStaffId,
-          isDarkMode,
-          nfcEnabled,
-        };
-        lastSavedStateRef.current = JSON.stringify(nextState);
-        saveHouseholdState(nextState).catch((error) => {
-          console.warn("Unable to save setup state", error);
-        });
+      await saveHouseholdState(nextState);
+    } catch (error) {
+      console.warn("Unable to save setup cache", error);
+      toast.warning("Household created, but live sync is unavailable", {
+        description: "Your Postgres data is saved. Reload after your connection recovers.",
       });
     }
+
+    isApplyingRemoteStateRef.current = true;
+    lastSavedStateRef.current = JSON.stringify(nextState);
+    if (snapshot) setSqlHouseholdId(snapshot.householdId);
+    setStaff(nextState.staff);
+    setExpenses(nextState.expenses);
+    setCashRequests(nextState.cashRequests || []);
+    setAttendanceRequests(nextState.attendanceRequests || []);
+    setAlerts(nextState.alerts);
+    setHouseholdProfile(nextState.householdProfile || null);
+    setHomemates(nextState.homemates || []);
+    setRooms(nextState.rooms || []);
+    setInventoryItems(nextState.inventoryItems || []);
+    setOwnerNameState(setup.ownerName);
+    setSetupComplete(true);
+    setSqlLoadError(false);
+    localStorage.setItem("homemaker_owner_name", setup.ownerName);
+    rememberOnboardingCompletion().catch((error) => {
+      console.warn("Unable to remember local setup completion", error);
+    });
+    queueMicrotask(() => { isApplyingRemoteStateRef.current = false; });
   }, [activeStaffId, appRole, isDarkMode, language, nfcEnabled]);
 
   if (isFirebaseConfigured && (!hasLoadedRemoteState || !hasBootstrappedSql)) {
@@ -1701,6 +1675,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             <p className="text-sm text-muted-foreground">
               We are loading your saved staff, tasks, expenses, and alerts before opening the dashboard.
             </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isFirebaseConfigured && !isDemoMode && (sqlLoadError || (remoteLoadError && !setupComplete) || (setupComplete && !sqlHouseholdId))) {
+    return (
+      <div className="min-h-[100dvh] bg-background flex items-center justify-center px-5">
+        <div role="alert" className="glass-card rounded-3xl p-7 max-w-md w-full space-y-4">
+          <h1 className="headline-md">Unable to sync your household</h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Your data could not be verified or saved with Postgres. Check your connection and try again; setup has not been reset.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button type="button" className="btn-estate rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground" onClick={() => window.location.reload()}>
+              Retry connection
+            </button>
+            <button type="button" className="glass-btn rounded-xl px-5 py-3 text-sm font-semibold" onClick={enableDemoMode}>
+              Use demo data
+            </button>
           </div>
         </div>
       </div>

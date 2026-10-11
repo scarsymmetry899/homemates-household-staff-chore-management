@@ -1,12 +1,11 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, TrendingUp, Bell, MapPin, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppState } from "@/context/AppContext";
-import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
+import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard } from "@/components/animations/MotionComponents";
 import StaffAvatar from "@/components/StaffAvatar";
 import { useI18n } from "@/lib/i18n";
-import { toast } from "sonner";
 
 const statusLabelKey: Record<string, string> = {
   "on-duty": "status.onDuty",
@@ -18,15 +17,15 @@ const statusLabelKey: Record<string, string> = {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { staff, alerts, expenses, ownerName, ownerLocation } = useAppState();
+  const { staff, alerts, expenses, ownerName, ownerLocation, householdProfile } = useAppState();
   const { t, locale } = useI18n();
 
-  // IST time
-  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-  const hour = now.getHours();
+  const timezone = householdProfile?.timezone || "Asia/Kolkata";
+  const now = new Date();
+  const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: timezone }).format(now));
   const greeting = hour < 12 ? t("home.goodMorning") : hour < 17 ? t("home.goodAfternoon") : t("home.goodEvening");
-  const dateStr = now.toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric" });
-  const timeStr = now.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata", hour12: true });
+  const dateStr = now.toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric", timeZone: timezone });
+  const timeStr = now.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", timeZone: timezone, hour12: true });
 
   const activeAlerts = alerts.filter((a) => !a.dismissed);
   const totalTasks = staff.reduce((a, s) => a + s.assignments.length, 0);
@@ -44,26 +43,20 @@ const Index = () => {
 
   // Creative daily tagline based on status
   const tagline = useMemo(() => {
-    if (taskPct === 100) return "All tasks wrapped up. Your home is running like a dream! 🏡✨";
-    if (absentCount > 1) return "A few hands missing today — might need your attention.";
-    if (lateCount > 0 && taskPct < 50) return "Slow start today, but the day's still young!";
-    if (taskPct >= 75) return "Almost there — your team is crushing it today! 💪";
-    if (taskPct >= 50) return "Halfway through the day's to-dos. Smooth sailing so far.";
-    return "A fresh day at home — let's make it count! ☀️";
-  }, [taskPct, absentCount, lateCount]);
-
-  const handleRefresh = useCallback(async () => {
-    await new Promise((r) => setTimeout(r, 800));
-    toast.success("Dashboard synced", { description: "All modules refreshed." });
-  }, []);
+    if (totalTasks > 0 && taskPct === 100) return t("home.taglineComplete");
+    if (absentCount > 1) return t("home.taglineAbsent");
+    if (lateCount > 0 && taskPct < 50) return t("home.taglineSlow");
+    if (taskPct >= 75) return t("home.taglineGreat");
+    if (taskPct >= 50) return t("home.taglineHalf");
+    return t("home.taglineFresh");
+  }, [totalTasks, taskPct, absentCount, lateCount, t]);
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <PageTransition className="px-5 space-y-7">
+      <PageTransition className="px-4 sm:px-6 md:px-8 space-y-7">
         {/* Time & Location Bar */}
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1"><Clock size={12} /> {timeStr} IST</span>
-          <span className="flex items-center gap-1"><MapPin size={12} /> {ownerLocation}</span>
+          <span className="flex items-center gap-1"><Clock size={12} /> {timeStr}</span>
+          <span className="flex items-center gap-1 min-w-0 truncate"><MapPin size={12} className="shrink-0" /> {ownerLocation}</span>
         </div>
 
         {/* Greeting */}
@@ -88,9 +81,9 @@ const Index = () => {
         {activeAlerts.length > 0 && (
           <AnimatedCard delay={0.05}>
             <PressableCard>
-              <div
+              <button type="button"
                 onClick={() => navigate("/alerts")}
-                className="glass-card rounded-2xl p-4 flex items-center gap-4 cursor-pointer border-l-4 border-l-status-absent"
+                className="glass-card rounded-2xl p-4 flex items-center gap-4 cursor-pointer border-l-4 border-l-status-absent w-full text-left"
               >
                 <div className="w-10 h-10 rounded-xl bg-status-absent/10 flex items-center justify-center shrink-0">
                   <Bell size={18} className="text-status-absent" />
@@ -100,7 +93,7 @@ const Index = () => {
                   <p className="text-xs text-muted-foreground mt-0.5">{activeAlerts[0].title}</p>
                 </div>
                 <ArrowRight size={16} className="text-muted-foreground" />
-              </div>
+              </button>
             </PressableCard>
           </AnimatedCard>
         )}
@@ -117,9 +110,9 @@ const Index = () => {
             {staff.slice(0, 3).map((s) => (
               <StaggerItem key={s.id}>
                 <PressableCard>
-                  <div
+                  <button type="button"
                     onClick={() => navigate(`/staff/${s.id}`)}
-                    className="glass-card rounded-2xl p-4 flex items-center gap-4 cursor-pointer"
+                    className="glass-card rounded-2xl p-4 flex items-center gap-3 sm:gap-4 cursor-pointer w-full text-left"
                   >
                     <StaffAvatar name={s.name} src={s.photo} className="w-12 h-12 shrink-0" textClassName="text-sm" />
                     <div className="flex-1 min-w-0">
@@ -128,21 +121,19 @@ const Index = () => {
                       {s.arrivalTime && (
                         <p className="text-xs text-muted-foreground mt-0.5">{t("home.checkedInAt", { time: s.arrivalTime })}</p>
                       )}
+                      <span
+                        className={`inline-flex mt-2 label-sm px-2.5 py-1 rounded-xl max-w-full whitespace-normal ${
+                          s.status === "on-duty"
+                            ? "bg-status-on-time/10 text-status-on-time"
+                            : s.status === "late" || s.status === "en-route"
+                            ? "bg-status-late/10 text-status-late"
+                            : "bg-destructive/10 text-destructive"
+                        }`}
+                      >
+                        {t(statusLabelKey[s.status])}
+                      </span>
                     </div>
-                    <span
-                      className={`label-sm px-2.5 py-1 rounded-xl ${
-                        s.status === "on-duty"
-                          ? "bg-status-on-time/10 text-status-on-time"
-                          : s.status === "late"
-                          ? "bg-secondary-container text-secondary-container-foreground"
-                          : s.status === "en-route"
-                          ? "bg-secondary-container text-secondary-container-foreground"
-                          : "bg-destructive/10 text-destructive"
-                      }`}
-                    >
-                      {t(statusLabelKey[s.status])}
-                    </span>
-                  </div>
+                  </button>
                 </PressableCard>
               </StaggerItem>
             ))}
@@ -223,7 +214,6 @@ const Index = () => {
 
         <div className="pb-4" />
       </PageTransition>
-    </PullToRefresh>
   );
 };
 

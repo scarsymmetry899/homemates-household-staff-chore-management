@@ -277,15 +277,6 @@ async function seedHousehold(seed: SeedSnapshot): Promise<UUIDString> {
   return householdId;
 }
 
-async function createEmptyHousehold(ownerName: string): Promise<UUIDString> {
-  const created = await createHousehold({
-    name: `${ownerName || "My"} Household`,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata",
-    addressLabel: null,
-  });
-  return created.data.household_insert.id;
-}
-
 export async function createConfiguredSqlConnectHousehold(
   setup: HouseholdSetupPayload
 ): Promise<SqlConnectHouseholdSnapshot | null> {
@@ -404,14 +395,13 @@ export async function bootstrapSqlConnectHousehold(
     email: user.email || null,
   });
 
-  let householdsResult = await myHouseholds();
-  let household = householdsResult.data.households[0];
-
-  if (!household) {
-    await createEmptyHousehold(user.displayName || seed.ownerName || "My");
-    householdsResult = await myHouseholds();
-    household = householdsResult.data.households[0];
-  }
+  const householdsResult = await myHouseholds();
+  const household = householdsResult.data.households.find((item) =>
+    item.roomZones_on_household.length > 0 ||
+    item.staffMembers_on_household.length > 0 ||
+    item.homemateProfiles_on_household.length > 0 ||
+    item.inventoryItems_on_household.length > 0
+  );
 
   if (!household) return null;
 

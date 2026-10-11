@@ -79,7 +79,7 @@ function emptyStaff(): StaffMember {
   };
 }
 
-const inputClass = "w-full rounded-2xl border border-border/40 bg-surface-low px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/30";
+const inputClass = "w-full min-w-0 rounded-2xl border border-border/50 bg-surface-low px-4 py-3 text-base md:text-sm text-foreground focus-visible:outline-none";
 
 export default function HouseholdSetupWizard() {
   const { ownerName, completeHouseholdSetup, enableDemoMode } = useAppState();
@@ -231,7 +231,6 @@ export default function HouseholdSetupWizard() {
     setSaving(true);
     try {
       await completeHouseholdSetup(payload);
-      localStorage.setItem("homemaker_onboarding_done", "true");
       toast.success("Household setup complete", { description: "Your fresh workspace is ready." });
     } catch (error) {
       toast.error("Setup could not be saved", {
@@ -243,11 +242,11 @@ export default function HouseholdSetupWizard() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6 flex items-center justify-center">
+    <div className="min-h-[100dvh] bg-background px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-3xl glass-card rounded-[2rem] p-5 md:p-8 shadow-card"
+        className="w-full max-w-4xl glass-card rounded-[2rem] p-5 md:p-8 shadow-card"
       >
         <div className="flex items-start gap-4 mb-6">
           <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center">
@@ -272,13 +271,14 @@ export default function HouseholdSetupWizard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-6 gap-2 mb-6">
+        <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar pb-2" aria-label="Setup steps">
           {steps.map((label, index) => (
             <button
               key={label}
               type="button"
               onClick={() => setStep(index)}
-              className={`rounded-full px-2 py-2 text-[11px] font-semibold transition ${
+              aria-current={index === step ? "step" : undefined}
+              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                 index === step ? "bg-primary text-primary-foreground" : index < step ? "bg-secondary/15 text-secondary" : "bg-muted text-muted-foreground"
               }`}
             >
@@ -297,7 +297,7 @@ export default function HouseholdSetupWizard() {
                 <input className={inputClass} value={setupOwnerName} onChange={(e) => setSetupOwnerName(e.target.value)} placeholder="Your name" />
               </Field>
               <Field label="Owner phone">
-                <input className={inputClass} value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="+91..." />
+                <input className={inputClass} type="tel" autoComplete="tel" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="+91..." />
               </Field>
               <Field label="Address label">
                 <input className={inputClass} value={addressLabel} onChange={(e) => setAddressLabel(e.target.value)} placeholder="Hyderabad home, farmhouse..." />
@@ -317,9 +317,9 @@ export default function HouseholdSetupWizard() {
             >
               {homemates.map((mate) => (
                 <div key={mate.id} className="grid md:grid-cols-4 gap-3">
-                  <input className={inputClass} value={mate.name} onChange={(e) => setHomemates((prev) => prev.map((m) => m.id === mate.id ? { ...m, name: e.target.value } : m))} placeholder="Name" />
-                  <input className={inputClass} value={mate.relationLabel} onChange={(e) => setHomemates((prev) => prev.map((m) => m.id === mate.id ? { ...m, relationLabel: e.target.value } : m))} placeholder="Relation" />
-                  <input className={inputClass} value={mate.phone || ""} onChange={(e) => setHomemates((prev) => prev.map((m) => m.id === mate.id ? { ...m, phone: e.target.value } : m))} placeholder="Phone" />
+                  <input className={inputClass} aria-label="Housemate name" value={mate.name} onChange={(e) => setHomemates((prev) => prev.map((m) => m.id === mate.id ? { ...m, name: e.target.value } : m))} placeholder="Name" />
+                  <input className={inputClass} aria-label="Relationship" value={mate.relationLabel} onChange={(e) => setHomemates((prev) => prev.map((m) => m.id === mate.id ? { ...m, relationLabel: e.target.value } : m))} placeholder="Relation" />
+                  <input className={inputClass} aria-label="Housemate phone" type="tel" value={mate.phone || ""} onChange={(e) => setHomemates((prev) => prev.map((m) => m.id === mate.id ? { ...m, phone: e.target.value } : m))} placeholder="Phone" />
                   <button className="glass-btn rounded-2xl text-sm" onClick={() => setHomemates((prev) => prev.filter((m) => m.id !== mate.id))}>Remove</button>
                 </div>
               ))}
@@ -330,9 +330,9 @@ export default function HouseholdSetupWizard() {
             <RepeatingSection title="Rooms and zones" description="These become the basis for room-wise NFC tags later." icon={<Home size={18} />} onAdd={() => setRooms((prev) => [...prev, { id: makeId("room"), name: "", floorLabel: "", notes: "" }])}>
               {rooms.map((room) => (
                 <div key={room.id} className="grid md:grid-cols-4 gap-3">
-                  <input className={inputClass} value={room.name} onChange={(e) => setRooms((prev) => prev.map((r) => r.id === room.id ? { ...r, name: e.target.value } : r))} placeholder="Room / zone" />
-                  <input className={inputClass} value={room.floorLabel || ""} onChange={(e) => setRooms((prev) => prev.map((r) => r.id === room.id ? { ...r, floorLabel: e.target.value } : r))} placeholder="Floor" />
-                  <input className={inputClass} value={room.notes || ""} onChange={(e) => setRooms((prev) => prev.map((r) => r.id === room.id ? { ...r, notes: e.target.value } : r))} placeholder="Notes" />
+                  <input className={inputClass} aria-label="Room or zone name" value={room.name} onChange={(e) => setRooms((prev) => prev.map((r) => r.id === room.id ? { ...r, name: e.target.value } : r))} placeholder="Room / zone" />
+                  <input className={inputClass} aria-label="Floor" value={room.floorLabel || ""} onChange={(e) => setRooms((prev) => prev.map((r) => r.id === room.id ? { ...r, floorLabel: e.target.value } : r))} placeholder="Floor" />
+                  <input className={inputClass} aria-label="Room notes" value={room.notes || ""} onChange={(e) => setRooms((prev) => prev.map((r) => r.id === room.id ? { ...r, notes: e.target.value } : r))} placeholder="Notes" />
                   <button className="glass-btn rounded-2xl text-sm" onClick={() => setRooms((prev) => prev.filter((r) => r.id !== room.id))}>Remove</button>
                 </div>
               ))}
@@ -344,9 +344,9 @@ export default function HouseholdSetupWizard() {
               {staff.map((member) => (
                 <div key={member.id} className="rounded-3xl bg-muted/30 p-4 space-y-3">
                   <div className="grid md:grid-cols-3 gap-3">
-                    <input className={inputClass} value={member.name} onChange={(e) => updateStaff(member.id, { name: e.target.value })} placeholder="Staff name" />
-                    <input className={inputClass} value={member.role} onChange={(e) => updateStaff(member.id, { role: e.target.value })} placeholder="Combined role e.g. Cook + Cleaner" />
-                    <select className={inputClass} value={member.department} onChange={(e) => updateStaff(member.id, { department: e.target.value as Department })}>
+                    <input className={inputClass} aria-label="Staff name" value={member.name} onChange={(e) => updateStaff(member.id, { name: e.target.value })} placeholder="Staff name" />
+                    <input className={inputClass} aria-label="Combined role" value={member.role} onChange={(e) => updateStaff(member.id, { role: e.target.value })} placeholder="Combined role e.g. Cook + Cleaner" />
+                    <select className={inputClass} aria-label="Department" value={member.department} onChange={(e) => updateStaff(member.id, { department: e.target.value as Department })}>
                       {departments.map((department) => <option key={department}>{department}</option>)}
                     </select>
                   </div>
@@ -431,10 +431,10 @@ export default function HouseholdSetupWizard() {
                     </div>
                   )}
                   <div className="grid md:grid-cols-4 gap-3">
-                    <input className={inputClass} value={member.phone} onChange={(e) => updateStaff(member.id, { phone: e.target.value })} placeholder="Phone" />
-                    <input className={inputClass} type="number" value={member.salary || ""} onChange={(e) => updateStaff(member.id, { salary: Number(e.target.value) })} placeholder="Monthly salary" />
-                    <input className={inputClass} value={member.shiftStart} onChange={(e) => updateStaff(member.id, { shiftStart: e.target.value })} placeholder="Shift start" />
-                    <input className={inputClass} value={member.shiftEnd} onChange={(e) => updateStaff(member.id, { shiftEnd: e.target.value })} placeholder="Shift end" />
+                    <input className={inputClass} aria-label="Staff phone" type="tel" value={member.phone} onChange={(e) => updateStaff(member.id, { phone: e.target.value })} placeholder="Phone" />
+                    <input className={inputClass} aria-label="Monthly salary" type="number" min="0" inputMode="decimal" value={member.salary || ""} onChange={(e) => updateStaff(member.id, { salary: Number(e.target.value) })} placeholder="Monthly salary" />
+                    <input className={inputClass} aria-label="Shift start" value={member.shiftStart} onChange={(e) => updateStaff(member.id, { shiftStart: e.target.value })} placeholder="Shift start" />
+                    <input className={inputClass} aria-label="Shift end" value={member.shiftEnd} onChange={(e) => updateStaff(member.id, { shiftEnd: e.target.value })} placeholder="Shift end" />
                   </div>
                   <input
                     className={inputClass}
@@ -461,11 +461,11 @@ export default function HouseholdSetupWizard() {
             <RepeatingSection title="Inventory starter list" description="Track groceries, vegetables, household supplies and minimum stock levels." icon={<Package size={18} />} onAdd={() => setInventoryItems((prev) => [...prev, { id: makeId("item"), name: "", category: "Groceries", unit: "unit", currentQuantity: 0, minimumQuantity: 0 }])}>
               {inventoryItems.map((item) => (
                 <div key={item.id} className="grid md:grid-cols-6 gap-3">
-                  <input className={inputClass} value={item.name} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, name: e.target.value } : i))} placeholder="Item" />
-                  <input className={inputClass} value={item.category} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, category: e.target.value } : i))} placeholder="Category" />
-                  <input className={inputClass} value={item.unit} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, unit: e.target.value } : i))} placeholder="Unit" />
-                  <input className={inputClass} type="number" value={item.currentQuantity} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, currentQuantity: Number(e.target.value) } : i))} placeholder="Qty" />
-                  <input className={inputClass} type="number" value={item.minimumQuantity ?? ""} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, minimumQuantity: Number(e.target.value) } : i))} placeholder="Min" />
+                  <input className={inputClass} aria-label="Inventory item" value={item.name} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, name: e.target.value } : i))} placeholder="Item" />
+                  <input className={inputClass} aria-label="Item category" value={item.category} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, category: e.target.value } : i))} placeholder="Category" />
+                  <input className={inputClass} aria-label="Item unit" value={item.unit} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, unit: e.target.value } : i))} placeholder="Unit" />
+                  <input className={inputClass} aria-label="Current quantity" type="number" min="0" inputMode="decimal" value={item.currentQuantity} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, currentQuantity: Number(e.target.value) } : i))} placeholder="Qty" />
+                  <input className={inputClass} aria-label="Minimum quantity" type="number" min="0" inputMode="decimal" value={item.minimumQuantity ?? ""} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, minimumQuantity: Number(e.target.value) } : i))} placeholder="Min" />
                   <button className="glass-btn rounded-2xl text-sm" onClick={() => setInventoryItems((prev) => prev.filter((i) => i.id !== item.id))}>Remove</button>
                 </div>
               ))}
