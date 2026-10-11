@@ -5,7 +5,7 @@ import {
   subscribeToHouseholdState,
   type HouseholdStateSnapshot,
 } from "@/lib/householdStore";
-import { getCurrentAuthUser, isFirebaseConfigured } from "@/lib/firebase";
+import { getCurrentAuthUser, isFirebaseConfigured, signOutFirebase } from "@/lib/firebase";
 import { toast } from "sonner";
 import { bootstrapSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
 import { createConfiguredSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
@@ -1695,6 +1695,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             </button>
             <button type="button" className="glass-btn rounded-xl px-5 py-3 text-sm font-semibold" onClick={enableDemoMode}>
               Use demo data
+            </button>
+            <button type="button" className="rounded-xl px-5 py-3 text-sm font-semibold text-secondary underline underline-offset-4" onClick={() => {
+              signOutFirebase().finally(() => window.location.reload());
+            }}>
+              Sign out and reconnect
             </button>
           </div>
         </div>
