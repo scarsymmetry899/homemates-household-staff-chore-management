@@ -330,6 +330,10 @@ const demoModeKey = "homemaker_demo_mode";
 const demoBackupKey = "homemaker_demo_backup";
 const absencePayrollMarker = "Auto payroll absence deduction";
 
+function localDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 function attendanceDateKey(value: string): string {
   return value.split(",")[0].trim();
 }
@@ -435,6 +439,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [sqlLoadError, setSqlLoadError] = useState(false);
   const [pendingSqlWrites, setPendingSqlWrites] = useState(0);
   const pendingSqlWritesRef = useRef(0);
+  const pendingTaskCompletionRef = useRef(new Map<string, boolean>());
   const isApplyingRemoteStateRef = useRef(false);
   const lastSavedStateRef = useRef("");
   const [ownerName, setOwnerNameState] = useState<string>(() => {
@@ -790,8 +795,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const toggleTask = useCallback((staffId: string, taskIndex: number) => {
-    let taskId: string | undefined;
-    let nextDone = false;
+    const assignment = staff.find((member) => member.id === staffId)?.assignments[taskIndex];
+    if (!assignment) return;
+    const nextDone = !assignment.done;
     setStaff((prev) =>
       prev.map((s) => {
         if (s.id !== staffId) return s;
@@ -799,22 +805,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           ...s,
           assignments: s.assignments.map((t, i) => {
             if (i !== taskIndex) return t;
-            taskId = t.id;
-            nextDone = !t.done;
             return { ...t, done: nextDone };
           }),
         };
       })
     );
-    if (taskId) {
+    if (assignment.id?.startsWith("temp-task-")) {
+      pendingTaskCompletionRef.current.set(assignment.id, nextDone);
+    } else if (assignment.id) {
       persistSql(() => sqlSetTaskCompletion({
-        taskId,
+        taskId: assignment.id!,
         status: nextDone ? "completed" : "pending",
         completedAt: nextDone ? new Date().toISOString() : null,
         source: "app",
       }));
     }
-  }, [persistSql]);
+  }, [persistSql, staff]);
 
   const updateStaffStatus = useCallback((staffId: string, status: StaffStatus) => {
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, status } : s)));
@@ -1069,7 +1075,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [persistSql]);
 
   const addTask = useCallback((staffId: string, task: string, dueDate?: string) => {
-    const tempId = `t${Date.now()}`;
+    const tempId = `temp-task-${crypto.randomUUID()}`;
     setStaff((prev) =>
       prev.map((s) =>
         s.id === staffId ? { ...s, assignments: [...s.assignments, { id: tempId, task, done: false, dueDate }] } : s
@@ -1082,6 +1088,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         title: task,
         dueAt: dueDate ? `${dueDate}T00:00:00.000Z` : null,
       });
+      const pendingDone = pendingTaskCompletionRef.current.get(tempId);
+      if (pendingDone !== undefined) {
+        await sqlSetTaskCompletion({
+          taskId: result.data.taskInstance_insert.id,
+          status: pendingDone ? "completed" : "pending",
+          completedAt: pendingDone ? new Date().toISOString() : null,
+          source: "app",
+        });
+        pendingTaskCompletionRef.current.delete(tempId);
+      }
       setStaff((prev) => prev.map((s) => (
         s.id === staffId
           ? {
@@ -1380,7 +1396,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const markAttendance = useCallback((staffId: string, type: string, detail: string) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-    const todayKey = now.toISOString().split("T")[0];
+    const todayKey = localDateKey(now);
     const dateStr = `${todayKey}, ${timeStr}`;
     const currentMember = staff.find((member) => member.id === staffId);
     const shouldApplyDeduction = currentMember

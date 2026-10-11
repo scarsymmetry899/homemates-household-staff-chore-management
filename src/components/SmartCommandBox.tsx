@@ -491,6 +491,7 @@ const SmartCommandBox = () => {
       {/* Floating trigger */}
       {!isOpen && (
         <motion.button
+          aria-label="Open AI home assistant"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           whileTap={{ scale: 0.9 }}
@@ -527,6 +528,7 @@ const SmartCommandBox = () => {
                 )}
               </div>
               <button
+                aria-label="Close AI home assistant"
                 onClick={() => {
                   setIsOpen(false);
                   if (guidedCmd) setGuidedCmd(null);
@@ -667,6 +669,7 @@ const SmartCommandBox = () => {
                 disabled={isThinking}
               />
               <motion.button
+                aria-label="Send message to AI home assistant"
                 whileTap={{ scale: 0.9 }}
                 onClick={handleSend}
                 disabled={!input.trim() || isThinking}

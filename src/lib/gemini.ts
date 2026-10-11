@@ -11,7 +11,7 @@ function getModel() {
   if (!API_KEY) return null;
   if (!_model) {
     const genAI = new GoogleGenerativeAI(API_KEY);
-    _model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    _model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
   }
   return _model;
 }
@@ -187,7 +187,7 @@ export async function scanReceiptWithGemini(file: File): Promise<ReceiptItem[]> 
   if (!API_KEY) return [];
   try {
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const visionModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const visionModel = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
     const base64 = await fileToBase64(file);
     const supportedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];

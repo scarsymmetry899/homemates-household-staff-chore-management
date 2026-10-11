@@ -59,7 +59,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   const now = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite" });
 
   const systemPrompt = `You are the production assistant for the Homemaker household management app.
 Answer only from the app context provided in this request. If the answer is not available in the context, say that it is not available yet instead of guessing.
