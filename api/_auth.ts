@@ -32,7 +32,13 @@ export async function requireFirebaseUser(req: ApiRequest): Promise<admin.auth.D
   if (!token) throw new Error("Missing Firebase auth token.");
 
   const app = getAdminApp();
-  return app.auth().verifyIdToken(token);
+  try {
+    return await app.auth().verifyIdToken(token);
+  } catch (error) {
+    const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "unknown";
+    console.warn("Firebase token verification failed", { code, projectId: app.options.projectId });
+    throw error;
+  }
 }
 
 export function parseJsonBody<T>(body: unknown): T {
