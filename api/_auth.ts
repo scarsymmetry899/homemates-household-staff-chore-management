@@ -1,4 +1,5 @@
-import * as admin from "firebase-admin";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
 
 type HeaderValue = string | string[] | undefined;
 
@@ -20,20 +21,21 @@ function getHeader(req: ApiRequest, name: string): string | undefined {
 }
 
 function getAdminApp() {
-  if (admin.apps.length) return admin.app();
-  return admin.initializeApp({
+  const existing = getApps()[0];
+  if (existing) return existing;
+  return initializeApp({
     projectId: process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID,
   });
 }
 
-export async function requireFirebaseUser(req: ApiRequest): Promise<admin.auth.DecodedIdToken> {
+export async function requireFirebaseUser(req: ApiRequest): Promise<DecodedIdToken> {
   const authorization = getHeader(req, "authorization");
   const token = authorization?.startsWith("Bearer ") ? authorization.slice("Bearer ".length) : "";
   if (!token) throw new Error("Missing Firebase auth token.");
 
   const app = getAdminApp();
   try {
-    return await app.auth().verifyIdToken(token);
+    return await getAuth(app).verifyIdToken(token);
   } catch (error) {
     const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "unknown";
     console.warn("Firebase token verification failed", { code, projectId: app.options.projectId });

@@ -182,20 +182,6 @@ const InsightsPage = () => {
     return -1; // no highlight for past periods
   }, [viewMode, selectedDay, selectedWeek, selectedMonth]);
 
-  const [overrides, setOverrides] = useState<Record<string, string>>({});
-
-  const getCellStatus = (staffName: string, dayIndex: number, originalStatus: string) => {
-    const key = `${viewMode}-${currentSelection}-${staffName}-${dayIndex}`;
-    return overrides[key] || originalStatus;
-  };
-
-  const handleLongPress = (staffName: string, dayIndex: number, currentStatus: string) => {
-    const nextStatus = currentStatus === "present" ? "late" : currentStatus === "late" ? "absent" : "present";
-    const key = `${viewMode}-${currentSelection}-${staffName}-${dayIndex}`;
-    setOverrides((prev) => ({ ...prev, [key]: nextStatus }));
-    toast.success(`Attendance updated to ${nextStatus}`, { description: `${staffName} — ${columnHeaders[dayIndex]}` });
-  };
-
   const approveAttendanceRequest = (requestId: string) => {
     reviewAttendanceCorrectionRequest(requestId, "approved", "Approved from attendance insights");
     toast.success("Attendance correction approved");
@@ -393,7 +379,7 @@ const InsightsPage = () => {
           ))}
         </div>
 
-        <p className="text-xs text-muted-foreground italic">💡 Long-press any cell to manually change attendance</p>
+        <p className="text-xs text-muted-foreground italic">Attendance history is read-only. Staff can report discrepancies for owner review.</p>
 
         {activeAttendanceRequests.length > 0 && (
           <AnimatedCard delay={0.08} className="glass-card rounded-2xl p-5 space-y-4">
@@ -482,22 +468,18 @@ const InsightsPage = () => {
                         </div>
                       </div>
                       {s.days.map((day, i) => {
-                        const status = getCellStatus(s.name, i, day);
-                        let pressTimer: ReturnType<typeof setTimeout>;
+                        const status = day;
                         return (
                           <motion.div
                             key={`${s.name}-${i}`}
+                            role="img"
+                            aria-label={`${s.name}, ${dateKey(getDateForColumn(i))}: ${status}`}
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.1 + i * 0.01 }}
-                            className={`w-6 h-6 rounded-lg ${cellColor[status]} cursor-pointer mx-auto transition-shadow ${
+                            className={`w-6 h-6 rounded-lg ${cellColor[status]} mx-auto ${
                               i === todayColumnIndex ? "ring-2 ring-secondary/60 ring-offset-1 ring-offset-card" : ""
                             }`}
-                            onPointerDown={() => {
-                              pressTimer = setTimeout(() => handleLongPress(s.name, i, status), 500);
-                            }}
-                            onPointerUp={() => clearTimeout(pressTimer)}
-                            onPointerLeave={() => clearTimeout(pressTimer)}
                           />
                         );
                       })}
