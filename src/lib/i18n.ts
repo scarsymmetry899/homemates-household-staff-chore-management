@@ -6,6 +6,7 @@ type Dictionary = Record<string, string>;
 const dictionaries: Record<AppLanguage, Dictionary> = {
   en: {
     "nav.home": "Home",
+    "nav.myDay": "My Day",
     "nav.staff": "Staff",
     "nav.tasks": "Tasks",
     "nav.expenses": "Expenses",
@@ -82,6 +83,7 @@ const dictionaries: Record<AppLanguage, Dictionary> = {
   },
   hi: {
     "nav.home": "होम",
+    "nav.myDay": "मेरा दिन",
     "nav.staff": "स्टाफ",
     "nav.tasks": "कार्य",
     "nav.expenses": "खर्च",
@@ -158,6 +160,7 @@ const dictionaries: Record<AppLanguage, Dictionary> = {
   },
   te: {
     "nav.home": "హోమ్",
+    "nav.myDay": "నా రోజు",
     "nav.staff": "సిబ్బంది",
     "nav.tasks": "పనులు",
     "nav.expenses": "ఖర్చులు",
@@ -234,6 +237,7 @@ const dictionaries: Record<AppLanguage, Dictionary> = {
   },
   kn: {
     "nav.home": "ಮುಖಪುಟ",
+    "nav.myDay": "ನನ್ನ ದಿನ",
     "nav.staff": "ಸಿಬ್ಬಂದಿ",
     "nav.tasks": "ಕೆಲಸಗಳು",
     "nav.expenses": "ಖರ್ಚುಗಳು",
@@ -310,6 +314,7 @@ const dictionaries: Record<AppLanguage, Dictionary> = {
   },
   ml: {
     "nav.home": "ഹോം",
+    "nav.myDay": "എന്റെ ദിവസം",
     "nav.staff": "സ്റ്റാഫ്",
     "nav.tasks": "ജോലികൾ",
     "nav.expenses": "ചെലവുകൾ",
