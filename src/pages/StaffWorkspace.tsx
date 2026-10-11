@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAppState, type AttendanceCorrectionRequest, type Expense } from "@/context/AppContext";
 import { useI18n } from "@/lib/i18n";
+import { localDateKey } from "@/lib/localDate";
 import StaffAvatar from "@/components/StaffAvatar";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/components/animations/MotionComponents";
 
@@ -38,7 +39,7 @@ export default function StaffWorkspace() {
     notes: "",
   });
   const [attendanceForm, setAttendanceForm] = useState({
-    date: new Date().toISOString().split("T")[0],
+    date: localDateKey(new Date()),
     requestedStatus: "present" as AttendanceCorrectionRequest["requestedStatus"],
     reason: "",
   });
@@ -95,7 +96,7 @@ export default function StaffWorkspace() {
       reason: attendanceForm.reason.trim(),
     });
     setAttendanceForm({
-      date: new Date().toISOString().split("T")[0],
+      date: localDateKey(new Date()),
       requestedStatus: "present",
       reason: "",
     });

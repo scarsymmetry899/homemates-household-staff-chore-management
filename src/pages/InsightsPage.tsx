@@ -6,12 +6,13 @@ import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard, PressableCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import StaffAvatar from "@/components/StaffAvatar";
+import { localDateKey } from "@/lib/localDate";
 import { toast } from "sonner";
 
 type ViewMode = "daily" | "weekly" | "monthly";
 
 function dateKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return localDateKey(date);
 }
 
 function entryStatus(type: string) {

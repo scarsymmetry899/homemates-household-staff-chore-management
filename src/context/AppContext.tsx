@@ -8,6 +8,7 @@ import {
 import { getCurrentAuthUser, isFirebaseConfigured, signOutFirebase } from "@/lib/firebase";
 import { toast } from "sonner";
 import { bootstrapSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
+import { localDateKey } from "@/lib/localDate";
 import { createConfiguredSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
 import {
   addExpenseEntry as sqlAddExpenseEntry,
@@ -329,10 +330,6 @@ const onboardingDoneKey = "homemaker_onboarding_done";
 const demoModeKey = "homemaker_demo_mode";
 const demoBackupKey = "homemaker_demo_backup";
 const absencePayrollMarker = "Auto payroll absence deduction";
-
-function localDateKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
 
 function attendanceDateKey(value: string): string {
   return value.split(",")[0].trim();

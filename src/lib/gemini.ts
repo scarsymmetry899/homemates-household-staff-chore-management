@@ -54,7 +54,7 @@ export async function askGemini(
         if (data.text) return data.text;
       } else {
         const data = (await res.json().catch(() => ({}))) as { reason?: string };
-        console.warn("Gemini server request failed", { status: res.status, reason: data.reason || "unknown" });
+        console.warn(`Gemini server request failed: status=${res.status} reason=${data.reason || "unknown"}`);
       }
     } catch (e) {
       console.warn("Gemini Vercel API failed; trying Firebase callable fallback.", e);
