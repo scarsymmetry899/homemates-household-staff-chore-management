@@ -44,8 +44,14 @@ export const sendTelegramMessage = functions.https.onCall(async (data, context) 
   }
 
   const { chatId, text } = data as { chatId: string | number; text: string };
-  if (!chatId || !text) {
-    throw new functions.https.HttpsError("invalid-argument", "chatId and text are required.");
+  const destination = String(chatId ?? "");
+  if (!/^-?\d{5,20}$/.test(destination) || typeof text !== "string" || !text.trim() || text.length > 4096) {
+    throw new functions.https.HttpsError("invalid-argument", "A numeric Chat ID and a message under 4096 characters are required.");
+  }
+
+  const allowedIds = new Set((process.env.TELEGRAM_ALLOWED_CHAT_IDS || "").split(",").map((id) => id.trim()).filter(Boolean));
+  if (!allowedIds.has(destination)) {
+    throw new functions.https.HttpsError("permission-denied", "This Chat ID is not authorized for notifications.");
   }
 
   const token = getBotToken();
@@ -56,7 +62,7 @@ export const sendTelegramMessage = functions.https.onCall(async (data, context) 
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+    body: JSON.stringify({ chat_id: chatId, text }),
   });
 
   const result = (await res.json()) as { ok: boolean; description?: string };

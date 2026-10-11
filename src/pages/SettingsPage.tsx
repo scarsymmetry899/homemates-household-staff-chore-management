@@ -1,11 +1,13 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Bell, Users, Receipt, BarChart3, Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil, Wifi, MessageCircle, Check, X, Nfc, Send, Beaker, ChevronDown, Home } from "lucide-react";
+import { Shield, Moon, Globe, ChevronRight, LogOut, User, Pencil, Wifi, MessageCircle, Check, X, Nfc, Send, Beaker, ChevronDown, Home } from "lucide-react";
 import { PageTransition, AnimatedCard, PullToRefresh } from "@/components/animations/MotionComponents";
 import { useAppState, type AppLanguage } from "@/context/AppContext";
 import { isNfcSupported, writeNfcTag } from "@/lib/nfc";
 import { getSimulateTap } from "@/lib/nfcTestBridge";
+import { getOwnerTelegramChatId, saveOwnerTelegramChatId } from "@/lib/ownerTelegram";
+import { sendMessage } from "@/lib/telegram";
 import { useI18n } from "@/lib/i18n";
 import StaffAvatar from "@/components/StaffAvatar";
 import { toast } from "sonner";
@@ -14,7 +16,7 @@ interface SettingToggle {
   id: string;
   label: string;
   description: string;
-  icon: typeof Bell;
+  icon: typeof Moon;
   defaultOn: boolean;
 }
 
@@ -23,22 +25,6 @@ interface SettingsPageProps {
 }
 
 const settingSections: { title: string; items: SettingToggle[] }[] = [
-  {
-    title: "Notifications",
-    items: [
-      { id: "alerts", label: "Staff Alerts", description: "Late arrivals, absences & security", icon: Bell, defaultOn: true },
-      { id: "tasks", label: "Task Updates", description: "Completion and assignment changes", icon: Shield, defaultOn: true },
-      { id: "expenses", label: "Expense Alerts", description: "Budget thresholds and new entries", icon: Receipt, defaultOn: false },
-    ],
-  },
-  {
-    title: "Dashboard Modules",
-    items: [
-      { id: "personnel", label: "Personnel Tracking", description: "Show staff cards on home", icon: Users, defaultOn: true },
-      { id: "financials", label: "Financial Snapshot", description: "Monthly expenditure overview", icon: BarChart3, defaultOn: true },
-      { id: "insights", label: "Attendance Insights", description: "Heatmap and stats on home", icon: Globe, defaultOn: true },
-    ],
-  },
   {
     title: "Appearance",
     items: [
@@ -87,11 +73,18 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
   const [nameInput, setNameInput] = useState(ownerName);
 
   // Telegram owner chat ID
-  const [ownerChatId, setOwnerChatId] = useState(
-    () => localStorage.getItem("homemaker_owner_telegram_chat_id") || ""
-  );
+  const [ownerChatId, setOwnerChatId] = useState("");
   const [editingChatId, setEditingChatId] = useState(false);
   const [chatIdInput, setChatIdInput] = useState(ownerChatId);
+  const [testingTelegram, setTestingTelegram] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getOwnerTelegramChatId().then((chatId) => {
+      if (active) setOwnerChatId(chatId);
+    });
+    return () => { active = false; };
+  }, []);
 
   // NFC write picker
   const [nfcWriteStaffId, setNfcWriteStaffId] = useState<string | null>(null);
@@ -148,12 +141,29 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
     setEditingName(false);
   };
 
-  const handleSaveChatId = () => {
+  const handleSaveChatId = async () => {
     const trimmed = chatIdInput.trim();
+    if (trimmed && !/^-?\d{5,20}$/.test(trimmed)) {
+      toast.error("Enter a numeric Telegram Chat ID");
+      return;
+    }
+    if (!await saveOwnerTelegramChatId(trimmed)) {
+      toast.error("Sign in before saving a Telegram Chat ID");
+      return;
+    }
     setOwnerChatId(trimmed);
-    localStorage.setItem("homemaker_owner_telegram_chat_id", trimmed);
-    toast.success("Owner Telegram ID saved");
+    toast.success(trimmed ? "Telegram Chat ID saved on this device" : "Telegram Chat ID removed");
     setEditingChatId(false);
+  };
+
+  const handleTestTelegram = async () => {
+    if (!ownerChatId || testingTelegram) return;
+    setTestingTelegram(true);
+    const sent = await sendMessage(ownerChatId, "Homemaker test notification. Telegram alerts are ready on this device.");
+    toast[sent ? "success" : "error"](sent ? "Test message sent" : "Test message failed", {
+      description: sent ? "Check your Telegram chat to confirm delivery." : "Check the Chat ID and bot configuration.",
+    });
+    setTestingTelegram(false);
   };
 
   const handleWriteNfc = async (staffId: string) => {
@@ -427,17 +437,17 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                 <div className="flex items-center gap-2">
                   <Wifi size={12} className={ownerChatId ? "text-status-on-time" : "text-muted-foreground"} />
                   <span className="text-xs text-muted-foreground">
-                    {ownerChatId ? `Connected · ID: ${ownerChatId}` : "Not configured"}
+                    {ownerChatId ? `Saved on this device · ID: ${ownerChatId}` : "Not configured"}
                   </span>
                 </div>
               )}
             </AnimatePresence>
-
-            <div className="border-t border-border/20" />
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Send size={12} />
-              <span>Bot commands: "mark Elena late", "add task X for Julian", "check in Maria"</span>
-            </div>
+            <p className="text-xs text-muted-foreground">This ID is stored only for this signed-in account in this browser. Add it again on another device. Telegram bot commands are not enabled.</p>
+            {ownerChatId && (
+              <button type="button" disabled={testingTelegram} onClick={handleTestTelegram} className="glass-btn rounded-xl px-4 py-2 text-xs font-semibold text-foreground disabled:opacity-50 flex items-center gap-2">
+                <Send size={14} /> {testingTelegram ? "Sending…" : "Send test message"}
+              </button>
+            )}
           </div>
         </AnimatedCard>
 

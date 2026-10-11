@@ -5,6 +5,7 @@ import { useAppState } from "@/context/AppContext";
 import type { StaffStatus } from "@/data/staff";
 import { toast } from "sonner";
 import { sendMessage } from "@/lib/telegram";
+import { getOwnerTelegramChatId } from "@/lib/ownerTelegram";
 import {
   evaluateCheckIn,
   evaluateCheckOut,
@@ -245,7 +246,7 @@ export function useNfcAttendance(enabled: boolean) {
 
       // Notify owner (skipped in test mode if silentTelegram)
       if (!options.silentTelegram) {
-        const ownerChatId = localStorage.getItem("homemaker_owner_telegram_chat_id");
+        const ownerChatId = await getOwnerTelegramChatId();
         if (ownerChatId) {
           await sendMessage(ownerChatId, ownerMsg);
         }

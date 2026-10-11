@@ -13,6 +13,7 @@ import {
   type GeminiAction,
 } from "@/lib/gemini";
 import { sendMessage as sendTelegram } from "@/lib/telegram";
+import { getOwnerTelegramChatId } from "@/lib/ownerTelegram";
 
 interface ChatMessage {
   id: string;
@@ -26,7 +27,7 @@ interface ChatMessage {
 interface ParsedAction {
   type: string;
   description: string;
-  execute: () => void;
+  execute: () => string | void;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -221,9 +222,10 @@ const SmartCommandBox = () => {
 
       if (resultText) {
         toast.success(label);
-        const ownerChatId = localStorage.getItem("homemaker_owner_telegram_chat_id");
-        if (ownerChatId && telegramCmd) {
-          sendTelegram(ownerChatId, `📱 Action from Homemaker app:\n${telegramCmd} — executed ✅`).catch(() => {});
+        if (telegramCmd) {
+          getOwnerTelegramChatId().then((ownerChatId) => {
+            if (ownerChatId) void sendTelegram(ownerChatId, `Action from Homemaker app:\n${telegramCmd} — executed.`);
+          });
         }
         pushMessage([{
           id: `a-${Date.now()}`,
@@ -267,24 +269,18 @@ const SmartCommandBox = () => {
       setIsThinking(false);
 
       if (!rawResponse) {
-        // Gemini failed — use regex fallback
-        handleRegexSend(trimmed);
+        pushMessage([{
+          id: `a-${Date.now()}`,
+          role: "assistant",
+          content: "The AI assistant is unavailable right now. No action was taken. Please try again shortly.",
+          isQuery: true,
+        }]);
         return;
       }
 
       // Parse any action blocks
       const actions = parseGeminiActions(rawResponse);
       const displayText = stripActionTags(rawResponse);
-
-      // Execute actions immediately and collect result lines
-      const resultLines: string[] = [];
-      for (const action of actions) {
-        const result = executeGeminiAction(action);
-        if (result) resultLines.push(result);
-      }
-
-      const finalText =
-        displayText + (resultLines.length > 0 ? "\n\n" + resultLines.join("\n") : "");
 
       // Update Gemini history for multi-turn
       geminiHistoryRef.current = [
@@ -293,14 +289,30 @@ const SmartCommandBox = () => {
         { role: "model" as const, parts: rawResponse },
       ].slice(-20); // keep last 10 turns
 
-      pushMessage([
-        {
-          id: `a-${Date.now()}`,
-          role: "assistant",
-          content: finalText || "Done!",
-          isQuery: actions.length === 0,
+      const responseMessages: ChatMessage[] = [];
+      if (displayText) responseMessages.push({
+        id: `a-${Date.now()}`,
+        role: "assistant",
+        content: displayText,
+        isQuery: true,
+      });
+      actions.forEach((action, index) => responseMessages.push({
+        id: `a-${Date.now()}-${index}`,
+        role: "assistant",
+        content: `Review proposed change: ${JSON.stringify(action)}\nApply this change?`,
+        action: {
+          type: action.type,
+          description: action.type.replaceAll("_", " "),
+          execute: () => executeGeminiAction(action),
         },
-      ]);
+      }));
+      if (!responseMessages.length) responseMessages.push({
+        id: `a-${Date.now()}`,
+        role: "assistant",
+        content: "I couldn't verify an answer from the saved household data. No action was taken.",
+        isQuery: true,
+      });
+      pushMessage(responseMessages);
     },
     [staff, expenses, executeGeminiAction, pushMessage]
   );
@@ -464,11 +476,11 @@ const SmartCommandBox = () => {
 
   const handleConfirm = useCallback((msgId: string, confirmed: boolean) => {
     const msg = messages.find((m) => m.id === msgId);
-    if (confirmed && msg?.action) msg.action.execute();
+    const result = confirmed && msg?.action ? msg.action.execute() : undefined;
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== msgId) return m;
-        if (confirmed && m.action) return { ...m, content: `✅ Done! ${m.action.description}`, action: undefined };
+        if (confirmed && m.action) return { ...m, content: result || `Done: ${m.action.description}`, action: undefined };
         return { ...m, content: "❌ Cancelled. Type another command.", action: undefined };
       })
     );

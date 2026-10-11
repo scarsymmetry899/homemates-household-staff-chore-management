@@ -2,7 +2,7 @@
 
 > Your household, simplified.
 
-A full-featured household staff management app built for homeowners who manage domestic staff. Track attendance, assign tasks, monitor expenses, get AI-powered insights, and control everything remotely via Telegram — all from a beautiful mobile-first interface.
+A household staff management app under active production development. Owners can manage saved staff, tasks, spending, payroll, and inventory; staff sign-in and some integrations are still in progress.
 
 ---
 
@@ -27,19 +27,21 @@ A full-featured household staff management app built for homeowners who manage d
 - Attendance grid no longer shows fake historical attendance before real records exist.
 - Language preference foundation for English, Hindi, Telugu, Kannada, and Malayalam.
 - Core shell, Home, Tasks, and Settings are partially wired into the central language layer.
+- Owner Telegram alerts use a server-side bot token and an allowlisted Chat ID. The Chat ID setting is currently saved per signed-in account on one device, not synced to Postgres.
+- Gemini responses can use current staff, task, and recent expense context. Proposed changes require owner confirmation in chat.
 
 ### Still In Progress
 
 - Full owner vs staff gated experience.
 - Staff-only mobile view for today's tasks, attendance, payment, and cash/expense requests.
 - Complete app-wide translations across all screens, forms, toasts, onboarding, and AI chat.
-- Staff cash request UI and approval workflow.
-- Expense request to purchase to receipt upload to monthly ledger linking.
-- Attendance discrepancy requests and owner approval.
-- Payroll auto-deductions from attendance rules.
+- Independent staff sign-in and backend-enforced role permissions. The current staff view is an owner preview.
+- Receipt upload and full expense-to-inventory reconciliation.
+- Historical attendance-event hydration and payroll-policy edge cases.
 - Realtime sync for all operational modules.
 - NFC room/task/staff tag setup UI.
-- Server-grounded Gemini data queries.
+- Server-fetched Gemini context for all household modules. Current context is supplied by the signed-in client and covers only selected modules.
+- Telegram Chat ID storage in the backend and a deployed, authorized bot-command handler. Browser polling is disabled.
 - CCTV monitoring dashboard and camera health reporting.
 
 ### Phase Plan
@@ -111,39 +113,20 @@ Built for mobile-first use — the entire UI is optimised for phone screens with
 - Swipe to dismiss
 
 ### AI Home Assistant (Gemini)
-- Powered by Google Gemini 1.5 Flash
-- Full multi-turn conversation with live staff + expense context injected
+- Server-side Gemini requests with current staff, task, and expense context supplied by the signed-in app
 - Natural language commands: "Mark Marcus late", "Add task mop floors for Elena", "Show expenses"
 - Quick-action chips for instant guided flows (Mark Late, Mark Absent, Mark Present, Add Task)
-- Guided commands ask for staff name → execute action → send Telegram notification
-- Regex fallback when Gemini API is not configured
+- Model-proposed changes require confirmation; an unavailable model reports an error instead of fabricating an answer
 
-### Telegram Bot
-- Full two-way bot integration via polling (no webhook server needed)
-- Registered slash commands visible in the Telegram keyboard:
-
-| Command | Description |
-|---------|-------------|
-| `/status` | Show all staff status |
-| `/staff` | List all staff members |
-| `/tasks [Name]` | Show pending tasks (all or by staff) |
-| `/expenses` | Show expense summary |
-| `/checkin Name` | Check in a staff member |
-| `/mark_late Name` | Mark staff late |
-| `/mark_absent Name` | Mark staff absent |
-| `/mark_present Name` | Mark staff present / on duty |
-| `/on_duty Name` | Mark staff on duty |
-| `/add_task Name \| task` | Add a task for a staff member |
-| `/help` | List all commands |
-
-- Natural language also works: "mark Elena absent", "add task polish silver for Marcus"
-- Every action sends a reply back to the originating chat
-- Owner Chat ID configurable in Settings for push notifications from the app
+### Telegram Notifications
+- Outbound alerts use the server-side Vercel API and an explicit Chat ID allowlist.
+- The owner Chat ID is configurable in Settings on each device and can be verified with a test message.
+- Incoming bot commands and browser polling are not deployed.
 
 ### Insights & Analytics
 - Daily / Weekly / Monthly attendance grid
 - Today's column highlighted with a secondary-colour indicator and ring on cells
-- Long-press any cell to manually override attendance
+- Historical cells are read-only; staff can submit correction requests for owner review
 - Punctuality score, reliability score and late check-in counters
 - **Excel report export** (SheetJS) with 4 sheets: Summary, Staff, Tasks, Expenses — properly formatted with column widths
 
@@ -173,7 +156,7 @@ Built for mobile-first use — the entire UI is optimised for phone screens with
 | Routing | React Router v6 |
 | State | React Context + useState |
 | Backend | Firebase Auth + Firebase SQL Connect/Postgres + Firestore compatibility bridge + Cloud Functions |
-| AI | Google Gemini 1.5 Flash (chat + vision) |
+| AI | Server-side Gemini (chat) |
 | Messaging | Telegram Bot API |
 | Attendance | Web NFC API + Google Sheets (Apps Script webhook) |
 | Export | SheetJS (xlsx) |
@@ -232,14 +215,14 @@ VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 
-# Telegram Bot
-VITE_TELEGRAM_BOT_TOKEN=your_bot_token
-
-# Google Gemini AI
-VITE_GEMINI_API_KEY=your_gemini_api_key
+# Server-only Vercel environment variables (do not prefix with VITE_)
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_ALLOWED_CHAT_IDS=your_owner_chat_id,optional_staff_chat_id
+GEMINI_API_KEY=your_gemini_api_key
+FIREBASE_PROJECT_ID=your_firebase_project_id
 ```
 
-All three integrations are optional — the app runs in demo mode if keys are not provided.
+The Firebase client config is public by design; the bot token and Gemini key must remain server-only. Demo mode is an explicit, local-only toggle and does not replace a production database.
 
 ---
 
@@ -284,11 +267,11 @@ firebase deploy --only functions
 
 1. Open Telegram and message [@BotFather](https://t.me/BotFather)
 2. Send `/newbot` and follow the prompts to create your bot
-3. Copy the bot token into `VITE_TELEGRAM_BOT_TOKEN` in `.env.local`
-4. Start the app — it will automatically register all slash commands with Telegram on first load
-5. Go to **Settings** in the app and paste your personal Telegram Chat ID (find it via [@userinfobot](https://t.me/userinfobot))
+3. Set `TELEGRAM_BOT_TOKEN` in Vercel's server environment, never `VITE_TELEGRAM_BOT_TOKEN`.
+4. Get your numeric Chat ID (for example from [@userinfobot](https://t.me/userinfobot)) and add it to the server-side `TELEGRAM_ALLOWED_CHAT_IDS` comma-separated list.
+5. Redeploy, enter the same Chat ID in Settings, and use **Send test message**. Check Telegram to confirm delivery.
 
-The bot uses long-polling (no public server required). Commands are processed client-side in the browser.
+The Chat ID setting is device-local for now. Browser bot commands and long-polling are not active; do not treat the presence of a bot token as proof of delivery.
 
 ---
 
@@ -296,11 +279,9 @@ The bot uses long-polling (no public server required). Commands are processed cl
 
 1. Go to [Google AI Studio](https://aistudio.google.com)
 2. Create an API key
-3. Add it to `.env.local` as `VITE_GEMINI_API_KEY`
+3. Add it to Vercel as server-only `GEMINI_API_KEY`.
 
-The app uses **Gemini 1.5 Flash** for:
-- **Smart Command Box** — multi-turn chat with live staff/expense context injection
-- **Receipt Scanner** — vision model reads receipt images and extracts line items
+The server-side assistant uses the configured `GEMINI_MODEL` (or its application default) for chat. Receipt extraction is a separate feature and should not be treated as verified production behavior.
 
 ---
 
@@ -340,7 +321,6 @@ src/
 ├── data/
 │   └── staff.ts         # StaffMember type + seed data
 ├── hooks/
-│   ├── useTelegramPolling.ts  # Telegram bot polling + command handling
 │   └── useNfcAttendance.ts    # Web NFC API hook
 ├── lib/
 │   ├── firebase.ts      # Auth, Firestore, Google OAuth

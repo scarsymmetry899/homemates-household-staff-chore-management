@@ -1,20 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { getCurrentAuthIdToken, getFirebaseFunctions, isFirebaseConfigured } from "@/lib/firebase";
+import { getCurrentAuthIdToken, isFirebaseConfigured } from "@/lib/firebase";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-
-export const isGeminiConfigured = isFirebaseConfigured || !!API_KEY;
-
-let _model: ReturnType<InstanceType<typeof GoogleGenerativeAI>["getGenerativeModel"]> | null = null;
-
-function getModel() {
-  if (!API_KEY) return null;
-  if (!_model) {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    _model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
-  }
-  return _model;
-}
+export const isGeminiConfigured = isFirebaseConfigured;
 
 export interface GeminiStaffContext {
   name: string;
@@ -39,100 +25,29 @@ export async function askGemini(
   chatHistory: { role: "user" | "model"; parts: string }[]
 ): Promise<string> {
   const idToken = await getCurrentAuthIdToken();
-  if (idToken) {
-    try {
-      const res = await fetch("/api/ask-home-assistant", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ userMessage, staffContext, expenseContext, chatHistory }),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as { text?: string };
-        if (data.text) return data.text;
-      } else {
-        const data = (await res.json().catch(() => ({}))) as { reason?: string };
-        console.warn(`Gemini server request failed: status=${res.status} reason=${data.reason || "unknown"}`);
-      }
-    } catch (e) {
-      console.warn("Gemini Vercel API failed; trying Firebase callable fallback.", e);
-    }
-  }
-
-  const functions = await getFirebaseFunctions();
-  if (functions) {
-    try {
-      const { httpsCallable } = await import("firebase/functions");
-      const askHomeAssistant = httpsCallable(functions, "askHomeAssistant");
-      const result = await askHomeAssistant({ userMessage, staffContext, expenseContext, chatHistory });
-      const data = result.data as { text?: string };
-      if (data.text) return data.text;
-    } catch (e) {
-      console.warn("Gemini callable failed; trying local demo key fallback.", e);
-    }
-  }
-
-  // The browser-key path is only for an explicitly unconfigured local demo.
-  // A signed-in production session must never downgrade to client-side Gemini.
-  if (isFirebaseConfigured) return "";
-  const model = getModel();
-  if (!model) return "";
-
-  const now = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-
-  const systemPrompt = `You are a smart household staff management assistant built into the "Homemaker" app.
-You help the home owner manage their domestic staff, tasks, attendance, and expenses.
-
-Current date & time (IST): ${now}
-
-STAFF DATA:
-${staffContext
-  .map(
-    (s) =>
-      `• ${s.name} (${s.role}) — Status: ${s.status}, Shift: ${s.shiftStart}–${s.shiftEnd}
-   Tasks: ${s.assignments.map((t) => `${t.done ? "✅" : "⏳"} ${t.task}`).join(", ") || "none"}`
-  )
-  .join("\n")}
-
-RECENT EXPENSES:
-${expenseContext
-  .slice(0, 8)
-  .map((e) => `• ₹${e.amount} — ${e.category}: ${e.description} (${e.date})`)
-  .join("\n")}
-
-GUIDELINES:
-- Be concise and helpful. Use ₹ for currency, not $. Use Indian number formatting.
-- When asked to DO something (add task, change status, mark attendance), output a JSON action block at the END of your response in this exact format:
-  <action>{"type":"add_task","staffName":"Elena Moretti","task":"Polish silverware"}</action>
-  <action>{"type":"update_status","staffName":"Marcus Thorne","status":"late"}</action>
-  <action>{"type":"add_expense","category":"Fuel","amount":500,"description":"Weekend fuel"}</action>
-- For pure queries (who is on duty, show expenses, staff status), just answer in plain text.
-- Keep responses under 120 words unless listing data.
-- Do not make up information not in the context above.`;
+  if (!idToken) return "";
 
   try {
-    const chat = model.startChat({
-      history: [
-        { role: "user", parts: [{ text: systemPrompt }] },
-        { role: "model", parts: [{ text: "Understood! I'm ready to help manage your household staff." }] },
-        ...chatHistory.map((h) => ({
-          role: h.role,
-          parts: [{ text: h.parts }],
-        })),
-      ],
+    const res = await fetch("/api/ask-home-assistant", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ userMessage, staffContext, expenseContext, chatHistory }),
     });
-
-    const result = await chat.sendMessage(userMessage);
-    return result.response.text();
-  } catch (e) {
-    console.error("Gemini error:", e);
+    if (!res.ok) {
+      console.warn(`Gemini server request failed: status=${res.status}`);
+      return "";
+    }
+    const data = (await res.json()) as { text?: string };
+    return data.text || "";
+  } catch (error) {
+    console.warn("Gemini server request failed", error);
     return "";
   }
 }
 
-// Parse action blocks from Gemini response
 export interface GeminiAction {
   type: "add_task" | "update_status" | "add_expense" | "mark_attendance";
   staffName?: string;
@@ -149,23 +64,17 @@ export function parseGeminiActions(text: string): GeminiAction[] {
   let match;
   while ((match = regex.exec(text)) !== null) {
     try {
-      const action = JSON.parse(match[1].trim()) as GeminiAction;
-      actions.push(action);
+      actions.push(JSON.parse(match[1].trim()) as GeminiAction);
     } catch {
-      // ignore malformed action blocks
+      // An invalid model action is ignored rather than executed.
     }
   }
   return actions;
 }
 
-// Strip action tags from display text
 export function stripActionTags(text: string): string {
   return text.replace(/<action>[\s\S]*?<\/action>/g, "").trim();
 }
-
-// ─────────────────────────────────────────────────────────────
-// Receipt scanning via Gemini Vision
-// ─────────────────────────────────────────────────────────────
 
 export interface ReceiptItem {
   description: string;
@@ -176,72 +85,29 @@ export interface ReceiptItem {
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      // Strip the data URL prefix (data:image/...;base64,)
-      resolve(result.split(",")[1]);
-    };
+    reader.onload = () => resolve(String(reader.result).split(",")[1]);
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 }
 
 export async function scanReceiptWithGemini(file: File): Promise<ReceiptItem[]> {
-  if (!API_KEY) return [];
-  try {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const visionModel = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
-
-    const base64 = await fileToBase64(file);
-    const supportedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
-    const mimeType = (supportedTypes.includes(file.type) ? file.type : "image/jpeg") as "image/jpeg" | "image/png" | "image/webp" | "image/heic";
-
-    const prompt = `You are analyzing a receipt or bill image for a household management app.
-Extract ALL line items from this receipt and categorize each one.
-
-Categories available:
-- Groceries: food, vegetables, dairy, beverages, pantry items
-- Fuel: petrol, diesel, CNG, gas station
-- Repairs: plumbing, electrical, maintenance, hardware, tools
-- Advances: salary advance, cash advance, loan
-- Household: cleaning supplies, home decor, kitchenware, garden, misc household
-
-Return ONLY a valid JSON array (no markdown, no explanation) in this exact format:
-[
-  {"description": "item description", "amount": 250, "category": "Groceries"},
-  {"description": "another item", "amount": 1200, "category": "Fuel"}
-]
-
-Rules:
-- Amounts must be numbers (no ₹ symbol)
-- If you see a total line, include it as a single entry only if there are no individual items
-- Round amounts to nearest integer
-- If the image is not a receipt, return []
-- Maximum 10 items`;
-
-    const result = await visionModel.generateContent([
-      prompt,
-      { inlineData: { data: base64, mimeType } },
-    ]);
-
-    const text = result.response.text().trim();
-    // Strip markdown code fences if present (```json [...] ``` or ``` [...] ```)
-    const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-    const jsonMatch = stripped.match(/\[[\s\S]*\]/) || text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      console.warn("Receipt scan: no JSON array found in response:", text.substring(0, 200));
-      return [];
-    }
-    const parsed = JSON.parse(jsonMatch[0]) as ReceiptItem[];
-    return parsed.filter(
-      (item) =>
-        item.description &&
-        typeof item.amount === "number" &&
-        item.amount > 0 &&
-        ["Fuel", "Groceries", "Repairs", "Advances", "Household"].includes(item.category)
-    );
-  } catch (e) {
-    console.error("Receipt scan error:", e);
-    return [];
+  if (file.size > 2_000_000) throw new Error("Choose an image smaller than 2 MB.");
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    throw new Error("Choose a JPG, PNG, or WebP receipt image.");
   }
+  const idToken = await getCurrentAuthIdToken();
+  if (!idToken) throw new Error("Sign in before scanning a receipt.");
+
+  const res = await fetch("/api/scan-receipt", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify({ imageBase64: await fileToBase64(file), mimeType: file.type }),
+  });
+  if (!res.ok) throw new Error("Receipt scan is unavailable. Please try again later.");
+  const data = (await res.json()) as { items?: ReceiptItem[] };
+  return data.items || [];
 }

@@ -22,7 +22,6 @@ import SettingsPage from "./pages/SettingsPage";
 import StaffWorkspace from "./pages/StaffWorkspace";
 import NotFound from "./pages/NotFound";
 import { onAuthStateChange, isFirebaseConfigured, signOutFirebase } from "@/lib/firebase";
-import { useTelegramPolling } from "@/hooks/useTelegramPolling";
 import { useNfcAttendance } from "@/hooks/useNfcAttendance";
 import { useAppState } from "@/context/AppContext";
 import NfcConfirmation from "@/components/NfcConfirmation";
@@ -34,9 +33,6 @@ const queryClient = new QueryClient({
 
 // Inner component that uses AppContext (so hooks that need it live here)
 function AppInner({ onLogout }: { onLogout: () => void }) {
-  const telegramEnabled = !!import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-  useTelegramPolling(telegramEnabled);
-
   // Global NFC scanning — works on any screen, not just Settings.
   // Toggled from Settings via AppContext's nfcEnabled.
   const { appRole, nfcEnabled, staff, setupComplete } = useAppState();

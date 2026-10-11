@@ -138,8 +138,10 @@ const ExpensesPage = () => {
         }));
         setScanItems(items);
       } else {
-        toast.error("Gemini AI is not configured. Add VITE_GEMINI_API_KEY to enable receipt scanning.");
+        toast.error("Receipt scanning requires a configured server-side Gemini key.");
       }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Receipt scanning failed.");
     } finally {
       setScanParsing(false);
     }
