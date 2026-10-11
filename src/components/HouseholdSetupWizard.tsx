@@ -85,6 +85,7 @@ export default function HouseholdSetupWizard() {
   const { ownerName, completeHouseholdSetup, enableDemoMode } = useAppState();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [householdName, setHouseholdName] = useState("My Household");
   const [setupOwnerName, setSetupOwnerName] = useState(ownerName === "Boss" ? "" : ownerName);
   const [ownerPhone, setOwnerPhone] = useState("");
@@ -229,12 +230,15 @@ export default function HouseholdSetupWizard() {
     };
 
     setSaving(true);
+    setSaveError(null);
     try {
       await completeHouseholdSetup(payload);
       toast.success("Household setup complete", { description: "Your fresh workspace is ready." });
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Please check your connection and reload before trying again.";
+      setSaveError(message);
       toast.error("Setup could not be saved", {
-        description: error instanceof Error ? error.message : "Please try again.",
+        description: message,
       });
     } finally {
       setSaving(false);
@@ -484,6 +488,15 @@ export default function HouseholdSetupWizard() {
           )}
         </div>
 
+        {saveError && (
+          <div role="alert" className="mt-5 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-foreground">
+            <p className="font-semibold">Setup needs attention</p>
+            <p className="mt-1">{saveError}</p>
+            <button type="button" onClick={() => window.location.reload()} className="mt-3 font-semibold text-primary underline underline-offset-4">
+              Reload saved household
+            </button>
+          </div>
+        )}
         <div className="flex gap-3 pt-6">
           <button
             type="button"

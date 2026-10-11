@@ -54,6 +54,49 @@ interface SeedSnapshot {
 
 type SqlHousehold = MyHouseholdsData["households"][number];
 
+function containsNames(expected: string[], actual: string[]): boolean {
+  const remaining = [...actual];
+  return expected.every((name) => {
+    const index = remaining.indexOf(name);
+    if (index < 0) return false;
+    remaining.splice(index, 1);
+    return true;
+  });
+}
+
+export function isConfiguredHouseholdComplete(household: SqlHousehold, setup: HouseholdSetupPayload): boolean {
+  if (household.name !== setup.householdName) return false;
+  if (!containsNames(setup.rooms.map((room) => room.name), household.roomZones_on_household.map((room) => room.name))) return false;
+  if (!containsNames(setup.homemates.map((mate) => mate.name), household.homemateProfiles_on_household.map((mate) => mate.name))) return false;
+  if (!containsNames(setup.inventoryItems.map((item) => item.name), household.inventoryItems_on_household.map((item) => item.name))) return false;
+  if (!containsNames(setup.staff.map((member) => member.name), household.staffMembers_on_household.map((member) => member.name))) return false;
+
+  return setup.staff.every((member) => {
+    const saved = household.staffMembers_on_household.find((item) => item.name === member.name);
+    return !!saved && saved.role === member.role && saved.salary === member.salary &&
+      containsNames(
+        member.assignments.map((assignment) => assignment.task),
+        household.taskInstances_on_household
+          .filter((task) => task.assignedStaff?.id === saved.id)
+          .map((task) => task.title)
+      ) && household.payrollRuns_on_household.some((run) => run.staff.id === saved.id);
+  });
+}
+
+async function readConfiguredHousehold(householdId: UUIDString, setup: HouseholdSetupPayload): Promise<SqlHousehold> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const result = await myHouseholds({ fetchPolicy: "SERVER_ONLY" });
+      const household = result.data.households.find((item) => item.id === householdId);
+      if (household && isConfiguredHouseholdComplete(household, setup)) return household;
+    } catch (error) {
+      if (attempt === 2) throw error;
+    }
+    if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+  }
+  throw new Error("The household may be partially saved. Reload before trying setup again; do not create a duplicate.");
+}
+
 const staffStatuses = new Set<StaffStatus>(["on-duty", "late", "absent", "en-route", "off-duty"]);
 const departments = new Set<Department>(["Hospitality", "Security", "Grounds", "Culinary", "Maintenance", "Other"]);
 
@@ -290,6 +333,13 @@ export async function createConfiguredSqlConnectHousehold(
     email: user.email || null,
   });
 
+  const existing = (await myHouseholds({ fetchPolicy: "SERVER_ONLY" })).data.households.filter((item) => item.name === setup.householdName);
+  const complete = existing.find((item) => isConfiguredHouseholdComplete(item, setup));
+  if (complete) return mapHousehold(complete, setup.ownerName || user.displayName || "Boss");
+  if (existing.length > 0) {
+    throw new Error("A household with this name already exists but setup is incomplete. Reload to recover it rather than creating a duplicate.");
+  }
+
   const created = await createHousehold({
     name: setup.householdName,
     timezone: setup.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata",
@@ -377,9 +427,8 @@ export async function createConfiguredSqlConnectHousehold(
     });
   }
 
-  const householdsResult = await myHouseholds();
-  const household = householdsResult.data.households.find((item) => item.id === householdId) || householdsResult.data.households[0];
-  return household ? mapHousehold(household, setup.ownerName || user.displayName || "Boss") : null;
+  const household = await readConfiguredHousehold(householdId, setup);
+  return mapHousehold(household, setup.ownerName || user.displayName || "Boss");
 }
 
 export async function bootstrapSqlConnectHousehold(
@@ -395,7 +444,7 @@ export async function bootstrapSqlConnectHousehold(
     email: user.email || null,
   });
 
-  const householdsResult = await myHouseholds();
+  const householdsResult = await myHouseholds({ fetchPolicy: "SERVER_ONLY" });
   const household = householdsResult.data.households.find((item) =>
     item.roomZones_on_household.length > 0 ||
     item.staffMembers_on_household.length > 0 ||
