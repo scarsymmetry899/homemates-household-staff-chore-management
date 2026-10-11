@@ -34,8 +34,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   try {
     await requireFirebaseUser(req);
-  } catch {
-    res.status(401).json({ error: "Sign in is required." });
+  } catch (error) {
+    const reason = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "missing-token";
+    res.status(401).json({ error: "Sign in is required.", reason });
     return;
   }
 
