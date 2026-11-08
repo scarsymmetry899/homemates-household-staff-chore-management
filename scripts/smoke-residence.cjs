@@ -34,9 +34,31 @@ async function walk(browser, width) {
     for (const route of ["/","/staff","/staff/1","/tasks","/expenses","/inventory","/payroll","/insights","/alerts","/household","/settings"]) {
       await visit(route); await screen(route);
     }
+    if (width < 768) {
+      const panel = page.locator("#main-content");
+      const {clientHeight, scrollHeight} = await panel.evaluate(el => ({clientHeight:el.clientHeight, scrollHeight:el.scrollHeight}));
+      assert(scrollHeight > clientHeight, `Settings must scroll inside the phone viewport (content: ${scrollHeight}, panel: ${clientHeight})`);
+      const cdp = await ctx.newCDPSession(page);
+      try {
+        async function swipe(start, end) {
+          const send = (type, y) => cdp.send("Input.dispatchTouchEvent", {type, touchPoints:y == null ? [] : [{x:width/2,y}]});
+          await send("touchStart",start);
+          for (let i=1;i<=8;i++) { await send("touchMove",start+(end-start)*i/8); await page.waitForTimeout(20); }
+          await send("touchEnd");
+        }
+        await swipe(620,260);
+        await page.waitForFunction(() => document.querySelector("#main-content").scrollTop > 50);
+        for (let i=0;i<20 && !(await panel.evaluate(el=>el.scrollHeight-el.clientHeight-el.scrollTop<2));i++) await swipe(620,260);
+        await page.waitForFunction(() => {const el=document.querySelector("#main-content"); return el.scrollHeight-el.clientHeight-el.scrollTop<2;});
+        const bottom = await panel.evaluate(el=>el.scrollTop);
+        await swipe(260,620);
+        await page.waitForFunction(y=>document.querySelector("#main-content").scrollTop<y-50,bottom);
+      } finally { await cdp.detach(); }
+    }
     await btn("Open AI home assistant").click(); await page.getByRole("dialog").waitFor(); await screen("Assistant");
     await page.keyboard.press("Escape");
     await visit("/expenses"); await btn("Log an Expense").click(); await page.getByPlaceholder("Amount (₹)").fill("45");
+    await btn("Groceries").click();
     await page.getByPlaceholder("Description",{exact:true}).fill("QA rice"); await btn("Add Expense").click();
     await page.getByText("QA rice",{exact:true}).first().waitFor();
     await visit("/tasks"); await btn("Assign task").click();

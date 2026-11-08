@@ -19,7 +19,7 @@ const AppLayout = () => {
         Skip to content
       </a>
       <BottomNav />
-      <div className="min-w-0 min-h-0 flex flex-col">
+      <div className="h-full min-w-0 min-h-0 flex flex-col">
         <AppHeader />
         <main
           ref={main} onScroll={e => positions.current.set(location.key, e.currentTarget.scrollTop)}
