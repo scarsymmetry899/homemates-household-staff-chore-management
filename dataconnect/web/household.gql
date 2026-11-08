@@ -1,3 +1,12 @@
+query FindStaffAttendanceTag($householdId: UUID!, $staffId: UUID!) @auth(level: USER) {
+  nfcTags(where: {
+    household: { id: { eq: $householdId }, ownerUid: { eq_expr: "auth.uid" } }
+    staff: { id: { eq: $staffId } }
+    tagType: { eq: "staff-attendance" }
+    isActive: { eq: true }
+  }, orderBy: [{ createdAt: DESC }], limit: 1) { id }
+}
+
 mutation UpsertCurrentUser($displayName: String, $email: String) @auth(level: USER) {
   user_upsert(
     data: {

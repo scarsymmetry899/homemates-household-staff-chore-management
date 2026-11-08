@@ -89,6 +89,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
   // NFC write picker
   const [nfcWriteStaffId, setNfcWriteStaffId] = useState<string | null>(null);
   const [writingNfc, setWritingNfc] = useState(false);
+  const [verifiedStaffId, setVerifiedStaffId] = useState<string | null>(null);
 
   // NFC test mode (dev-only simulation, no physical tag needed)
   const [testModeOpen, setTestModeOpen] = useState(false);
@@ -169,10 +170,15 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
   const handleWriteNfc = async (staffId: string) => {
     setWritingNfc(true);
     try {
-      await writeNfcTag(staffId);
+      if (verifiedStaffId !== staffId) {
+        await writeNfcTag(staffId);
+        setVerifiedStaffId(staffId);
+      }
       const member = staff.find((s) => s.id === staffId);
-      await registerStaffNfcTag(staffId, member ? `${member.name} attendance tag` : undefined);
-      toast.success("NFC tag written", { description: `Tag programmed for ${member?.name}` });
+      const registered = await registerStaffNfcTag(staffId, member ? `${member.name} attendance tag` : undefined);
+      if (!registered) throw new Error("Sticker verified, but registration failed. Check the household connection before retrying setup.");
+      toast.success("Attendance tag ready to use", { description: member?.name });
+      setVerifiedStaffId(null);
       setNfcWriteStaffId(null);
     } catch (e) {
       toast.error("NFC write failed", { description: e instanceof Error ? e.message : "Unknown error" });
@@ -496,7 +502,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
             {/* Program NFC Tags */}
             <div className="space-y-2">
               <p className="label-sm text-muted-foreground">Program NFC Tags</p>
-              <p className="text-xs text-muted-foreground">Select a staff member to write their ID to an NFC tag</p>
+              <p className="text-xs text-muted-foreground">Choose the staff member, hold their sticker against the phone to write it, then lift and tap again to verify. Label it with their name once registration succeeds. These personal attendance stickers identify one person each.</p>
               <div className="space-y-2">
                 {staff.map((s) => (
                   <div key={s.id} className="flex items-center gap-3">
@@ -513,9 +519,9 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                           disabled={writingNfc}
                           className="label-sm px-3 py-1.5 rounded-lg btn-estate text-primary-foreground text-[11px] disabled:opacity-60"
                         >
-                          {writingNfc ? "Writing…" : "Tap & Write"}
+                          {writingNfc ? "Setting up…" : verifiedStaffId === s.id ? "Retry registration" : "Write and verify"}
                         </motion.button>
-                        <button onClick={() => setNfcWriteStaffId(null)} className="w-7 h-7 glass-btn rounded-lg flex items-center justify-center">
+                        <button aria-label="Cancel tag setup" disabled={writingNfc} onClick={() => { setVerifiedStaffId(null); setNfcWriteStaffId(null); }} className="w-11 h-11 glass-btn rounded-lg flex items-center justify-center">
                           <X size={12} className="text-muted-foreground" />
                         </button>
                       </div>

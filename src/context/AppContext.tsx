@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
+import { executeQuery, getDataConnect, queryRef } from "firebase/data-connect";
+import { connectorConfig } from "@homemaker/dataconnect";
 import { staffMembers as initialStaff, type StaffMember, type StaffStatus } from "@/data/staff";
 import {
   saveHouseholdState,
@@ -205,7 +207,7 @@ interface AppState {
   addTask: (staffId: string, task: string, dueDate?: string) => void;
   removeStaff: (staffId: string) => void;
   deleteTask: (staffId: string, taskIndex: number) => void;
-  addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => void;
+  addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => Promise<void>;
   addDeduction: (staffId: string, amount: number, reason: string) => void;
   updateStaffPhoto: (staffId: string, photoUrl: string) => void;
   updateTaskDueDate: (staffId: string, taskIndex: number, newDueDate: string) => void;
@@ -222,7 +224,7 @@ interface AppState {
   deleteRoom: (roomId: string) => void;
   markAttendance: (staffId: string, type: string, detail: string) => void;
   registerStaffNfcTag: (staffId: string, label?: string) => Promise<string | null>;
-  recordNfcTap: (staffId: string, actionType: string, deviceLabel?: string) => void;
+  recordNfcTap: (staffId: string, actionType: string, deviceLabel?: string) => Promise<void>;
   reassignTask: (fromStaffId: string, taskIndex: number, toStaffId: string) => void;
   extendTaskDeadlineByName: (staffId: string, taskName: string, days?: number) => void;
   updatePunctualityScore: (staffId: string, delta: number) => void;
@@ -670,7 +672,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [isDemoMode, sqlHouseholdId]);
 
-  const getNfcTagStorageKey = useCallback((staffId: string) => `homemaker_nfc_tag_id_${staffId}`, []);
+  const findRegisteredTag = useCallback(async (staffId: string) => {
+    const ref = queryRef<{ nfcTags: { id: string }[] }, { householdId: string; staffId: string }>(
+      getDataConnect(connectorConfig), "FindStaffAttendanceTag", { householdId: sqlHouseholdId!, staffId }
+    );
+    const result = await executeQuery(ref, { fetchPolicy: "SERVER_ONLY" });
+    return result.data.nfcTags[0]?.id;
+  }, [sqlHouseholdId]);
 
   const setOwnerName = useCallback((name: string) => {
     setOwnerNameState(name);
@@ -1125,7 +1133,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (taskId) persistSql(() => sqlDeleteTaskInstance({ taskId }));
   }, [persistSql, staff]);
 
-  const addStaff = useCallback((member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => {
+  const addStaff = useCallback(async (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => {
     const tempId = `s${Date.now()}`;
     const newMember: StaffMember = {
       ...member,
@@ -1142,8 +1150,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         month: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       },
     };
-    setStaff((prev) => [...prev, newMember]);
-    persistSql(async () => {
+    if (isDemoMode) {
+      setStaff((prev) => [...prev, newMember]);
+      return;
+    }
+    if (!sqlHouseholdId) throw new Error("Reconnect your household and try again.");
+    pendingSqlWritesRef.current += 1;
+    setPendingSqlWrites(pendingSqlWritesRef.current);
+    try {
       const result = await sqlAddStaffMember({
         householdId: sqlHouseholdId!,
         name: member.name,
@@ -1154,11 +1168,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         shiftStart: member.shiftStart,
         shiftEnd: member.shiftEnd,
       });
-      setStaff((prev) => prev.map((s) => (
-        s.id === tempId ? { ...s, id: result.data.staffMember_insert.id } : s
-      )));
-    });
-  }, [persistSql, sqlHouseholdId]);
+      setStaff((prev) => [...prev, { ...newMember, id: result.data.staffMember_insert.id }]);
+    } finally {
+      pendingSqlWritesRef.current -= 1;
+      setPendingSqlWrites(pendingSqlWritesRef.current);
+    }
+  }, [isDemoMode, sqlHouseholdId]);
 
   const addDeduction = useCallback((staffId: string, amount: number, _reason: string) => {
     const current = staff.find((s) => s.id === staffId);
@@ -1448,6 +1463,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!member) return null;
 
     try {
+      const existing = await findRegisteredTag(staffId);
+      if (existing) return existing;
       const result = await sqlRegisterNfcTag({
         householdId: sqlHouseholdId,
         tagUid: `staff:${staffId}`,
@@ -1458,20 +1475,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         taskTemplateId: null,
       });
       const tagId = result.data.nfcTag_insert.id;
-      localStorage.setItem(getNfcTagStorageKey(staffId), tagId);
       return tagId;
     } catch (error) {
       console.warn("SQL Connect NFC tag registration failed", error);
       return null;
     }
-  }, [getNfcTagStorageKey, sqlHouseholdId, staff]);
+  }, [findRegisteredTag, sqlHouseholdId, staff]);
 
-  const recordNfcTap = useCallback((staffId: string, actionType: string, deviceLabel?: string) => {
-    if (!sqlHouseholdId) return;
-    const tagId = localStorage.getItem(getNfcTagStorageKey(staffId));
-    if (!tagId) return;
+  const recordNfcTap = useCallback(async (staffId: string, actionType: string, deviceLabel?: string) => {
+    if (isDemoMode) return;
+    if (!sqlHouseholdId) throw new Error("Reconnect your household before scanning.");
+    const tagId = await findRegisteredTag(staffId);
+    if (!tagId) throw new Error("Ask the owner to register this attendance sticker.");
 
-    persistSql(() => sqlRecordNfcTap({
+    await sqlRecordNfcTap({
       householdId: sqlHouseholdId,
       tagId,
       staffId,
@@ -1479,8 +1496,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       taskId: null,
       actionType,
       deviceLabel: deviceLabel || navigator.userAgent,
-    }));
-  }, [getNfcTagStorageKey, persistSql, sqlHouseholdId]);
+    });
+  }, [isDemoMode, findRegisteredTag, sqlHouseholdId]);
 
   const reassignTask = useCallback((fromStaffId: string, taskIndex: number, toStaffId: string) => {
     const taskId = staff.find((s) => s.id === fromStaffId)?.assignments[taskIndex]?.id;

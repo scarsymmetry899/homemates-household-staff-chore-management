@@ -282,11 +282,8 @@ const TasksPage = () => {
   return (
       <PageTransition className="px-4 sm:px-6 md:px-8 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">{t("tasks.missionControl")}</p>
           <h1 className="display-sm text-foreground">
             {t("nav.tasks")}
-            <br />
-            <span className="font-display italic text-secondary">{t("tasks.pipeline")}</span>
           </h1>
         </section>
 

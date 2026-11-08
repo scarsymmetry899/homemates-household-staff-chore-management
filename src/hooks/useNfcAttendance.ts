@@ -87,6 +87,15 @@ export function useNfcAttendance(enabled: boolean) {
       const eventType: "check-in" | "check-out" =
         options.forceEventType ?? (isWorking ? "check-out" : "check-in");
 
+      if (!options.skipDebounce) {
+        try {
+          await recordNfcTap(member.id, eventType, options.deviceLabel);
+        } catch {
+          toast.error("Tap could not be confirmed. Check the connection and ask the owner to verify the sticker.");
+          return;
+        }
+      }
+
       const timeStr = timestamp.toLocaleTimeString("en-IN", {
         hour: "2-digit",
         minute: "2-digit",
@@ -218,7 +227,6 @@ export function useNfcAttendance(enabled: boolean) {
 
       updateStaffStatus(member.id, newStatus);
       markAttendance(member.id, eventType, detail);
-      recordNfcTap(member.id, eventType, options.deviceLabel);
 
       const event: NfcEvent = {
         staffId: member.id,

@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Phone, MessageCircle, Eye, Plus, X, Camera, UserPlus } from "lucide-react";
+import { Phone, MessageCircle, Eye, Plus, X, UserPlus } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { departments, type Department } from "@/data/staff";
 import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/components/animations/MotionComponents";
@@ -59,7 +59,9 @@ const StaffDirectory = () => {
     toast.success("Directory refreshed");
   }, []);
 
-  const handleAddStaff = () => {
+  const [savingStaff, setSavingStaff] = useState(false);
+  const handleAddStaff = async () => {
+    if (savingStaff) return;
     if (!newStaff.name || !newStaff.role || !newStaff.phone) {
       toast.error("Please fill in name, role, and phone number");
       return;
@@ -76,7 +78,9 @@ const StaffDirectory = () => {
       tenure = `Since ${d.toLocaleDateString("en-IN", { month: "short", year: "numeric" })}`;
     }
 
-    addStaff({
+    setSavingStaff(true);
+    try {
+      await addStaff({
       name: newStaff.name,
       role: newStaff.role,
       phone: newStaff.phone,
@@ -86,10 +90,16 @@ const StaffDirectory = () => {
       status: "off-duty",
       tenure,
       location: newStaff.location || "Not assigned",
-      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(newStaff.name)}&background=567C8D&color=fff&size=200`,
+      photo: "",
       shiftStart: newStaff.shiftStart,
       shiftEnd: newStaff.shiftEnd,
-    });
+      });
+    } catch {
+      toast.error("Could not confirm the save. Check your connection and the staff list before retrying.");
+      return;
+    } finally {
+      setSavingStaff(false);
+    }
     toast.success(`${newStaff.name} added to the team!`);
     setNewStaff({ name: "", role: "", phone: "", department: "Hospitality", salary: "", location: "", tenure: "", startDate: "", shiftStart: "08:00", shiftEnd: "17:00" });
     setCustomDeptName("");
@@ -121,7 +131,7 @@ const StaffDirectory = () => {
               onClick={() => setShowAddForm(true)}
               className="btn-estate text-primary-foreground label-sm px-5 py-3 rounded-2xl inline-flex items-center gap-2"
             >
-              <UserPlus size={14} /> Add Homemaker
+              <UserPlus size={14} /> Add staff member
             </motion.button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
@@ -140,24 +150,22 @@ const StaffDirectory = () => {
             >
               <div className="glass-card rounded-2xl p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="headline-sm text-card-foreground">New Homemaker</h3>
-                  <button onClick={() => setShowAddForm(false)} className="glass-btn w-8 h-8 rounded-xl flex items-center justify-center">
+                  <h3 className="headline-sm text-card-foreground">Add staff member</h3>
+                  <button aria-label="Close add staff form" disabled={savingStaff} onClick={() => setShowAddForm(false)} className="glass-btn w-11 h-11 rounded-xl flex items-center justify-center">
                     <X size={16} className="text-muted-foreground" />
                   </button>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-2xl bg-surface-container flex items-center justify-center text-muted-foreground">
-                    <Camera size={20} />
-                  </div>
-                  <p className="text-xs text-muted-foreground">Photo (optional)</p>
-                </div>
-                <input placeholder="Full Name *" value={newStaff.name} onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+                <label htmlFor="staff-name" className="block text-sm">Full name (required)</label>
+                <input id="staff-name" required autoComplete="name" value={newStaff.name} onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
-                <input placeholder="Role (e.g. Cook, Nanny, Gardener) *" value={newStaff.role} onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
+                <label htmlFor="staff-roles" className="block text-sm">Roles (required)</label>
+                <input id="staff-roles" required placeholder="For example, Cook + Cleaner" value={newStaff.role} onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
-                <input placeholder="Phone Number *" value={newStaff.phone} onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
+                <label htmlFor="staff-phone" className="block text-sm">Phone number (required)</label>
+                <input id="staff-phone" type="tel" required autoComplete="tel" value={newStaff.phone} onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30" />
-                <select value={newStaff.department} onChange={(e) => setNewStaff({ ...newStaff, department: e.target.value as Department })}
+                <label htmlFor="staff-department" className="block text-sm">Department</label>
+                <select id="staff-department" value={newStaff.department} onChange={(e) => setNewStaff({ ...newStaff, department: e.target.value as Department })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30">
                   {departments.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
@@ -202,7 +210,7 @@ const StaffDirectory = () => {
                     />
                   </div>
                 </div>
-                <motion.button whileTap={{ scale: 0.95 }} onClick={handleAddStaff}
+                <motion.button disabled={savingStaff} aria-busy={savingStaff} whileTap={{ scale: 0.95 }} onClick={handleAddStaff}
                   className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl">
                   Add to Team
                 </motion.button>

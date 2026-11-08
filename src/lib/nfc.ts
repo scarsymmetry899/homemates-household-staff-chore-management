@@ -6,6 +6,7 @@ export interface NfcScanResult {
 
 export type NfcScanCallback = (result: NfcScanResult) => void;
 export type NfcErrorCallback = (error: Error) => void;
+let programming = false;
 
 // Returns a cleanup function
 export async function startNfcScan(onScan: NfcScanCallback, onError: NfcErrorCallback): Promise<() => void> {
@@ -20,15 +21,18 @@ export async function startNfcScan(onScan: NfcScanCallback, onError: NfcErrorCal
     await reader.scan();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = (event: any) => {
+      if (programming) return;
       try {
         const decoder = new TextDecoder();
         for (const record of event.message.records) {
           if (record.recordType === "text" || record.recordType === "url") {
             const rawData = decoder.decode(record.data);
             // Expect format: "homemates:staffId:XXXXX"
-            const parts = rawData.split(":");
-            const staffId = parts.length >= 3 ? parts[2] : rawData;
+            const match = /^homemates:staffId:([^:\s]+)$/.exec(rawData);
+            if (!match) continue;
+            const staffId = match[1];
             onScan({ staffId, rawData, timestamp: new Date() });
+            break;
           }
         }
       } catch (e) {
@@ -48,9 +52,32 @@ export async function writeNfcTag(staffId: string): Promise<void> {
   if (!("NDEFReader" in window)) throw new Error("Web NFC not supported");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const writer = new (window as any).NDEFReader();
-  await writer.write({
-    records: [{ recordType: "text", data: `homemates:staffId:${staffId}` }],
-  });
+  if (programming) throw new Error("Finish the current tag setup first.");
+  const payload = `homemates:staffId:${staffId}`;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 45000);
+  programming = true;
+  try {
+    await writer.write({ records: [{ recordType: "text", data: payload }] }, { signal: controller.signal });
+    const readback = new Promise<void>((resolve, reject) => {
+      writer.onreading = (event: { message: { records: { recordType: string; data: DataView }[] } }) => {
+        const verified = event.message.records.some(record =>
+          record.recordType === "text" && new TextDecoder().decode(record.data) === payload
+        );
+        if (verified) resolve();
+        else reject(new Error("Different sticker detected. Try again with the sticker you wrote."));
+      };
+      writer.onreadingerror = () => reject(new Error("Could not read the sticker. Hold it against the phone and retry."));
+      controller.signal.addEventListener("abort", () => reject(new Error("Verification timed out. Tap the sticker again to retry.")), { once: true });
+    });
+    await Promise.all([readback, writer.scan({ signal: controller.signal })]);
+  } finally {
+    writer.onreading = null;
+    writer.onreadingerror = null;
+    controller.abort();
+    window.clearTimeout(timeout);
+    programming = false;
+  }
 }
 
 export function isNfcSupported(): boolean {
