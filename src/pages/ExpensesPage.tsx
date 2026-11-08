@@ -44,6 +44,13 @@ const ExpensesPage = () => {
   const scanInputRef = useRef<HTMLInputElement>(null);
 
   const [period, setPeriod] = useState(() => expenseMonth(new Date()));
+  const availableMonths = Array.from(new Set([
+    ...Array.from({ length: 12 }, (_, i) => {
+      const now = new Date();
+      return expenseMonth(new Date(now.getFullYear(), now.getMonth() - i, 1));
+    }),
+    ...expenses.map(expense => expenseMonth(expense.date)).filter(Boolean),
+  ])).sort().reverse();
   const ledger = expenses.filter(expense => expenseMonth(expense.date) === period);
   const total = ledger.reduce((a, e) => a + e.amount, 0);
   const byCategory = ledger.reduce<Record<string, number>>((acc, e) => {
@@ -198,7 +205,7 @@ const ExpensesPage = () => {
           className="btn-estate rounded-2xl p-6 space-y-3"
         >
           <div className="flex items-center justify-between">
-            <label className="text-sm text-primary-foreground">Report month <input type="month" value={period} onChange={e => e.target.value && setPeriod(e.target.value)} className="ml-2 rounded-lg bg-card px-2 py-1 text-foreground" /></label>
+            <label className="text-sm text-primary-foreground">Report month <select aria-label="Report month" value={period} onChange={e => setPeriod(e.target.value)} className="ml-2 rounded-lg bg-card px-2 py-1 text-foreground">{availableMonths.map(month => <option key={month} value={month}>{new Date(month + "-01T12:00:00").toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>
             <TrendingUp size={16} className="text-primary-foreground/60" />
           </div>
           <p className="label-sm text-primary-foreground/50">Monthly Spending</p>

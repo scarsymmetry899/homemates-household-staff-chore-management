@@ -203,7 +203,7 @@ export default function HouseholdPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="label-sm text-muted-foreground">Family Profiles</p>
-              <h2 className="headline-sm text-foreground">Homemates</h2>
+              <h2 className="headline-sm text-foreground">Residents</h2>
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -235,7 +235,7 @@ export default function HouseholdPage() {
           <StaggerContainer className="space-y-3">
             {homemates.length === 0 ? (
               <div className="glass-card rounded-2xl p-6 text-center text-sm text-muted-foreground">
-                No homemates yet. Add owner, spouse, parents, children, or anyone who belongs to this household.
+                No residents yet. Add owner, spouse, parents, children, or anyone who belongs to this household.
               </div>
             ) : (
               homemates.map((profile) => (
@@ -252,7 +252,7 @@ export default function HouseholdPage() {
                       <button type="button" aria-label={`Edit ${profile.name}`} onClick={() => startHomemateEdit(profile)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-secondary">
                         <Pencil size={14} />
                       </button>
-                      <details className="relative"><summary aria-label={`More actions for ${profile.name}`} className="glass-btn cursor-pointer rounded-xl p-2">More</summary><button type="button" onClick={() => handleDeleteHomemate(profile)} className="absolute right-0 z-20 rounded-lg border bg-card p-3 text-destructive">Delete {profile.name}</button></details>
+                      <details className="relative"><summary aria-label={`More actions for ${profile.name}`} className="glass-btn cursor-pointer rounded-xl p-2">More</summary><button type="button" onClick={() => handleDeleteHomemate(profile)} className="mt-1 rounded-lg border bg-card p-2 text-destructive">Delete {profile.name}</button></details>
                     </div>
                   </PressableCard>
                 </StaggerItem>
@@ -317,7 +317,7 @@ export default function HouseholdPage() {
                         <button type="button" aria-label={`Edit ${room.name}`} onClick={() => startRoomEdit(room)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-secondary">
                           <Pencil size={14} />
                         </button>
-                        <details className="relative"><summary aria-label={`More actions for ${room.name}`} className="glass-btn cursor-pointer rounded-xl p-2">More</summary><button type="button" onClick={() => handleDeleteRoom(room)} className="absolute right-0 z-20 rounded-lg border bg-card p-3 text-destructive">Delete {room.name}</button></details>
+                        <details className="relative"><summary aria-label={`More actions for ${room.name}`} className="glass-btn cursor-pointer rounded-xl p-2">More</summary><button type="button" onClick={() => handleDeleteRoom(room)} className="mt-1 rounded-lg border bg-card p-2 text-destructive">Delete {room.name}</button></details>
                       </div>
                     </PressableCard>
                   </StaggerItem>
