@@ -59,6 +59,7 @@ const StaffDirectory = () => {
     toast.success("Directory refreshed");
   }, []);
 
+  const [saveError, setSaveError] = useState("");
   const [savingStaff, setSavingStaff] = useState(false);
   const handleAddStaff = async () => {
     if (savingStaff) return;
@@ -78,6 +79,7 @@ const StaffDirectory = () => {
       tenure = `Since ${d.toLocaleDateString("en-IN", { month: "short", year: "numeric" })}`;
     }
 
+    setSaveError("");
     setSavingStaff(true);
     try {
       await addStaff({
@@ -95,7 +97,7 @@ const StaffDirectory = () => {
       shiftEnd: newStaff.shiftEnd,
       });
     } catch {
-      toast.error("Could not confirm the save. Check your connection and the staff list before retrying.");
+      setSaveError("Could not confirm the save. Check your connection and the staff list before retrying.");
       return;
     } finally {
       setSavingStaff(false);
@@ -119,12 +121,7 @@ const StaffDirectory = () => {
   return (
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Your Household Heroes</p>
-          <h1 className="display-sm text-foreground">
-            Home
-            <br />
-            <span className="font-display italic text-secondary">Champions</span>
-          </h1>
+          <h1 className="display-sm text-foreground">Staff</h1>
           <div className="flex gap-3 mt-3">
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -210,9 +207,10 @@ const StaffDirectory = () => {
                     />
                   </div>
                 </div>
+                {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
                 <motion.button disabled={savingStaff} aria-busy={savingStaff} whileTap={{ scale: 0.95 }} onClick={handleAddStaff}
                   className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl">
-                  Add to Team
+                  {savingStaff ? "Saving…" : saveError ? "Retry save" : "Add staff member"}
                 </motion.button>
               </div>
             </motion.div>

@@ -66,11 +66,12 @@ const TasksPage = () => {
   const upcomingTasks = pendingTasks.filter((t) => t.dueDate && t.dueDate > today);
   const nodateTasks = pendingTasks.filter((t) => !t.dueDate);
 
-  const handleToggle = (staffId: string, taskIndex: number, taskName: string, currentDone: boolean) => {
-    toggleTask(staffId, taskIndex);
+  const handleToggle = async (staffId: string, taskIndex: number, taskName: string, currentDone: boolean) => {
+    if (!await toggleTask(staffId, taskIndex)) return;
     if (!currentDone) toast.success(t("tasks.taskCompleted"), { description: taskName });
   };
 
+  const [creating, setCreating] = useState(false);
   const handleAddTask = async () => {
     if (!canManageTasks) return;
     if (!newTask.staffId || !newTask.task.trim()) return;
@@ -78,7 +79,11 @@ const TasksPage = () => {
     const cleanTask = newTask.task.trim();
     const selectedMember = staff.find((s) => s.id === newTask.staffId);
 
-    addTask(newTask.staffId, cleanTask, newTask.dueDate || undefined);
+    if (creating) return;
+    setCreating(true);
+    const saved = await addTask(newTask.staffId, cleanTask, newTask.dueDate || undefined);
+    setCreating(false);
+    if (!saved) return;
     toast.success("Task added", {
       description: newTask.dueDate
         ? `${cleanTask} · Due ${new Date(newTask.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
@@ -393,10 +398,10 @@ const TasksPage = () => {
 
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={handleAddTask}
+                  disabled={creating} aria-busy={creating} onClick={handleAddTask}
                   className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-xl inline-flex items-center justify-center gap-2"
                 >
-                  <Send size={14} /> {t("tasks.createAssign")}
+                  <Send size={14} /> {creating ? "Saving…" : t("tasks.createAssign")}
                 </motion.button>
               </div>
             </motion.div>

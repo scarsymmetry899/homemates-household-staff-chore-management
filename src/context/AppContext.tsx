@@ -191,7 +191,7 @@ interface AppState {
   setNfcEnabled: (v: boolean) => void;
   enableDemoMode: () => void;
   disableDemoMode: () => void;
-  toggleTask: (staffId: string, taskIndex: number) => void;
+  toggleTask: (staffId: string, taskIndex: number) => Promise<boolean>;
   updateStaffStatus: (staffId: string, status: StaffStatus) => void;
   updateStaffRole: (staffId: string, role: string) => void;
   updateStaffShift: (staffId: string, shiftStart: string, shiftEnd: string) => void;
@@ -204,7 +204,7 @@ interface AppState {
   editExpense: (id: string, updates: Partial<Omit<Expense, "id">>) => void;
   deleteExpense: (id: string) => void;
   dismissAlert: (alertId: string) => void;
-  addTask: (staffId: string, task: string, dueDate?: string) => void;
+  addTask: (staffId: string, task: string, dueDate?: string) => Promise<boolean>;
   removeStaff: (staffId: string) => void;
   deleteTask: (staffId: string, taskIndex: number) => void;
   addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => Promise<void>;
@@ -438,7 +438,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [sqlLoadError, setSqlLoadError] = useState(false);
   const [pendingSqlWrites, setPendingSqlWrites] = useState(0);
   const pendingSqlWritesRef = useRef(0);
-  const pendingTaskCompletionRef = useRef(new Map<string, boolean>());
+
   const isApplyingRemoteStateRef = useRef(false);
   const lastSavedStateRef = useRef("");
   const [ownerName, setOwnerNameState] = useState<string>(() => {
@@ -799,33 +799,39 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setHasBootstrappedSql(true);
   }, []);
 
-  const toggleTask = useCallback((staffId: string, taskIndex: number) => {
-    const assignment = staff.find((member) => member.id === staffId)?.assignments[taskIndex];
-    if (!assignment) return;
-    const nextDone = !assignment.done;
-    setStaff((prev) =>
-      prev.map((s) => {
-        if (s.id !== staffId) return s;
-        return {
-          ...s,
-          assignments: s.assignments.map((t, i) => {
-            if (i !== taskIndex) return t;
-            return { ...t, done: nextDone };
-          }),
-        };
-      })
-    );
-    if (assignment.id?.startsWith("temp-task-")) {
-      pendingTaskCompletionRef.current.set(assignment.id, nextDone);
-    } else if (assignment.id) {
-      persistSql(() => sqlSetTaskCompletion({
-        taskId: assignment.id!,
-        status: nextDone ? "completed" : "pending",
-        completedAt: nextDone ? new Date().toISOString() : null,
-        source: "app",
-      }));
+  const completing = useRef(new Set<string>());
+  const toggleTask = useCallback(async (staffId: string, taskIndex: number) => {
+    const assignment = staff.find(member => member.id === staffId)?.assignments[taskIndex];
+    if (!assignment) return false;
+    const key = assignment.id || `${staffId}/${taskIndex}`;
+    if (completing.current.has(key)) return false;
+    if (!isDemoMode && (!sqlHouseholdId || !assignment.id || assignment.id.startsWith("temp-task-"))) {
+      toast.info("Wait for the task to finish saving, then try again.");
+      return false;
     }
-  }, [persistSql, staff]);
+    completing.current.add(key);
+    pendingSqlWritesRef.current += 1;
+    setPendingSqlWrites(pendingSqlWritesRef.current);
+    try {
+      const done = !assignment.done;
+      if (!isDemoMode) await sqlSetTaskCompletion({
+        taskId: assignment.id!, status: done ? "completed" : "pending",
+        completedAt: done ? new Date().toISOString() : null, source: "app",
+      });
+      setStaff(prev => prev.map(member => member.id !== staffId ? member : {
+        ...member, assignments: member.assignments.map((item, i) =>
+          (assignment.id ? item.id === assignment.id : i === taskIndex) ? { ...item, done } : item),
+      }));
+      return true;
+    } catch {
+      toast.error("Could not confirm task status. Check your connection and retry.");
+      return false;
+    } finally {
+      completing.current.delete(key);
+      pendingSqlWritesRef.current -= 1;
+      setPendingSqlWrites(pendingSqlWritesRef.current);
+    }
+  }, [staff, isDemoMode, sqlHouseholdId]);
 
   const updateStaffStatus = useCallback((staffId: string, status: StaffStatus) => {
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, status } : s)));
@@ -1079,42 +1085,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     persistSql(() => sqlDismissAlert({ alertId }));
   }, [persistSql]);
 
-  const addTask = useCallback((staffId: string, task: string, dueDate?: string) => {
-    const tempId = `temp-task-${crypto.randomUUID()}`;
-    setStaff((prev) =>
-      prev.map((s) =>
-        s.id === staffId ? { ...s, assignments: [...s.assignments, { id: tempId, task, done: false, dueDate }] } : s
-      )
-    );
-    persistSql(async () => {
-      const result = await sqlAddTaskInstance({
-        householdId: sqlHouseholdId!,
-        assignedStaffId: staffId,
-        title: task,
+  const addTask = useCallback(async (staffId: string, task: string, dueDate?: string) => {
+    if (!isDemoMode && !sqlHouseholdId) return false;
+    pendingSqlWritesRef.current += 1;
+    setPendingSqlWrites(pendingSqlWritesRef.current);
+    try {
+      const id = isDemoMode ? crypto.randomUUID() : (await sqlAddTaskInstance({
+        householdId: sqlHouseholdId!, assignedStaffId: staffId, title: task,
         dueAt: dueDate ? `${dueDate}T00:00:00.000Z` : null,
-      });
-      const pendingDone = pendingTaskCompletionRef.current.get(tempId);
-      if (pendingDone !== undefined) {
-        await sqlSetTaskCompletion({
-          taskId: result.data.taskInstance_insert.id,
-          status: pendingDone ? "completed" : "pending",
-          completedAt: pendingDone ? new Date().toISOString() : null,
-          source: "app",
-        });
-        pendingTaskCompletionRef.current.delete(tempId);
-      }
-      setStaff((prev) => prev.map((s) => (
-        s.id === staffId
-          ? {
-              ...s,
-              assignments: s.assignments.map((assignment) => (
-                assignment.id === tempId ? { ...assignment, id: result.data.taskInstance_insert.id } : assignment
-              )),
-            }
-          : s
-      )));
-    });
-  }, [persistSql, sqlHouseholdId]);
+      })).data.taskInstance_insert.id;
+      setStaff(prev => prev.map(member => member.id === staffId ? {
+        ...member, assignments: [...member.assignments, { id, task, done: false, dueDate }],
+      } : member));
+      return true;
+    } catch {
+      toast.error("Could not confirm the task. Check the task list before retrying.");
+      return false;
+    } finally {
+      pendingSqlWritesRef.current -= 1;
+      setPendingSqlWrites(pendingSqlWritesRef.current);
+    }
+  }, [isDemoMode, sqlHouseholdId]);
 
   const removeStaff = useCallback((staffId: string) => {
     setStaff((prev) => prev.filter((s) => s.id !== staffId));

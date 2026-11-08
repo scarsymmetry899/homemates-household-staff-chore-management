@@ -136,6 +136,7 @@ export default function HouseholdPage() {
       });
       return;
     }
+    if (!window.confirm(`Delete room “${room.name}”?`)) return;
     deleteRoom(room.id);
     toast.success("Room removed", { description: room.name });
     if (editingRoomId === room.id) {
@@ -145,6 +146,7 @@ export default function HouseholdPage() {
   };
 
   const handleDeleteHomemate = (profile: HomemateProfile) => {
+    if (!window.confirm(`Remove resident “${profile.name}”?`)) return;
     deleteHomemate(profile.id);
     toast.success("Homemate removed", { description: profile.name });
     if (editingHomemateId === profile.id) {
@@ -162,12 +164,7 @@ export default function HouseholdPage() {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Household Control</p>
-          <h1 className="display-sm text-foreground">
-            Setup
-            <br />
-            <span className="font-display italic text-secondary">Manager</span>
-          </h1>
+          <h1 className="display-sm text-foreground">Household settings</h1>
           <p className="text-sm text-muted-foreground">
             Keep the people and rooms behind your household dashboard synced after onboarding.
           </p>
@@ -188,7 +185,7 @@ export default function HouseholdPage() {
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-2xl bg-surface-low p-3">
-              <p className="label-sm text-muted-foreground">Homemates</p>
+              <p className="label-sm text-muted-foreground">Residents</p>
               <p className="font-display text-2xl text-card-foreground">{homemates.length}</p>
             </div>
             <div className="rounded-2xl bg-surface-low p-3">
@@ -252,12 +249,10 @@ export default function HouseholdPage() {
                         <p className="text-sm font-semibold text-card-foreground truncate">{profile.name}</p>
                         <p className="text-xs text-muted-foreground truncate">{profile.relationLabel}{profile.phone ? ` - ${profile.phone}` : ""}</p>
                       </div>
-                      <button type="button" onClick={() => startHomemateEdit(profile)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-secondary">
+                      <button type="button" aria-label={`Edit ${profile.name}`} onClick={() => startHomemateEdit(profile)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-secondary">
                         <Pencil size={14} />
                       </button>
-                      <button type="button" onClick={() => handleDeleteHomemate(profile)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-destructive">
-                        <Trash2 size={14} />
-                      </button>
+                      <details className="relative"><summary aria-label={`More actions for ${profile.name}`} className="glass-btn cursor-pointer rounded-xl p-2">More</summary><button type="button" onClick={() => handleDeleteHomemate(profile)} className="absolute right-0 z-20 rounded-lg border bg-card p-3 text-destructive">Delete {profile.name}</button></details>
                     </div>
                   </PressableCard>
                 </StaggerItem>
@@ -319,12 +314,10 @@ export default function HouseholdPage() {
                             {room.floorLabel || "No floor set"} - {linkedInventory} linked supply item{linkedInventory === 1 ? "" : "s"}
                           </p>
                         </div>
-                        <button type="button" onClick={() => startRoomEdit(room)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-secondary">
+                        <button type="button" aria-label={`Edit ${room.name}`} onClick={() => startRoomEdit(room)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-secondary">
                           <Pencil size={14} />
                         </button>
-                        <button type="button" onClick={() => handleDeleteRoom(room)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-destructive">
-                          <Trash2 size={14} />
-                        </button>
+                        <details className="relative"><summary aria-label={`More actions for ${room.name}`} className="glass-btn cursor-pointer rounded-xl p-2">More</summary><button type="button" onClick={() => handleDeleteRoom(room)} className="absolute right-0 z-20 rounded-lg border bg-card p-3 text-destructive">Delete {room.name}</button></details>
                       </div>
                     </PressableCard>
                   </StaggerItem>

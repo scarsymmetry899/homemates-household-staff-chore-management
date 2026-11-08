@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Check, ChevronLeft, ChevronRight, Home, Package, UserRound, UsersRound } from "lucide-react";
@@ -7,7 +7,7 @@ import { departments, type Department, type StaffMember } from "@/data/staff";
 import { useAppState, type HomemateProfile, type HouseholdSetupPayload, type InventorySetupItem, type RoomZoneProfile } from "@/context/AppContext";
 import StaffAvatar from "@/components/StaffAvatar";
 
-const steps = ["Household", "Housemates", "Rooms", "Staff", "Inventory", "Review"];
+const steps = ["Household", "Residents", "Rooms", "Staff", "Inventory", "Review"];
 
 const responsibilityPresets = [
   { label: "Cooking", roleHint: "Cook", tasks: ["Prepare breakfast", "Prepare lunch", "Prepare dinner", "Plan grocery list"] },
@@ -84,6 +84,12 @@ const inputClass = "w-full min-w-0 rounded-2xl border border-border/50 bg-surfac
 export default function HouseholdSetupWizard() {
   const { ownerName, completeHouseholdSetup, enableDemoMode } = useAppState();
   const [step, setStep] = useState(0);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const previousStep = useRef(step);
+  useEffect(() => {
+    if (step !== previousStep.current) heading.current?.focus();
+    previousStep.current = step;
+  }, [step]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [householdName, setHouseholdName] = useState("My Household");
@@ -258,7 +264,7 @@ export default function HouseholdSetupWizard() {
           </div>
           <div className="flex-1">
             <p className="label-sm text-muted-foreground">Fresh setup</p>
-            <h1 className="display-sm text-foreground">Build your real household</h1>
+            <h1 ref={heading} tabIndex={-1} className="display-sm text-foreground">{steps[step]} · Step {step + 1} of {steps.length}</h1>
             <p className="text-sm text-muted-foreground mt-1">
               No demo data. Add only the people, rooms, payroll and supplies you want to track.
             </p>
@@ -356,12 +362,7 @@ export default function HouseholdSetupWizard() {
                   </div>
                   <div className="grid md:grid-cols-[auto_1fr] gap-3 items-center">
                     <StaffAvatar name={member.name || "Homemaker"} src={member.photo} className="w-14 h-14 rounded-2xl shrink-0" textClassName="text-sm" />
-                    <input
-                      className={inputClass}
-                      value={member.photo === "/placeholder.svg" ? "" : member.photo}
-                      onChange={(e) => updateStaff(member.id, { photo: cleanPhotoUrl(e.target.value) })}
-                      placeholder="Photo URL (optional)"
-                    />
+                    <span className="text-sm">{member.name || "Staff member"}</span>
                   </div>
                   <div className="space-y-2">
                     <p className="label-sm text-muted-foreground">Responsibilities</p>

@@ -123,7 +123,7 @@ function toAttendanceRequestStatus(value: string): AttendanceCorrectionStatus {
 }
 
 function mapHousehold(household: SqlHousehold, ownerName: string): SqlConnectHouseholdSnapshot {
-  const tasksByStaffId = new Map<string, { task: string; done: boolean; dueDate?: string }[]>();
+  const tasksByStaffId = new Map<string, { id: string; task: string; done: boolean; dueDate?: string }[]>();
   const latestPayrollByStaffId = new Map<string, SqlHousehold["payrollRuns_on_household"][number]>();
 
   household.taskInstances_on_household.forEach((task) => {

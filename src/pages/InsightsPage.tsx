@@ -17,6 +17,7 @@ function dateKey(date: Date) {
 
 function entryStatus(type: string) {
   const normalized = type.toLowerCase();
+  if (normalized === "off-duty") return "off-duty";
   if (normalized.includes("late")) return "late";
   if (normalized.includes("absent") || normalized.includes("leave")) return "absent";
   if (normalized.includes("check-in") || normalized.includes("on-site") || normalized.includes("present")) return "present";
@@ -25,7 +26,8 @@ function entryStatus(type: string) {
 
 const InsightsPage = () => {
   const { staff, expenses, alerts, attendanceRequests, reviewAttendanceCorrectionRequest } = useAppState();
-  const [viewMode, setViewMode] = useState<ViewMode>("monthly");
+  const [viewMode, setViewMode] = useState<ViewMode>(() => window.matchMedia("(max-width: 767px)").matches ? "daily" : "monthly");
+  const [cellDetail, setCellDetail] = useState("");
   const onDuty = staff.filter((s) => s.status === "on-duty").length;
   const activeAttendanceRequests = attendanceRequests.filter((request) => request.status === "pending");
 
@@ -96,35 +98,6 @@ const InsightsPage = () => {
     return firstColumnWidth + columnHeaders.length * dayColumnWidth;
   }, [columnHeaders.length, viewMode]);
 
-  // Generate attendance data for all homemakers
-  const attendanceData = useMemo(
-    () =>
-      staff.map((s, si) => ({
-        name: s.name,
-        photo: s.photo,
-        role: s.role,
-        days: Array.from({ length: columnHeaders.length }, (_, di) => {
-          // For today in daily view — use real live status
-          if (viewMode === "daily" && selectedDay === 0) {
-            const statusMap: Record<string, string> = {
-              "on-duty": "present",
-              "en-route": "present",
-              late: "late",
-              absent: "absent",
-              "off-duty": "off-duty",
-            };
-            return statusMap[s.status] ?? "present";
-          }
-          const offset = viewMode === "monthly" ? selectedMonth : viewMode === "weekly" ? selectedWeek : selectedDay;
-          const seed = ((si * 31 + di + offset * 7) * 17 + 3) % 10;
-          if (seed < 6) return "present";
-          if (seed < 8) return "late";
-          return "absent";
-        }),
-      })),
-    [staff, viewMode, columnHeaders.length, selectedMonth, selectedWeek, selectedDay]
-  );
-
   const getDateForColumn = useCallback((dayIndex: number) => {
     const now = new Date();
     if (viewMode === "daily") {
@@ -151,18 +124,9 @@ const InsightsPage = () => {
         role: s.role,
         days: Array.from({ length: columnHeaders.length }, (_, dayIndex) => {
           const key = dateKey(getDateForColumn(dayIndex));
-          if (key === dateKey(new Date())) {
-            const statusMap: Record<string, string> = {
-              "on-duty": "present",
-              "en-route": "present",
-              late: "late",
-              absent: "absent",
-              "off-duty": "off-duty",
-            };
-            return statusMap[s.status] ?? "off-duty";
-          }
-          const matchingEntry = s.attendance.find((entry) => entry.date.startsWith(key));
-          return matchingEntry ? entryStatus(matchingEntry.type) || "present" : "off-duty";
+          if (key > dateKey(new Date())) return "Upcoming";
+          const entry = s.attendance.find(item => item.date.startsWith(key) && entryStatus(item.type));
+          return entry ? entryStatus(entry.type) : "No record";
         }),
       })),
     [columnHeaders.length, getDateForColumn, staff]
@@ -291,31 +255,22 @@ const InsightsPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <h1 className="display-sm text-foreground">
-            Household
-            <br />
-            <span className="font-display italic text-secondary">Analytics</span>
-          </h1>
+          <h1 className="display-sm text-foreground">Attendance</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Track your homemakers' attendance, punctuality & reliability at a glance.
           </p>
         </section>
 
-        {/* Export Report Button */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={handleExport}
-          className="w-full glass-btn text-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
-        >
-          <Download size={16} /> Export Excel Report
-        </motion.button>
 
-        {/* View Mode Toggle */}
-        <div className="flex gap-2">
+
+        {/* Report toolbar */}
+        <div className="flex flex-wrap items-center gap-2">
           {(["daily", "weekly", "monthly"] as ViewMode[]).map((mode) => (
             <button
               key={mode}
+              aria-pressed={viewMode === mode}
               onClick={() => {
+                setCellDetail("");
                 setViewMode(mode);
                 setShowDropdown(false);
               }}
@@ -324,6 +279,14 @@ const InsightsPage = () => {
               {mode}
             </button>
           ))}
+        {/* Export Report Button */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={handleExport}
+          className="ml-auto glass-btn text-foreground label-sm px-3 py-2 rounded-2xl flex items-center justify-center gap-2"
+        >
+          <Download size={16} /> Export report
+        </motion.button>
         </div>
 
         {/* Period Dropdown Selector */}
@@ -470,17 +433,15 @@ const InsightsPage = () => {
                       {s.days.map((day, i) => {
                         const status = day;
                         return (
-                          <motion.div
+                          <button
                             key={`${s.name}-${i}`}
-                            role="img"
+                            type="button"
+                            onClick={() => setCellDetail(`${s.name} · ${dateKey(getDateForColumn(i))} · ${status}`)}
                             aria-label={`${s.name}, ${dateKey(getDateForColumn(i))}: ${status}`}
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.1 + i * 0.01 }}
-                            className={`w-6 h-6 rounded-lg ${cellColor[status]} mx-auto ${
+                            className={`min-w-7 min-h-7 rounded-lg ${cellColor[status] || "border border-border bg-background"} mx-auto ${
                               i === todayColumnIndex ? "ring-2 ring-secondary/60 ring-offset-1 ring-offset-card" : ""
                             }`}
-                          />
+                          >{viewMode === "daily" ? status : status === "Upcoming" ? "·" : status === "No record" ? "–" : status.slice(0,1).toUpperCase()}</button>
                         );
                       })}
                     </div>
@@ -492,6 +453,7 @@ const InsightsPage = () => {
           </div>
         </AnimatedCard>
 
+        <p role="status" className="text-sm">{cellDetail}</p>
         {/* Stats */}
         <StaggerContainer className="space-y-3 pb-4">
           <StaggerItem>

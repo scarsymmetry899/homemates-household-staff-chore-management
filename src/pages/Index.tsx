@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { expenseMonth } from "@/lib/expensePeriod";
+
 import { motion } from "framer-motion";
 import { ArrowRight, TrendingUp, Bell, MapPin, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +18,7 @@ const statusLabelKey: Record<string, string> = {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { staff, alerts, expenses, ownerName, ownerLocation, householdProfile } = useAppState();
+  const { staff, alerts, expenses, cashRequests, ownerName, ownerLocation, householdProfile } = useAppState();
   const { t, locale } = useI18n();
 
   const timezone = householdProfile?.timezone || "Asia/Kolkata";
@@ -31,25 +32,15 @@ const Index = () => {
   const totalTasks = staff.reduce((a, s) => a + s.assignments.length, 0);
   const doneTasks = staff.reduce((a, s) => a + s.assignments.filter((t) => t.done).length, 0);
   const taskPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-  const absentCount = staff.filter((s) => s.status === "absent").length;
-  const lateCount = staff.filter((s) => s.status === "late").length;
 
   // Live expense totals
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const monthExpenses = expenses.filter(item => expenseMonth(item.date) === expenseMonth(now));
+  const pendingRequests = cashRequests.filter(item => item.status === "pending").length;
+  const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
   const payrollTotal = staff.reduce((sum, s) => sum + s.payroll.netPay, 0);
-  const householdTotal = expenses
+  const householdTotal = monthExpenses
     .filter((e) => e.category !== "Advances")
     .reduce((sum, e) => sum + e.amount, 0);
-
-  // Creative daily tagline based on status
-  const tagline = useMemo(() => {
-    if (totalTasks > 0 && taskPct === 100) return t("home.taglineComplete");
-    if (absentCount > 1) return t("home.taglineAbsent");
-    if (lateCount > 0 && taskPct < 50) return t("home.taglineSlow");
-    if (taskPct >= 75) return t("home.taglineGreat");
-    if (taskPct >= 50) return t("home.taglineHalf");
-    return t("home.taglineFresh");
-  }, [totalTasks, taskPct, absentCount, lateCount, t]);
 
   return (
       <PageTransition className="px-4 sm:px-6 md:px-8 space-y-7">
@@ -67,7 +58,11 @@ const Index = () => {
             <br />
             <span className="italic">{ownerName}</span> ✨
           </h1>
-          <p className="text-sm text-muted-foreground leading-relaxed mt-1">{tagline}</p>
+          <div className="mt-3 flex flex-wrap gap-2 text-sm">
+            <button className="glass-btn rounded-lg px-3 py-2" onClick={() => navigate("/staff")}>{staff.filter(s => s.status === "on-duty" || s.status === "late").length} on duty</button>
+            <button className="glass-btn rounded-lg px-3 py-2" onClick={() => navigate("/tasks")}>{totalTasks - doneTasks} pending tasks</button>
+            <button className="glass-btn rounded-lg px-3 py-2" onClick={() => navigate("/expenses")}>{pendingRequests} cash requests awaiting review</button>
+          </div>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/tasks")}

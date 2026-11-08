@@ -1,3 +1,4 @@
+import SmartCommandBox from "@/components/SmartCommandBox";
 import { motion } from "framer-motion";
 import { Bell, Globe, Settings } from "lucide-react";
 import { useAppState, type AppLanguage } from "@/context/AppContext";
@@ -31,6 +32,7 @@ const AppHeader = () => {
         <img src={logoImg} alt="Homemaker" className="w-14 h-14 object-contain" />
       </motion.button>
       <div className="flex items-center gap-2">
+        {appRole === "owner" && <SmartCommandBox />}
         <div className="relative">
           <Globe size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <select

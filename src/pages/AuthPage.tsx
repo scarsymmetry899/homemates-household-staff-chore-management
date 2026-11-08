@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, User, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import {
+  getFirebaseAuth,
   signInWithGoogle,
   signInWithEmail,
   createAccount,
@@ -10,6 +11,14 @@ import {
   isFirebaseConfigured,
 } from "@/lib/firebase";
 import { toast } from "sonner";
+
+const authCopy = {
+  en: ["English", "Sign in", "Create account", "Email address", "Password", "Full name", "Continue with Google", "Reset password"],
+  hi: ["हिन्दी", "साइन इन करें", "खाता बनाएँ", "ईमेल पता", "पासवर्ड", "पूरा नाम", "Google से जारी रखें", "पासवर्ड रीसेट करें"],
+  te: ["తెలుగు", "సైన్ ఇన్", "ఖాతా సృష్టించండి", "ఇమెయిల్ చిరునామా", "పాస్‌వర్డ్", "పూర్తి పేరు", "Googleతో కొనసాగండి", "పాస్‌వర్డ్ రీసెట్ చేయండి"],
+  kn: ["ಕನ್ನಡ", "ಸೈನ್ ಇನ್", "ಖಾತೆ ತೆರೆಯಿರಿ", "ಇಮೇಲ್ ವಿಳಾಸ", "ಪಾಸ್‌ವರ್ಡ್", "ಪೂರ್ಣ ಹೆಸರು", "Google ಮೂಲಕ ಮುಂದುವರಿಸಿ", "ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಿ"],
+  ml: ["മലയാളം", "സൈൻ ഇൻ", "അക്കൗണ്ട് സൃഷ്ടിക്കുക", "ഇമെയിൽ വിലാസം", "പാസ്‌വേഡ്", "മുഴുവൻ പേര്", "Google വഴി തുടരുക", "പാസ്‌വേഡ് പുനഃസജ്ജീകരിക്കുക"],
+};
 
 interface AuthPageProps {
   onLogin: (name?: string) => void;
@@ -22,6 +31,24 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [language, setLanguage] = useState(() => {
+    const saved = localStorage.getItem("homemaker_language") || "en";
+    return Object.prototype.hasOwnProperty.call(authCopy, saved) ? saved as keyof typeof authCopy : "en";
+  });
+  const copy = authCopy[language];
+  async function resetPassword() {
+    if (!email.trim()) { toast.error("Enter your email address first."); return; }
+    setLoading(true);
+    try {
+      const auth = await getFirebaseAuth();
+      if (!auth) throw new Error();
+      const { sendPasswordResetEmail } = await import("firebase/auth");
+      await sendPasswordResetEmail(auth, email.trim());
+      toast.success("Check your email for a password reset link.");
+    } catch { toast.error("Could not send the reset link. Check your email address and try again."); }
+    finally { setLoading(false); }
+  }
 
   // Handle Google redirect result on page load (after signInWithRedirect returns)
   useEffect(() => {
@@ -110,6 +137,13 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
         transition={{ duration: 0.6 }}
         className="w-full max-w-sm space-y-8"
       >
+        <select aria-label="Language" value={language} onChange={e => {
+          const next = e.target.value as keyof typeof authCopy;
+          localStorage.setItem("homemaker_language", next);
+          setLanguage(next);
+        }} className="ml-auto block rounded-lg border bg-card px-3 py-2">
+          {Object.entries(authCopy).map(([key, labels]) => <option key={key} value={key}>{labels[0]}</option>)}
+        </select>
         <div className="text-center space-y-3">
           <motion.img
             initial={{ scale: 0.8, opacity: 0 }}
@@ -119,7 +153,7 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
             alt="Homemaker"
             className="w-32 h-32 mx-auto object-contain"
           />
-          <p className="text-sm text-muted-foreground">Your household, simplified.</p>
+          <h1 className="display-sm">{copy[isSignUp ? 2 : 1]}</h1>
           {!isFirebaseConfigured && (
             <p className="text-[10px] text-muted-foreground/60 bg-muted/30 rounded-lg px-3 py-1.5">
               Demo mode — add Firebase keys to enable persistent auth
@@ -143,7 +177,7 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
           )}
-          <span className="text-sm font-semibold text-foreground">Continue with Google</span>
+          <span className="text-sm font-semibold text-foreground">{copy[6]}</span>
         </motion.button>
 
         <div className="flex items-center gap-3">
@@ -153,40 +187,43 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignUp && <label htmlFor="auth-name" className="block text-sm">{copy[5]}</label>}
           {isSignUp && (
             <div className="relative">
               <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Your name"
+                id="auth-name" autoComplete="name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full glass-card rounded-2xl py-3.5 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/30"
               />
             </div>
           )}
+          <label htmlFor="auth-email" className="block text-sm">{copy[3]}</label>
           <div className="relative">
             <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="email"
-              placeholder="Email address"
+              id="auth-email" autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full glass-card rounded-2xl py-3.5 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/30"
             />
           </div>
+          <label htmlFor="auth-password" className="block text-sm">{copy[4]}</label>
           <div className="relative">
             <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Password"
+              id="auth-password" autoComplete={isSignUp ? "new-password" : "current-password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full glass-card rounded-2xl py-3.5 pl-11 pr-11 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/30"
             />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
@@ -198,14 +235,15 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
             className="w-full btn-estate text-primary-foreground font-semibold py-3.5 rounded-2xl text-sm disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={16} className="animate-spin" />}
-            {isSignUp ? "Create Account" : "Sign In"}
+            {copy[isSignUp ? 2 : 1]}
           </motion.button>
+          {!isSignUp && isFirebaseConfigured && <button type="button" disabled={loading} onClick={resetPassword} className="text-sm underline">{copy[7]}</button>}
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button onClick={() => setIsSignUp(!isSignUp)} className="text-secondary font-semibold">
-            {isSignUp ? "Sign In" : "Sign Up"}
+            {copy[isSignUp ? 1 : 2]}
           </button>
         </p>
       </motion.div>

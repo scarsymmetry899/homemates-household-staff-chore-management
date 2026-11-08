@@ -1,3 +1,4 @@
+import * as Dialog from "@radix-ui/react-dialog";
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, User, Check, X, Sparkles, Loader2, Zap } from "lucide-react";
@@ -27,7 +28,7 @@ interface ChatMessage {
 interface ParsedAction {
   type: string;
   description: string;
-  execute: () => string | void;
+  execute: () => Promise<string> | string | void;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -117,15 +118,15 @@ const SmartCommandBox = () => {
 
   // ── Execute actions that Gemini requested ─────────────────
   const executeGeminiAction = useCallback(
-    (action: GeminiAction): string => {
+    async (action: GeminiAction): Promise<string> => {
       const member = action.staffName
-        ? staff.find((s) => s.name.toLowerCase().includes(action.staffName!.toLowerCase().split(" ")[0]))
+        ? staff.find((s) => s.name.toLowerCase() === action.staffName!.trim().toLowerCase())
         : undefined;
 
       switch (action.type) {
         case "add_task":
           if (member && action.task) {
-            addTask(member.id, action.task);
+            if (!await addTask(member.id, action.task)) return "Could not confirm the task. Check your task list before retrying.";
             return `✅ Task added for ${member.name}: "${action.task}"`;
           }
           return "⚠️ Couldn't find that staff member to add a task.";
@@ -299,10 +300,10 @@ const SmartCommandBox = () => {
       actions.forEach((action, index) => responseMessages.push({
         id: `a-${Date.now()}-${index}`,
         role: "assistant",
-        content: `Review proposed change: ${JSON.stringify(action)}\nApply this change?`,
+        content: `${action.type === "add_task" ? `Assign “${action.task}” to ${action.staffName}?` : action.type === "add_expense" ? `Record ₹${action.amount} for ${action.description || action.category}?` : action.type === "mark_attendance" ? `Check in ${action.staffName}?` : `Mark ${action.staffName} as ${action.status}?`}`,
         action: {
           type: action.type,
-          description: action.type.replaceAll("_", " "),
+          description: action.type.replace(/_/g, " "),
           execute: () => executeGeminiAction(action),
         },
       }));
@@ -474,9 +475,15 @@ const SmartCommandBox = () => {
     }
   }, [input, isThinking, guidedCmd, handleGuidedComplete, handleGeminiSend, handleRegexSend, scrollToBottom]);
 
-  const handleConfirm = useCallback((msgId: string, confirmed: boolean) => {
+  const applying = useRef(new Set<string>());
+  const handleConfirm = useCallback(async (msgId: string, confirmed: boolean) => {
     const msg = messages.find((m) => m.id === msgId);
-    const result = confirmed && msg?.action ? msg.action.execute() : undefined;
+    if (applying.current.has(msgId)) return;
+    applying.current.add(msgId);
+    let result;
+    try { result = confirmed && msg?.action ? await msg.action.execute() : undefined; }
+    catch { result = "Could not confirm the change. Check the record before retrying."; }
+    finally { applying.current.delete(msgId); }
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== msgId) return m;
@@ -499,40 +506,29 @@ const SmartCommandBox = () => {
   ];
 
   return (
-    <>
-      {/* Floating trigger */}
-      {!isOpen && (
+    <Dialog.Root open={isOpen} onOpenChange={open => { setIsOpen(open); if (!open) setGuidedCmd(null); }}>
+      <Dialog.Trigger asChild>
         <motion.button
           aria-label="Open AI home assistant"
-          initial={{ scale: 0 }}
+          initial={false}
           animate={{ scale: 1 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => {
-            setIsOpen(true);
-            setTimeout(() => inputRef.current?.focus(), 300);
-          }}
-          className="fixed bottom-28 right-5 z-50 w-14 h-14 rounded-2xl btn-estate shadow-btn-hover flex items-center justify-center"
+          className="w-11 h-11 rounded-xl glass-btn flex items-center justify-center"
         >
-          <Sparkles size={22} className="text-primary-foreground" />
+          <Sparkles size={18} className="text-primary" />
         </motion.button>
-      )}
-
-      {/* Chat panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 80, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 80, scale: 0.95 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-28 right-4 left-4 z-50 max-w-md mx-auto glass-card rounded-2xl shadow-card-hover overflow-hidden border border-border/50 flex flex-col"
-            style={{ maxHeight: "55vh" }}
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/20 z-50" />
+        <Dialog.Content aria-describedby={undefined} onOpenAutoFocus={e => { e.preventDefault(); inputRef.current?.focus(); }}
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto bg-card rounded-t-2xl shadow-card-hover overflow-hidden border border-border flex flex-col md:left-auto md:right-4 md:bottom-4 md:top-20 md:w-96 md:rounded-2xl"
+            style={{ maxHeight: "85dvh" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-primary/5">
               <div className="flex items-center gap-2">
                 <Sparkles size={16} className="text-primary" />
-                <span className="label-sm text-foreground font-semibold">AI Home Assistant</span>
+                <Dialog.Title className="label-sm text-foreground font-semibold">Household assistant</Dialog.Title>
                 {isGeminiConfigured && (
                   <span className="flex items-center gap-1 text-[10px] text-status-on-time bg-status-on-time/10 px-2 py-0.5 rounded-full font-semibold">
                     <Zap size={9} /> Gemini
@@ -632,13 +628,13 @@ const SmartCommandBox = () => {
                           onClick={() => handleConfirm(m.id, true)}
                           className="flex items-center gap-1 bg-status-on-time/20 text-status-on-time label-sm px-3 py-1.5 rounded-xl"
                         >
-                          <Check size={12} /> Yes
+                          <Check size={12} /> {m.action.type === "add_task" ? "Assign task" : "Confirm"}
                         </button>
                         <button
                           onClick={() => handleConfirm(m.id, false)}
                           className="flex items-center gap-1 bg-destructive/10 text-destructive label-sm px-3 py-1.5 rounded-xl"
                         >
-                          <X size={12} /> No
+                          <X size={12} /> Cancel
                         </button>
                       </div>
                     )}
@@ -690,10 +686,9 @@ const SmartCommandBox = () => {
                 {isThinking ? <Loader2 size={14} className="text-primary-foreground animate-spin" /> : <Send size={14} className="text-primary-foreground" />}
               </motion.button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 };
 

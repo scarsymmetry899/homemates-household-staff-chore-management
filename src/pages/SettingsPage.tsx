@@ -88,6 +88,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
 
   // NFC write picker
   const [nfcWriteStaffId, setNfcWriteStaffId] = useState<string | null>(null);
+  const [tagStage, setTagStage] = useState("");
   const [writingNfc, setWritingNfc] = useState(false);
   const [verifiedStaffId, setVerifiedStaffId] = useState<string | null>(null);
 
@@ -171,10 +172,12 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
     setWritingNfc(true);
     try {
       if (verifiedStaffId !== staffId) {
-        await writeNfcTag(staffId);
+        setTagStage("Hold sticker to phone");
+        await writeNfcTag(staffId, () => setTagStage("Lift and tap again"));
         setVerifiedStaffId(staffId);
       }
       const member = staff.find((s) => s.id === staffId);
+      setTagStage("Registering…");
       const registered = await registerStaffNfcTag(staffId, member ? `${member.name} attendance tag` : undefined);
       if (!registered) throw new Error("Sticker verified, but registration failed. Check the household connection before retrying setup.");
       toast.success("Attendance tag ready to use", { description: member?.name });
@@ -519,7 +522,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
                           disabled={writingNfc}
                           className="label-sm px-3 py-1.5 rounded-lg btn-estate text-primary-foreground text-[11px] disabled:opacity-60"
                         >
-                          {writingNfc ? "Setting up…" : verifiedStaffId === s.id ? "Retry registration" : "Write and verify"}
+                          {writingNfc ? tagStage : verifiedStaffId === s.id ? "Retry registration" : "Write and verify"}
                         </motion.button>
                         <button aria-label="Cancel tag setup" disabled={writingNfc} onClick={() => { setVerifiedStaffId(null); setNfcWriteStaffId(null); }} className="w-11 h-11 glass-btn rounded-lg flex items-center justify-center">
                           <X size={12} className="text-muted-foreground" />

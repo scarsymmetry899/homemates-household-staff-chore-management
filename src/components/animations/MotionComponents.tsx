@@ -8,15 +8,7 @@ interface Props {
 }
 
 export const PageTransition = ({ children, className }: Props) => (
-  <motion.div
-    initial={{ opacity: 0, y: 12 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -8 }}
-    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    className={className}
-  >
-    {children}
-  </motion.div>
+  <div className={className}>{children}</div>
 );
 
 interface StaggerProps {
@@ -25,31 +17,8 @@ interface StaggerProps {
   staggerDelay?: number;
 }
 
-export const StaggerContainer = ({ children, className, staggerDelay = 0.06 }: StaggerProps) => (
-  <motion.div
-    initial="hidden"
-    animate="visible"
-    variants={{
-      hidden: {},
-      visible: { transition: { staggerChildren: staggerDelay } },
-    }}
-    className={className}
-  >
-    {children}
-  </motion.div>
-);
-
-export const StaggerItem = ({ children, className }: Props) => (
-  <motion.div
-    variants={{
-      hidden: { opacity: 0, y: 16 },
-      visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
-    }}
-    className={className}
-  >
-    {children}
-  </motion.div>
-);
+export const StaggerContainer = ({ children, className }: StaggerProps) => <div className={className}>{children}</div>;
+export const StaggerItem = PageTransition;
 
 export const ScaleIn = ({ children, className }: Props) => (
   <motion.div

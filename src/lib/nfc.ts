@@ -48,7 +48,7 @@ export async function startNfcScan(onScan: NfcScanCallback, onError: NfcErrorCal
 }
 
 // Write a staff ID to an NFC tag
-export async function writeNfcTag(staffId: string): Promise<void> {
+export async function writeNfcTag(staffId: string, onReadback?: () => void): Promise<void> {
   if (!("NDEFReader" in window)) throw new Error("Web NFC not supported");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const writer = new (window as any).NDEFReader();
@@ -59,6 +59,7 @@ export async function writeNfcTag(staffId: string): Promise<void> {
   programming = true;
   try {
     await writer.write({ records: [{ recordType: "text", data: payload }] }, { signal: controller.signal });
+    onReadback?.();
     const readback = new Promise<void>((resolve, reject) => {
       writer.onreading = (event: { message: { records: { recordType: string; data: DataView }[] } }) => {
         const verified = event.message.records.some(record =>

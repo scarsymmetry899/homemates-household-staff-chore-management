@@ -5,7 +5,7 @@ type Dictionary = Record<string, string>;
 
 const dictionaries: Record<AppLanguage, Dictionary> = {
   en: {
-    "nav.home": "Home",
+    "nav.home": "Today",
     "nav.myDay": "My Day",
     "nav.staff": "Staff",
     "nav.tasks": "Tasks",
@@ -770,7 +770,7 @@ export function translate(language: AppLanguage, key: string, params: Record<str
     dictionaries.en[key] ||
     key;
   return Object.entries(params).reduce(
-    (value, [param, replacement]) => value.replaceAll(`{{${param}}}`, String(replacement)),
+    (value, [param, replacement]) => value.split(`{{${param}}}`).join(String(replacement)),
     template
   );
 }

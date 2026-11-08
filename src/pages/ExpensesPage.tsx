@@ -1,3 +1,4 @@
+import { expenseMonth } from "@/lib/expensePeriod";
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Fuel, ShoppingCart, Wrench, Banknote, Home as HomeIcon, TrendingUp, Camera, Check, Pencil, ClipboardCheck } from "lucide-react";
@@ -42,8 +43,10 @@ const ExpensesPage = () => {
   const [scanItems, setScanItems] = useState<ScanItem[]>([]);
   const scanInputRef = useRef<HTMLInputElement>(null);
 
-  const total = expenses.reduce((a, e) => a + e.amount, 0);
-  const byCategory = expenses.reduce<Record<string, number>>((acc, e) => {
+  const [period, setPeriod] = useState(() => expenseMonth(new Date()));
+  const ledger = expenses.filter(expense => expenseMonth(expense.date) === period);
+  const total = ledger.reduce((a, e) => a + e.amount, 0);
+  const byCategory = ledger.reduce<Record<string, number>>((acc, e) => {
     acc[e.category] = (acc[e.category] || 0) + e.amount;
     return acc;
   }, {});
@@ -184,12 +187,7 @@ const ExpensesPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Treasury & Outflows</p>
-          <h1 className="display-sm text-foreground">
-            Expense
-            <br />
-            <span className="font-display italic text-secondary">Tracker</span>
-          </h1>
+          <h1 className="display-sm text-foreground">Expenses</h1>
         </section>
 
         {/* Total Burn Rate */}
@@ -200,7 +198,7 @@ const ExpensesPage = () => {
           className="btn-estate rounded-2xl p-6 space-y-3"
         >
           <div className="flex items-center justify-between">
-            <p className="label-sm text-primary-foreground/60">This Month</p>
+            <label className="text-sm text-primary-foreground">Report month <input type="month" value={period} onChange={e => e.target.value && setPeriod(e.target.value)} className="ml-2 rounded-lg bg-card px-2 py-1 text-foreground" /></label>
             <TrendingUp size={16} className="text-primary-foreground/60" />
           </div>
           <p className="label-sm text-primary-foreground/50">Monthly Spending</p>
@@ -587,7 +585,8 @@ const ExpensesPage = () => {
 
         {/* Expense List */}
         <StaggerContainer className="space-y-3 pb-4">
-          {expenses.map((expense) => {
+          {ledger.length === 0 && <p className="text-muted-foreground">No expenses recorded for this month.</p>}
+          {ledger.map((expense) => {
             const cfg = categoryConfig[expense.category];
             const Icon = cfg.icon;
             return (

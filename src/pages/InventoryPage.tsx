@@ -91,12 +91,7 @@ export default function InventoryPage() {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <p className="label-sm text-muted-foreground">Supply Command</p>
-          <h1 className="display-sm text-foreground">
-            Inventory
-            <br />
-            <span className="font-display italic text-secondary">Ledger</span>
-          </h1>
+          <h1 className="display-sm text-foreground">Inventory</h1>
         </section>
 
         <div className="grid grid-cols-3 gap-3">
