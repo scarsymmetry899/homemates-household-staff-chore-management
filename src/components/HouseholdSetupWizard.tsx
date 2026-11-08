@@ -1,3 +1,4 @@
+import { ResidenceBanner, ResidentFaces, RoomDirectory } from "@/components/ResidenceDesign";
 import { useEffect, useRef, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
@@ -256,18 +257,16 @@ export default function HouseholdSetupWizard() {
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-4xl glass-card rounded-[2rem] p-5 md:p-8 shadow-card"
+        className="w-full max-w-3xl p-1 md:p-8"
       >
         <div className="flex items-start gap-4 mb-6">
           <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center">
             <Home size={20} />
           </div>
           <div className="flex-1">
-            <p className="label-sm text-muted-foreground">Fresh setup</p>
-            <h1 ref={heading} tabIndex={-1} className="display-sm text-foreground">{steps[step]} · Step {step + 1} of {steps.length}</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              No demo data. Add only the people, rooms, payroll and supplies you want to track.
-            </p>
+            <p className="label-sm text-muted-foreground">Household setup · {step + 1} / {steps.length}</p>
+            <h1 ref={heading} tabIndex={-1} className="display-sm text-foreground">{["Your household", "Who lives here?", "Rooms & zones", "Build your team", "Opening inventory", "Review your home"][step]}</h1>
+
             <button
               type="button"
               onClick={() => {
@@ -281,22 +280,22 @@ export default function HouseholdSetupWizard() {
           </div>
         </div>
 
-        <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar pb-2" aria-label="Setup steps">
+        <div className="setup-progress" aria-label="Setup steps">
           {steps.map((label, index) => (
             <button
-              key={label}
+              aria-label={label} title={label} data-complete={index <= step} key={label}
               type="button"
               onClick={() => setStep(index)}
               aria-current={index === step ? "step" : undefined}
-              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
-                index === step ? "bg-primary text-primary-foreground" : index < step ? "bg-secondary/15 text-secondary" : "bg-muted text-muted-foreground"
-              }`}
             >
-              {label}
+              <span className="sr-only">{label}</span>
             </button>
           ))}
         </div>
 
+        {(step === 0 || step === 5) && <div className="mb-5"><ResidenceBanner title={householdName.trim() || "Your residence"} subtitle={addressLabel || timezone} /></div>}
+        {step === 1 && <ResidentFaces names={[setupOwnerName,...homemates.map(p=>p.name)]} />}
+        {step === 2 && <div className="mb-5"><RoomDirectory rooms={rooms} /></div>}
         <div className="min-h-[360px]">
           {step === 0 && (
             <section className="grid md:grid-cols-2 gap-4">
@@ -320,7 +319,7 @@ export default function HouseholdSetupWizard() {
 
           {step === 1 && (
             <RepeatingSection
-              title="Housemates"
+              title="Residents"
               description="Add family members or residents whose household routines matter."
               icon={<UsersRound size={18} />}
               onAdd={() => setHomemates((prev) => [...prev, { id: makeId("mate"), name: "", relationLabel: "", phone: "", notes: "" }])}
@@ -463,14 +462,14 @@ export default function HouseholdSetupWizard() {
           )}
 
           {step === 4 && (
-            <RepeatingSection title="Inventory starter list" description="Track groceries, vegetables, household supplies and minimum stock levels." icon={<Package size={18} />} onAdd={() => setInventoryItems((prev) => [...prev, { id: makeId("item"), name: "", category: "Groceries", unit: "unit", currentQuantity: 0, minimumQuantity: 0 }])}>
+            <RepeatingSection title="Opening balances" description="Track groceries, vegetables, household supplies and minimum stock levels." icon={<Package size={18} />} onAdd={() => setInventoryItems((prev) => [...prev, { id: makeId("item"), name: "", category: "Groceries", unit: "unit", currentQuantity: 0, minimumQuantity: 0 }])}>
               {inventoryItems.map((item) => (
-                <div key={item.id} className="grid md:grid-cols-6 gap-3">
-                  <input className={inputClass} aria-label="Inventory item" value={item.name} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, name: e.target.value } : i))} placeholder="Item" />
-                  <input className={inputClass} aria-label="Item category" value={item.category} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, category: e.target.value } : i))} placeholder="Category" />
-                  <input className={inputClass} aria-label="Item unit" value={item.unit} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, unit: e.target.value } : i))} placeholder="Unit" />
-                  <input className={inputClass} aria-label="Current quantity" type="number" min="0" inputMode="decimal" value={item.currentQuantity} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, currentQuantity: Number(e.target.value) } : i))} placeholder="Qty" />
-                  <input className={inputClass} aria-label="Minimum quantity" type="number" min="0" inputMode="decimal" value={item.minimumQuantity ?? ""} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, minimumQuantity: Number(e.target.value) } : i))} placeholder="Min" />
+                <div key={item.id} className="grid grid-cols-2 md:grid-cols-3 gap-3 rounded-2xl bg-card border border-border p-4">
+                  <label className="grid gap-1 text-xs text-muted-foreground">Inventory item<input className={inputClass} aria-label="Inventory item" value={item.name} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, name: e.target.value } : i))} placeholder="Item" /></label>
+                  <label className="grid gap-1 text-xs text-muted-foreground">Item category<input className={inputClass} aria-label="Item category" value={item.category} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, category: e.target.value } : i))} placeholder="Category" /></label>
+                  <label className="grid gap-1 text-xs text-muted-foreground">Item unit<input className={inputClass} aria-label="Item unit" value={item.unit} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, unit: e.target.value } : i))} placeholder="Unit" /></label>
+                  <label className="grid gap-1 text-xs text-muted-foreground">Current quantity<input className={inputClass} aria-label="Current quantity" type="number" min="0" inputMode="decimal" value={item.currentQuantity} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, currentQuantity: Number(e.target.value) } : i))} placeholder="Qty" /></label>
+                  <label className="grid gap-1 text-xs text-muted-foreground">Minimum quantity<input className={inputClass} aria-label="Minimum quantity" type="number" min="0" inputMode="decimal" value={item.minimumQuantity ?? ""} onChange={(e) => setInventoryItems((prev) => prev.map((i) => i.id === item.id ? { ...i, minimumQuantity: Number(e.target.value) } : i))} placeholder="Min" /></label>
                   <button className="glass-btn rounded-2xl text-sm" onClick={() => setInventoryItems((prev) => prev.filter((i) => i.id !== item.id))}>Remove</button>
                 </div>
               ))}
@@ -479,12 +478,12 @@ export default function HouseholdSetupWizard() {
 
           {step === 5 && (
             <section className="grid md:grid-cols-2 gap-4">
-              <SummaryCard label="Household" value={householdName || "Not set"} />
-              <SummaryCard label="Owner" value={setupOwnerName || "Not set"} />
-              <SummaryCard label="Housemates" value={`${homemates.filter((m) => m.name.trim()).length} profiles`} />
-              <SummaryCard label="Rooms" value={`${rooms.filter((r) => r.name.trim()).length} zones`} />
-              <SummaryCard label="Staff" value={`${staff.filter((s) => s.name.trim()).length} members`} />
-              <SummaryCard label="Inventory" value={`${inventoryItems.filter((i) => i.name.trim()).length} items`} />
+              <SummaryCard onEdit={() => setStep(0)} label="Household" value={householdName || "Not set"} />
+              <SummaryCard onEdit={() => setStep(0)} label="Owner" value={setupOwnerName || "Not set"} />
+              <SummaryCard onEdit={() => setStep(1)} label="Residents" value={`${homemates.filter((m) => m.name.trim()).length} profiles`} />
+              <SummaryCard onEdit={() => setStep(2)} label="Rooms" value={`${rooms.filter((r) => r.name.trim()).length} zones`} />
+              <SummaryCard onEdit={() => setStep(3)} label="Staff" value={`${staff.filter((s) => s.name.trim()).length} members`} />
+              <SummaryCard onEdit={() => setStep(4)} label="Inventory" value={`${inventoryItems.filter((i) => i.name.trim()).length} items`} />
             </section>
           )}
         </div>
@@ -557,11 +556,9 @@ function RepeatingSection({ title, description, icon, onAdd, children }: { title
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-3xl bg-muted/30 p-5">
-      <p className="label-sm text-muted-foreground">{label}</p>
-      <p className="headline-sm text-foreground mt-1">{value}</p>
-    </div>
-  );
+function SummaryCard({ label, value, onEdit }: { label: string; value: string; onEdit: () => void }) {
+  return <button type="button" onClick={onEdit} aria-label={`Edit ${label}: ${value}`} className="glass-card rounded-xl p-4 flex items-center justify-between text-left">
+    <span><span className="block text-xs text-muted-foreground">{label}</span><strong className="block mt-1">{value}</strong></span>
+    <ChevronRight size={16} />
+  </button>;
 }

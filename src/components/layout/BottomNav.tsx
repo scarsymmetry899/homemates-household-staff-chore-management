@@ -38,7 +38,7 @@ const BottomNav = () => {
   };
 
   return (
-    <nav aria-label="Primary navigation" className="fixed bottom-0 inset-x-0 z-50 px-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.35rem)] md:relative md:inset-auto md:h-full md:px-3 md:py-6 md:bg-surface-low/70 md:border-r md:border-border/40">
+    <nav aria-label="Primary navigation" className="fixed bottom-0 inset-x-0 z-50 bg-card border-t border-border pb-[env(safe-area-inset-bottom,0px)] md:bg-transparent md:border-0 md:relative md:inset-auto md:h-full md:px-3 md:py-6 md:bg-surface-low/70 md:border-r md:border-border/40">
       {moreOpen && moreItems.length > 0 && (
         <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] right-2 left-2 glass-card rounded-2xl p-2 shadow-card-hover md:hidden" aria-label={t("nav.more")}>
           {moreItems.map(({ icon: Icon, labelKey, path }) => (
@@ -50,7 +50,7 @@ const BottomNav = () => {
           ))}
         </div>
       )}
-      <div className="glass-card rounded-2xl mx-auto max-w-3xl md:mx-0 md:max-w-none md:h-full md:rounded-3xl md:bg-transparent md:border-0 md:shadow-none">
+      <div className="mx-auto max-w-3xl md:mx-0 md:max-w-none md:h-full md:rounded-3xl md:bg-transparent md:border-0 md:shadow-none">
         <div className="flex items-center gap-0.5 py-2 px-1 md:flex-col md:items-stretch md:gap-2 md:py-0 md:px-0">
           {visibleNavItems.map(({ icon: Icon, labelKey, path }) => {
             const active = isActive(path);
@@ -61,11 +61,11 @@ const BottomNav = () => {
                 onClick={() => { setMoreOpen(false); navigate(path); }}
                 aria-current={active ? "page" : undefined}
                 className={`hidden md:flex md:w-full md:min-w-0 md:flex-row md:justify-start md:gap-3 md:px-4 md:py-3 items-center rounded-xl transition-colors relative ${
-                  active ? "text-primary bg-primary/8" : "text-muted-foreground"
+                  active ? "text-primary bg-secondary-container/65" : "text-muted-foreground"
                 }`}
               >
                 <Icon size={19} strokeWidth={active ? 2.4 : 1.7} />
-                <span className="text-xs font-sans font-semibold uppercase tracking-normal whitespace-nowrap">
+                <span className="text-xs font-sans font-semibold tracking-normal whitespace-nowrap">
                   {t(labelKey)}
                 </span>
               </motion.button>
@@ -76,18 +76,18 @@ const BottomNav = () => {
             return (
               <motion.button key={`mobile-${path}`} whileTap={{ scale: 0.96 }}
                 onClick={() => { setMoreOpen(false); navigate(path); }} aria-current={active ? "page" : undefined}
-                className={`flex md:hidden min-w-0 flex-1 min-h-11 flex-col items-center justify-center gap-1 rounded-xl ${active ? "text-primary bg-primary/8" : "text-muted-foreground"}`}>
+                className={`flex md:hidden min-w-0 flex-1 min-h-11 flex-col items-center justify-center gap-1 rounded-xl ${active ? "text-primary bg-secondary-container/65" : "text-muted-foreground"}`}>
                 <Icon size={19} strokeWidth={active ? 2.4 : 1.7} />
-                <span className="text-[0.58rem] font-sans font-semibold uppercase truncate max-w-full">{t(labelKey)}</span>
+                <span className="text-[0.65rem] font-sans font-semibold truncate max-w-full">{t(labelKey)}</span>
               </motion.button>
             );
           })}
           {moreItems.length > 0 && (
             <button type="button" aria-expanded={moreOpen} aria-label={t("nav.more")}
               onClick={() => setMoreOpen((open) => !open)}
-              className={`flex md:hidden min-w-0 flex-1 min-h-11 flex-col items-center justify-center gap-1 rounded-xl ${moreOpen || moreItems.some((item) => isActive(item.path)) ? "text-primary bg-primary/8" : "text-muted-foreground"}`}>
+              className={`flex md:hidden min-w-0 flex-1 min-h-11 flex-col items-center justify-center gap-1 rounded-xl ${moreOpen || moreItems.some((item) => isActive(item.path)) ? "text-primary bg-secondary-container/65" : "text-muted-foreground"}`}>
               <Ellipsis size={19} aria-hidden="true" />
-              <span className="text-[0.58rem] font-sans font-semibold uppercase truncate max-w-full">{t("nav.more")}</span>
+              <span className="text-[0.65rem] font-sans font-semibold truncate max-w-full">{t("nav.more")}</span>
             </button>
           )}
         </div>

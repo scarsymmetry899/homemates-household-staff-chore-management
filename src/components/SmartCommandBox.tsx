@@ -528,7 +528,7 @@ const SmartCommandBox = () => {
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-primary/5">
               <div className="flex items-center gap-2">
                 <Sparkles size={16} className="text-primary" />
-                <Dialog.Title className="label-sm text-foreground font-semibold">Household assistant</Dialog.Title>
+                <Dialog.Title className="font-display text-xl text-foreground">Household assistant</Dialog.Title>
                 {isGeminiConfigured && (
                   <span className="flex items-center gap-1 text-[10px] text-status-on-time bg-status-on-time/10 px-2 py-0.5 rounded-full font-semibold">
                     <Zap size={9} /> Gemini
@@ -557,7 +557,7 @@ const SmartCommandBox = () => {
                   className="space-y-3"
                 >
                   <p className="text-xs text-muted-foreground text-center pt-1">
-                    {isGeminiConfigured ? "Powered by Gemini AI — ask anything or tap a quick action" : "Tap a quick action or type a command"}
+                    {isGeminiConfigured ? "Ask about your household’s staff, tasks and spending." : "Tap a quick action or type a command"}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {chips.map((chip) => (
@@ -618,7 +618,7 @@ const SmartCommandBox = () => {
                     className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm whitespace-pre-line leading-relaxed ${
                       m.role === "user"
                         ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-muted/50 text-foreground rounded-bl-md"
+                        : "bg-card border border-border text-foreground rounded-bl-md"
                     }`}
                   >
                     {m.content}

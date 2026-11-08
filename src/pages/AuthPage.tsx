@@ -1,3 +1,4 @@
+import { ResidenceBanner } from "@/components/ResidenceDesign";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, User, Loader2 } from "lucide-react";
@@ -135,24 +136,18 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-sm space-y-8"
+        className="w-full max-w-md space-y-4 py-5"
       >
-        <select aria-label="Language" value={language} onChange={e => {
+        <header className="flex items-center justify-between gap-2 border-b pb-3"><span className="flex items-center gap-1 residence-brand"><img src={logo} alt="" className="w-9 h-9 object-contain" />Homemates</span><select aria-label="Language" value={language} onChange={e => {
           const next = e.target.value as keyof typeof authCopy;
           localStorage.setItem("homemaker_language", next);
           setLanguage(next);
         }} className="ml-auto block rounded-lg border bg-card px-3 py-2">
           {Object.entries(authCopy).map(([key, labels]) => <option key={key} value={key}>{labels[0]}</option>)}
-        </select>
-        <div className="text-center space-y-3">
-          <motion.img
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            src={logo}
-            alt="Homemaker"
-            className="w-32 h-32 mx-auto object-contain"
-          />
+        </select></header>
+        {!isSignUp && <ResidenceBanner title={language === "en" ? "Welcome home." : copy[1]} />}
+        <div className="space-y-3">
+          {isSignUp && <div className="grid place-items-center rounded-full bg-secondary-container w-12 h-12"><User aria-hidden="true" /></div>}
           <h1 className="display-sm">{copy[isSignUp ? 2 : 1]}</h1>
           {!isFirebaseConfigured && (
             <p className="text-[10px] text-muted-foreground/60 bg-muted/30 rounded-lg px-3 py-1.5">

@@ -29,6 +29,7 @@ const AlertsPage = () => {
     reassignTask, extendTaskDeadlineByName,
   } = useAppState();
 
+  const [tab, setTab] = useState<"open" | "resolved">("open");
   const activeAlerts = alerts.filter((a) => !a.dismissed);
   const dismissedAlerts = alerts.filter((a) => a.dismissed);
 
@@ -166,27 +167,14 @@ const AlertsPage = () => {
   return (
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
+          <p className="residence-kicker">Household activity</p>
           <h1 className="display-sm text-foreground">Alerts</h1>
         </section>
 
-        {/* Summary */}
-        <div className="grid grid-cols-2 gap-3">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
-            <div className="flex items-center gap-2">
-              <Bell size={14} className="text-status-absent" />
-              <p className="label-sm text-status-absent">Active</p>
-            </div>
-            <p className="font-display text-2xl text-card-foreground mt-1">{activeAlerts.length}</p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-2xl p-4">
-            <div className="flex items-center gap-2">
-              <Clock size={14} className="text-status-on-time" />
-              <p className="label-sm text-status-on-time">Resolved</p>
-            </div>
-            <p className="font-display text-2xl text-card-foreground mt-1">{dismissedAlerts.length}</p>
-          </motion.div>
-        </div>
-
+        <div className="flex gap-2">{(["open","resolved"] as const).map(value =>
+          <button key={value} aria-pressed={tab===value} onClick={()=>setTab(value)} className={`rounded-xl px-4 py-2 ${tab===value ? "btn-estate text-primary-foreground" : "glass-btn"}`}>
+            {value==="open" ? "Needs review · "+activeAlerts.length : "Resolved · "+dismissedAlerts.length}
+          </button>)}</div>
         {/* Staff quick-status in header area */}
         <div className="flex gap-4 text-xs">
           <span className="text-status-on-time font-semibold">
@@ -248,7 +236,7 @@ const AlertsPage = () => {
         {/* Active Alerts */}
         <AnimatePresence mode="popLayout">
           <StaggerContainer className="space-y-3">
-            {activeAlerts.map((alert) => {
+            {tab === "open" && activeAlerts.map((alert) => {
               const cfg = typeConfig[alert.type];
               const Icon = cfg.icon;
               return (
@@ -298,7 +286,7 @@ const AlertsPage = () => {
           </StaggerContainer>
         </AnimatePresence>
 
-        {activeAlerts.length === 0 && (
+        {tab === "open" && activeAlerts.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-2xl p-8 text-center space-y-2">
             <div className="w-12 h-12 rounded-xl bg-status-on-time/10 flex items-center justify-center mx-auto">
               <Shield size={20} className="text-status-on-time" />
@@ -309,9 +297,10 @@ const AlertsPage = () => {
         )}
 
         {/* Resolved */}
-        {dismissedAlerts.length > 0 && (
+        {tab === "resolved" && (
           <section className="space-y-3 pb-4">
             <h3 className="headline-sm text-foreground">Resolved</h3>
+            {!dismissedAlerts.length && <p>No resolved alerts.</p>}
             {dismissedAlerts.map((alert) => {
               const cfg = typeConfig[alert.type];
               const Icon = cfg.icon;

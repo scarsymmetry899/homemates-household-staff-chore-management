@@ -1,3 +1,4 @@
+import { ExpenseTrend } from "@/components/ResidenceDesign";
 import { expenseMonth } from "@/lib/expensePeriod";
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -194,6 +195,7 @@ const ExpensesPage = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
+          <p className="residence-kicker">Household ledger</p>
           <h1 className="display-sm text-foreground">Expenses</h1>
         </section>
 
@@ -202,16 +204,17 @@ const ExpensesPage = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="btn-estate rounded-2xl p-6 space-y-3"
+          className="residence-ledger space-y-3"
         >
           <div className="flex items-center justify-between">
-            <label className="text-sm text-primary-foreground">Report month <select aria-label="Report month" value={period} onChange={e => setPeriod(e.target.value)} className="ml-2 rounded-lg bg-card px-2 py-1 text-foreground">{availableMonths.map(month => <option key={month} value={month}>{new Date(month + "-01T12:00:00").toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>
-            <TrendingUp size={16} className="text-primary-foreground/60" />
+            <label className="text-sm text-foreground">Report month <select aria-label="Report month" value={period} onChange={e => setPeriod(e.target.value)} className="ml-2 rounded-lg bg-card px-2 py-1 text-foreground">{availableMonths.map(month => <option key={month} value={month}>{new Date(month + "-01T12:00:00").toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>
+            <TrendingUp size={16} className="text-muted-foreground" />
           </div>
-          <p className="label-sm text-primary-foreground/50">Monthly Spending</p>
-          <p className="font-display text-3xl text-primary-foreground">
+          <p className="label-sm text-muted-foreground">Monthly Spending</p>
+          <p className="font-display text-3xl text-foreground">
             ₹{total.toLocaleString("en-IN")}
           </p>
+          <ExpenseTrend ledger={ledger} period={period} />
         </motion.section>
 
         {/* Category Breakdown */}

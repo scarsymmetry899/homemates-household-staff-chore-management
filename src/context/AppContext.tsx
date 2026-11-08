@@ -165,6 +165,7 @@ export interface HouseholdSetupPayload {
 }
 
 interface AppState {
+  connectedHouseholdId: string | null;
   staff: StaffMember[];
   expenses: Expense[];
   cashRequests: StaffCashRequest[];
@@ -1732,7 +1733,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     <AppContext.Provider
       value={{
         staff, expenses, alerts, setupComplete, householdProfile, homemates, rooms, inventoryItems,
-        ownerName, ownerLocation, language, appRole, activeStaffId, isDarkMode, nfcEnabled, isDemoMode,
+        connectedHouseholdId: sqlHouseholdId, ownerName, ownerLocation, language, appRole, activeStaffId, isDarkMode, nfcEnabled, isDemoMode,
         cashRequests, attendanceRequests,
         setOwnerName, setLanguage, setAppRole, setActiveStaffId, setDarkMode, setNfcEnabled, toggleTask, updateStaffStatus, updateStaffRole, updateStaffShift,
         enableDemoMode, disableDemoMode,

@@ -1,0 +1,36 @@
+.residence-banner { display:flex; flex-direction:column; justify-content:flex-end; gap:3px; padding:1.25rem; min-height:9.5rem; border-radius:1rem; background-size:cover; background-position:center 48%; color:white; }
+.residence-banner strong { font:500 1.65rem/1.2 'Noto Serif', Georgia, serif; overflow-wrap:anywhere; }
+.residence-banner span,.residence-brand { font-weight:600; }
+.residence-brand { font-family:'Noto Serif',Georgia,serif; font-size:1.25rem; letter-spacing:-.045em; }
+.residence-kicker { font:650 .72rem/1.4 Manrope,sans-serif; letter-spacing:.085em; color:hsl(var(--muted-foreground)); text-transform:uppercase; }
+.room-directory { padding:1rem; border-radius:1rem; background-color:hsl(var(--secondary-container)/.55); background-image:linear-gradient(hsl(var(--secondary)/.12) 1px,transparent 1px),linear-gradient(90deg,hsl(var(--secondary)/.12) 1px,transparent 1px); background-size:14px 14px; }
+.room-directory figcaption { margin-bottom:.6rem; font-size:.75rem; font-weight:650; }
+.room-directory>div { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); border:1px solid hsl(var(--secondary)); }
+.room-outline { display:grid; align-content:center; gap:2px; min-height:78px; padding:.65rem; background:hsl(var(--card)/.85); border:1px solid hsl(var(--secondary)); overflow-wrap:anywhere; }
+.room-outline:nth-child(3n+1) { background:hsl(var(--secondary-container)/.93); }
+.room-outline small,.expense-trend,.shift-time {color:hsl(var(--muted-foreground))}
+.resident-faces { display:flex;justify-content:center;margin:1rem 0; }
+.resident-faces span { display:grid;place-items:center;width:3.6rem;height:3.6rem;border:2px solid hsl(var(--card));border-radius:50%;background:hsl(var(--secondary-container));font:1.35rem Georgia,serif;margin-left:-.35rem; }
+.summary-tiles { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem; }
+.summary-tiles>button,.summary-tiles>div { text-align:start;border-top:2px solid hsl(var(--secondary)/.65);padding:.55rem .2rem;min-width:0; }
+.summary-tiles small {display:block;color:hsl(var(--muted-foreground));font-size:.75rem}
+.summary-tiles strong {font:1.6rem 'Noto Serif',Georgia,serif;}
+.setup-progress {display:flex;gap:4px;margin-bottom:1rem}.setup-progress button {flex:1;border-block:10px solid transparent;background-clip:padding-box;background-color:hsl(var(--border));height:24px;border-radius:0}.setup-progress button[data-complete=true]{background-color:hsl(var(--secondary))}
+.expense-trend svg {width:100%;height:55px}.expense-trend figcaption,.shift-time { display:flex;justify-content:space-between;font-size:.75rem; }
+.residence-meter {display:block;width:100%;height:6px;background:hsl(var(--secondary-container));border-radius:6px;overflow:hidden}
+.residence-meter i {display:block;background:hsl(var(--secondary));height:100%}
+.payslip {background:hsl(var(--card));border:1px solid hsl(var(--border));border-top:3px solid hsl(var(--primary));padding:1.25rem;box-shadow:0 4px 0 -1px hsl(var(--border));}
+.payslip dl>div {display:flex;justify-content:space-between;align-items:baseline;padding:.65rem 0;border-bottom:1px solid hsl(var(--border));}
+.payslip dd {font-weight:650}
+.attendance-cell {min-height:32px;min-width:28px;padding:3px;border-radius:8px;touch-action:manipulation;-webkit-touch-callout:none;font-size:.78rem;font-weight:650}
+.attendance-cell.bg-status-on-time,.attendance-cell.bg-status-absent {color:white}
+.attendance-cell.bg-status-late {color:#302114}
+.week-strip {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));padding:6px;background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:14px}
+.week-strip button {display:grid;justify-items:center;padding:6px 0;border-radius:8px}
+.week-strip button:hover:not(:disabled) {background:hsl(var(--secondary-container))}
+.week-strip button:disabled {opacity:.55}
+.week-strip strong {font:1.25rem 'Noto Serif',Georgia,serif}
+.residence-ledger {padding:1.2rem;border-radius:1rem;background:hsl(var(--card));border:1px solid hsl(var(--border))}
+.staff-grid {display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+@media(max-width:380px){.residence-brand{font-size:.95rem}.brand-header{gap:2px;padding-inline:8px}.brand-header>div{gap:3px}.brand-header .glass-btn{min-width:34px;width:auto}}
+@media(min-width:768px){.residence-banner{min-height:12rem}.room-directory>div{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}.expense-trend svg{height:80px}.payslip{max-width:42rem}}

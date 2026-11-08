@@ -56,7 +56,9 @@ export default function StaffWorkspace() {
     );
   }
 
-  const completedTasks = activeStaff.assignments.filter((task) => task.done).length;
+  const todayKey = localDateKey(new Date());
+  const todaysTasks = activeStaff.assignments.map((task,index)=>({task,index})).filter(({task})=>!task.dueDate || task.dueDate===todayKey);
+  const completedTasks = todaysTasks.filter(({task})=>task.done).length;
   const attendanceEntry = activeStaff.attendance[0];
   const myCashRequests = cashRequests.filter((request) => request.staffId === activeStaff.id);
   const myAttendanceRequests = attendanceRequests.filter((request) => request.staffId === activeStaff.id);
@@ -106,6 +108,7 @@ export default function StaffWorkspace() {
 
   return (
     <PageTransition className="px-5 space-y-6">
+      <div><p className="residence-kicker">{new Date().toLocaleDateString(locale,{weekday:"long",month:"long",day:"numeric"})}</p><h1 className="display-sm">{t("nav.myDay")}</h1></div>
       <p className="rounded-xl border border-secondary/20 bg-secondary/10 px-4 py-2 text-xs text-foreground">
         Owner preview of the staff workspace. Individual staff sign-in is not connected yet.
       </p>
@@ -114,11 +117,13 @@ export default function StaffWorkspace() {
           <StaffAvatar name={activeStaff.name} src={activeStaff.photo} className="w-16 h-16 rounded-2xl shrink-0" textClassName="text-lg" />
           <div className="min-w-0 flex-1">
             <p className="label-sm text-muted-foreground">{t("staff.mode")}</p>
-            <h1 className="font-display text-2xl text-foreground leading-tight">{activeStaff.name}</h1>
+            <h2 className="font-display text-2xl text-foreground leading-tight">{activeStaff.name}</h2>
             <p className="text-sm text-muted-foreground truncate">{activeStaff.role}</p>
           </div>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-secondary-container px-3 py-1 text-sm">{t(statusLabelKey[activeStaff.status] || "status.offDuty")}</span>{activeStaff.arrivalTime && <span className="text-sm">{activeStaff.arrivalTime}</span>}</div>
+        <div className="shift-time"><span>Shift starts · {activeStaff.shiftStart}</span><span>Ends · {activeStaff.shiftEnd}</span></div>
         {staff.length > 1 && (
           <select
             aria-label="Staff member to preview"
@@ -135,11 +140,11 @@ export default function StaffWorkspace() {
         )}
       </section>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="summary-tiles" style={{gridTemplateColumns:"repeat(2,1fr)"}}>
         <div className="glass-card rounded-2xl p-4">
           <p className="label-sm text-status-on-time">{t("staff.tasksDone")}</p>
           <p className="font-display text-2xl text-card-foreground mt-1">
-            {completedTasks}/{activeStaff.assignments.length}
+            {completedTasks}/{todaysTasks.length}
           </p>
         </div>
         <div className="glass-card rounded-2xl p-4">
@@ -153,13 +158,13 @@ export default function StaffWorkspace() {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="headline-sm text-foreground">{t("staff.myTasksToday")}</h2>
-          <span className="label-sm text-muted-foreground">{t("staff.total", { count: activeStaff.assignments.length })}</span>
+          <span className="label-sm text-muted-foreground">{t("staff.total", { count: todaysTasks.length })}</span>
         </div>
         <StaggerContainer className="space-y-3">
-          {activeStaff.assignments.length === 0 ? (
+          {todaysTasks.length === 0 ? (
             <div className="glass-card rounded-2xl p-5 text-sm text-muted-foreground">{t("staff.noTasksToday")}</div>
           ) : (
-            activeStaff.assignments.map((task, index) => (
+            todaysTasks.map(({task, index}) => (
               <StaggerItem key={`${activeStaff.id}-${index}-${task.task}`}>
                 <PressableCard>
                   <button

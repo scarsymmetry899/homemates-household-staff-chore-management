@@ -13,6 +13,7 @@ function isLowStock(item: InventorySetupItem) {
 
 export default function InventoryPage() {
   const { inventoryItems, rooms, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useAppState();
+  const [roomFilter, setRoomFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -24,7 +25,8 @@ export default function InventoryPage() {
     roomId: "",
   });
 
-  const lowStockItems = inventoryItems.filter(isLowStock);
+  const filteredItems = inventoryItems.filter(item => !roomFilter || item.roomId === roomFilter);
+  const lowStockItems = filteredItems.filter(isLowStock);
   const categoryCount = new Set(inventoryItems.map((item) => item.category)).size;
   const roomNameById = useMemo(() => new Map(rooms.map((room) => [room.id, room.name])), [rooms]);
 
@@ -91,27 +93,14 @@ export default function InventoryPage() {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <h1 className="display-sm text-foreground">Inventory</h1>
+          <p className="residence-kicker">Household supplies</p><h1 className="display-sm text-foreground">Inventory</h1>
         </section>
 
-        <div className="grid grid-cols-3 gap-3">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-4">
-            <Boxes size={16} className="text-secondary mb-2" />
-            <p className="label-sm text-muted-foreground">Items</p>
-            <p className="font-display text-2xl text-card-foreground">{inventoryItems.length}</p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-2xl p-4">
-            <AlertTriangle size={16} className="text-status-late mb-2" />
-            <p className="label-sm text-muted-foreground">Low</p>
-            <p className="font-display text-2xl text-card-foreground">{lowStockItems.length}</p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
-            <Home size={16} className="text-status-on-time mb-2" />
-            <p className="label-sm text-muted-foreground">Groups</p>
-            <p className="font-display text-2xl text-card-foreground">{categoryCount}</p>
-          </motion.div>
-        </div>
-
+        <label className="flex items-center gap-3">Stock by room
+          <select value={roomFilter} onChange={e=>setRoomFilter(e.target.value)} className={inputClass+" max-w-xs"}>
+            <option value="">All rooms</option>{rooms.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+        </label>
         {lowStockItems.length > 0 && (
           <section className="glass-card rounded-2xl p-4 space-y-3 border border-status-late/20">
             <div className="flex items-center gap-2">
@@ -175,12 +164,12 @@ export default function InventoryPage() {
         )}
 
         <StaggerContainer className="space-y-3 pb-4">
-          {inventoryItems.length === 0 ? (
+          {filteredItems.length === 0 ? (
             <div className="glass-card rounded-2xl p-6 text-center text-sm text-muted-foreground">
               No inventory yet. Add groceries, vegetables, cleaning supplies, pet items, fuel cards, or anything else the household tracks.
             </div>
           ) : (
-            inventoryItems.map((item) => {
+            filteredItems.map((item) => {
               const low = isLowStock(item);
               return (
                 <StaggerItem key={item.id}>
@@ -196,6 +185,7 @@ export default function InventoryPage() {
                         {low ? "Low stock" : "In stock"}
                       </span>
                     </div>
+                    {item.minimumQuantity !== undefined && item.minimumQuantity > 0 && <div className="residence-meter" title="Stock relative to twice the minimum"><i style={{width: Math.min(100, Math.max(0,item.currentQuantity / (2*item.minimumQuantity) * 100)) + "%"}} /></div>}
                     <div className="flex items-end justify-between gap-3">
                       <div>
                         <p className="font-display text-2xl text-card-foreground">{item.currentQuantity}</p>
@@ -204,10 +194,10 @@ export default function InventoryPage() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => startEdit(item)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-secondary">
+                        <button type="button" aria-label={`Edit ${item.name}`} onClick={() => startEdit(item)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-secondary">
                           <Pencil size={14} />
                         </button>
-                        <button type="button" onClick={() => handleDelete(item)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-destructive">
+                        <button type="button" aria-label={`Remove ${item.name}`} onClick={() => window.confirm(`Remove ${item.name}?`) && handleDelete(item)} className="glass-btn rounded-xl w-9 h-9 flex items-center justify-center text-destructive">
                           <Trash2 size={14} />
                         </button>
                       </div>

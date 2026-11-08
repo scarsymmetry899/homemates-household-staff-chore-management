@@ -203,11 +203,12 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
           <h1 className="display-sm text-foreground">{t("settings.title")}</h1>
         </section>
 
+        <h2 className="headline-sm">Account and household</h2>
         {/* Owner Name */}
         <AnimatedCard delay={0.02} className="glass-card rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <User size={18} className="text-primary" />
+              <span className="font-display text-lg">{ownerName.trim().split(/\s+/).slice(0,2).map(s=>s[0]).join("").toUpperCase() || "O"}</span>
             </div>
             <div className="flex-1">
               <p className="label-sm text-muted-foreground">{t("settings.displayName")}</p>
@@ -227,7 +228,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
               )}
             </div>
             {!editingName && (
-              <button onClick={() => { setEditingName(true); setNameInput(ownerName); }} className="text-secondary">
+              <button aria-label="Edit display name" onClick={() => { setEditingName(true); setNameInput(ownerName); }} className="text-secondary">
                 <Pencil size={14} />
               </button>
             )}
@@ -254,6 +255,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
           </motion.button>
         </AnimatedCard>
 
+        <h2 className="headline-sm">Preferences</h2>
         <AnimatedCard delay={0.04} className="glass-card rounded-2xl p-5 space-y-3">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
@@ -407,6 +409,7 @@ const SettingsPage = ({ onLogout }: SettingsPageProps) => {
         ))}
 
         {/* ── Telegram Integration ───────────────────────────────── */}
+        <h2 className="headline-sm">Integrations</h2>
         <AnimatedCard delay={0.28} className="space-y-3">
           <h3 className="headline-sm text-foreground">Telegram Integration</h3>
           <div className="glass-card rounded-2xl p-4 space-y-4">

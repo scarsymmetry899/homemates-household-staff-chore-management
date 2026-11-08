@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
 import { motion } from "framer-motion";
 import { TrendingUp, Clock, Users, Calendar, ChevronDown, Download, MessageSquareWarning, Check, X } from "lucide-react";
@@ -9,23 +9,19 @@ import StaffAvatar from "@/components/StaffAvatar";
 import { localDateKey } from "@/lib/localDate";
 import { toast } from "sonner";
 
+import AttendanceCell from "@/components/AttendanceCell";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { dayStatuses, loadAttendancePeriod, saveDayAttendance, statusFromEvent, type DayStatus } from "@/lib/dayAttendance";
+import { isFirebaseConfigured } from "@/lib/firebase";
+
 type ViewMode = "daily" | "weekly" | "monthly";
 
 function dateKey(date: Date) {
   return localDateKey(date);
 }
 
-function entryStatus(type: string) {
-  const normalized = type.toLowerCase();
-  if (normalized === "off-duty") return "off-duty";
-  if (normalized.includes("late")) return "late";
-  if (normalized.includes("absent") || normalized.includes("leave")) return "absent";
-  if (normalized.includes("check-in") || normalized.includes("on-site") || normalized.includes("present")) return "present";
-  return "";
-}
-
 const InsightsPage = () => {
-  const { staff, expenses, alerts, attendanceRequests, reviewAttendanceCorrectionRequest } = useAppState();
+  const { appRole, isDemoMode, connectedHouseholdId, staff, expenses, alerts, attendanceRequests, reviewAttendanceCorrectionRequest } = useAppState();
   const [viewMode, setViewMode] = useState<ViewMode>(() => window.matchMedia("(max-width: 767px)").matches ? "daily" : "monthly");
   const [cellDetail, setCellDetail] = useState("");
   const onDuty = staff.filter((s) => s.status === "on-duty").length;
@@ -48,7 +44,7 @@ const InsightsPage = () => {
     const now = new Date();
     for (let i = 0; i < 12; i++) {
       const start = new Date(now);
-      start.setDate(start.getDate() - (i * 7) - start.getDay() + 1);
+      start.setDate(start.getDate() - (i * 7) - ((start.getDay() + 6) % 7));
       const end = new Date(start);
       end.setDate(end.getDate() + 6);
       const label = i === 0 ? "This Week" : i === 1 ? "Last Week" :
@@ -107,7 +103,7 @@ const InsightsPage = () => {
     }
     if (viewMode === "weekly") {
       const start = new Date(now);
-      start.setDate(start.getDate() - (selectedWeek * 7) - start.getDay() + 1);
+      start.setDate(start.getDate() - (selectedWeek * 7) - ((start.getDay() + 6) % 7));
       start.setHours(0, 0, 0, 0);
       const date = new Date(start);
       date.setDate(start.getDate() + dayIndex);
@@ -116,20 +112,67 @@ const InsightsPage = () => {
     return new Date(now.getFullYear(), now.getMonth() - selectedMonth, dayIndex + 1);
   }, [selectedDay, selectedMonth, selectedWeek, viewMode]);
 
+  const from = dateKey(getDateForColumn(0));
+  const to = dateKey(getDateForColumn(columnHeaders.length - 1));
+  const demo = isDemoMode || !isFirebaseConfigured;
+  const [reload, setReload] = useState(0);
+  const [history, setHistory] = useState(new Map<string, DayStatus>());
+  const [loadState, setLoadState] = useState("loading");
+  const [editor, setEditor] = useState<{ id: string; name: string; date: string; before: string } | null>(null);
+  const [choice, setChoice] = useState<DayStatus | "">("");
+  const [reason, setReason] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
+  const returnFocus = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    let active = true;
+    setHistory(new Map());
+    if (demo) {
+      try { setHistory(new Map(JSON.parse(sessionStorage.getItem("homemates-demo-day-edits") || "[]"))); } catch { /* An expired demo starts fresh. */ }
+      setLoadState("ready");
+    } else if (connectedHouseholdId) {
+      setLoadState("loading");
+      loadAttendancePeriod(connectedHouseholdId, from, to).then(days => {
+        if (active) { setHistory(days); setLoadState("ready"); }
+      }).catch(() => { if (active) setLoadState("error"); });
+    } else setLoadState("error");
+    return () => { active = false; };
+  }, [demo, connectedHouseholdId, from, to, reload, attendanceRequests]);
+  async function applyEdit() {
+    if (!editor || !choice || appRole !== "owner" || editor.date > dateKey(new Date()) || saveLock.current) return;
+    setSaving(true); saveLock.current = true; setSaveError("");
+    try {
+      if (!demo) {
+        if (!connectedHouseholdId) throw new Error();
+        await saveDayAttendance(connectedHouseholdId, editor.id, editor.date, choice, reason.trim() || "Owner attendance edit");
+      }
+      const next = new Map(history).set(editor.id + "/" + editor.date, choice);
+      if (demo) sessionStorage.setItem("homemates-demo-day-edits", JSON.stringify([...next]));
+      setHistory(next); setCellDetail(`${editor.name} · ${editor.date} · ${choice}`);
+      setEditor(null); toast.success(demo ? "Demo attendance updated" : "Attendance saved");
+    } catch { setSaveError("Could not confirm the update. Check your connection and retry."); }
+    finally { saveLock.current = false; setSaving(false); }
+  }
   const displayedAttendanceData = useMemo(
     () =>
       staff.map((s) => ({
+        id: s.id,
         name: s.name,
         photo: s.photo,
         role: s.role,
         days: Array.from({ length: columnHeaders.length }, (_, dayIndex) => {
           const key = dateKey(getDateForColumn(dayIndex));
           if (key > dateKey(new Date())) return "Upcoming";
-          const entry = s.attendance.find(item => item.date.startsWith(key) && entryStatus(item.type));
-          return entry ? entryStatus(entry.type) : "No record";
+          const stored = history.get(s.id + "/" + key);
+          if (stored) return stored;
+          if (loadState !== "ready") return loadState === "loading" ? "Loading" : "Unavailable";
+          if (!demo) return "No record";
+          const entry = s.attendance.find(item => (item.date.startsWith(key) || (key === dateKey(new Date()) && item.date.startsWith("Today"))) && statusFromEvent(item.type, item.detail));
+          return entry ? statusFromEvent(entry.type, entry.detail)! : "No record";
         }),
       })),
-    [columnHeaders.length, getDateForColumn, staff]
+    [columnHeaders.length, getDateForColumn, staff, history, loadState, demo]
   );
 
   // Which column index corresponds to today (for highlighting)
@@ -164,8 +207,7 @@ const InsightsPage = () => {
   };
 
   const handleRefresh = useCallback(async () => {
-    await new Promise((r) => setTimeout(r, 800));
-    toast.success("Insights refreshed");
+    setReload(n=>n+1);
   }, []);
 
   const handleExport = () => {
@@ -327,6 +369,12 @@ const InsightsPage = () => {
           )}
         </div>
 
+        {viewMode === "weekly" && <div className="week-strip">{columnHeaders.map((label,i) => {
+          const d = getDateForColumn(i), now = new Date(), key = dateKey(d);
+          const offset = Math.round((Date.parse(dateKey(now)) - Date.parse(key)) / 86400000);
+          return <button key={key} disabled={offset < 0 || offset >= dayOptions.length} aria-label={`Show attendance on ${key}`}
+            onClick={() => { setSelectedDay(offset); setViewMode("daily"); }}><small>{label}</small><strong>{d.getDate()}</strong></button>;
+        })}</div>}
         {/* Legend */}
         <div className="flex flex-wrap gap-4">
           {[
@@ -342,7 +390,8 @@ const InsightsPage = () => {
           ))}
         </div>
 
-        <p className="text-xs text-muted-foreground italic">Attendance history is read-only. Staff can report discrepancies for owner review.</p>
+        <p className="text-xs text-muted-foreground">Tap or long-press a recorded or past day to change attendance.</p>
+        {loadState === "error" && <button className="glass-btn rounded-lg px-3" onClick={() => setReload(n => n+1)}>Reload attendance</button>}
 
         {activeAttendanceRequests.length > 0 && (
           <AnimatedCard delay={0.08} className="glass-card rounded-2xl p-5 space-y-4">
@@ -422,7 +471,7 @@ const InsightsPage = () => {
                   ))}
 
                   {displayedAttendanceData.map((s) => (
-                    <div key={s.name} className="contents">
+                    <div key={s.id} className="contents">
                       <div className="flex items-center gap-2 py-2 sticky left-0 z-10 bg-card/95 backdrop-blur-sm px-2 rounded-md">
                         <StaffAvatar name={s.name} src={s.photo} className="w-7 h-7 rounded-lg shrink-0" textClassName="text-[10px]" />
                         <div className="min-w-0">
@@ -433,15 +482,18 @@ const InsightsPage = () => {
                       {s.days.map((day, i) => {
                         const status = day;
                         return (
-                          <button
-                            key={`${s.name}-${i}`}
-                            type="button"
-                            onClick={() => setCellDetail(`${s.name} · ${dateKey(getDateForColumn(i))} · ${status}`)}
-                            aria-label={`${s.name}, ${dateKey(getDateForColumn(i))}: ${status}`}
-                            className={`min-w-7 min-h-7 rounded-lg ${cellColor[status] || "border border-border bg-background"} mx-auto ${
-                              i === todayColumnIndex ? "ring-2 ring-secondary/60 ring-offset-1 ring-offset-card" : ""
-                            }`}
-                          >{viewMode === "daily" ? status : status === "Upcoming" ? "·" : status === "No record" ? "–" : status.slice(0,1).toUpperCase()}</button>
+                          <AttendanceCell key={dateKey(getDateForColumn(i))}
+                            label={`${s.name}, ${dateKey(getDateForColumn(i))}: ${status}`}
+                            editable={appRole === "owner" && status !== "Upcoming" && loadState === "ready"}
+                            onInspect={() => setCellDetail(`${s.name} · ${dateKey(getDateForColumn(i))} · ${status}`)}
+                            onOpen={() => {
+                              returnFocus.current = document.activeElement as HTMLElement;
+                              setEditor({ id: s.id, name: s.name, date: dateKey(getDateForColumn(i)), before: status });
+                              setChoice(""); setReason(""); setSaveError("");
+                            }}
+                            className={`attendance-cell ${cellColor[status] || "border border-border bg-background"} ${i === todayColumnIndex ? "ring-1 ring-secondary" : ""}`}
+                            text={viewMode === "daily" ? status : status === "Upcoming" ? "·" : status === "No record" ? "–" : status.slice(0,1).toUpperCase()}
+                          />
                         );
                       })}
                     </div>
@@ -454,6 +506,22 @@ const InsightsPage = () => {
         </AnimatedCard>
 
         <p role="status" className="text-sm">{cellDetail}</p>
+        <Dialog open={!!editor} onOpenChange={v => { if (!v && !saving) setEditor(null); }}>
+          <DialogContent onCloseAutoFocus={e => { e.preventDefault(); returnFocus.current?.focus(); }}>
+            <DialogTitle>Change attendance</DialogTitle>
+            <DialogDescription>{editor?.name} · {editor?.date} · Currently {editor?.before}</DialogDescription>
+            <fieldset disabled={saving} className="grid grid-cols-2 gap-2"><legend className="sr-only">New attendance status</legend>
+              {dayStatuses.map(option => <label key={option} className="flex items-center gap-2 rounded-lg border p-3 capitalize">
+                <input type="radio" name="attendance" checked={choice === option} onChange={() => setChoice(option)} />
+                <span className={`h-3 w-3 rounded-full ${cellColor[option]}`} />{option}
+              </label>)}
+            </fieldset>
+            <label className="text-sm">Note (optional)<input className="mt-1 w-full rounded-lg border bg-card p-3" value={reason} maxLength={300} disabled={saving} onChange={e => setReason(e.target.value)} /></label>
+            <p className="text-xs text-muted-foreground">This changes the daily record. Payroll and live check-in status are managed separately.</p>
+            {saveError && <p role="alert">{saveError}</p>}
+            <button disabled={saving || !choice || choice === editor?.before} className="btn-estate rounded-xl p-3 text-primary-foreground disabled:opacity-50" onClick={applyEdit}>{saving ? "Saving…" : "Save attendance"}</button>
+          </DialogContent>
+        </Dialog>
         {/* Stats */}
         <StaggerContainer className="space-y-3 pb-4">
           <StaggerItem>

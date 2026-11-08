@@ -22,14 +22,15 @@ const AppHeader = () => {
   const activeLanguage = languages.find((item) => item.code === language) || languages[0];
 
   return (
-    <header className="flex items-center justify-between gap-2 px-4 py-3 md:px-8 md:py-4 bg-background/85 backdrop-blur-md z-40 border-b border-border/20">
+    <header className="brand-header flex items-center justify-between gap-2 px-4 py-3 md:px-8 md:py-4 bg-background/85 backdrop-blur-md z-40 border-b border-border/20">
       <motion.button
         whileTap={{ scale: 0.95 }}
         onClick={() => navigate("/")}
         aria-label="Go to household dashboard"
-        className="flex items-center gap-3"
+        className="flex items-center gap-1 min-w-0"
       >
-        <img src={logoImg} alt="Homemaker" className="w-14 h-14 object-contain" />
+        <img src={logoImg} alt="Homemaker" className="w-8 h-9 object-contain" />
+        <span className="residence-brand">Homemates</span>
       </motion.button>
       <div className="flex items-center gap-2">
         {appRole === "owner" && <SmartCommandBox />}

@@ -108,13 +108,13 @@ const StaffProfile = () => {
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="h-56 bg-secondary-container overflow-hidden relative"
+          className="h-60 md:h-80 bg-secondary-container overflow-hidden relative"
         >
           <StaffAvatar name={s.name} src={s.photo} className="w-full h-full rounded-none shadow-none" textClassName="text-6xl" />
 
           {/* Camera overlay button */}
           <button
-            onClick={() => photoInputRef.current?.click()}
+            aria-label="Change profile photo" onClick={() => photoInputRef.current?.click()}
             className="absolute bottom-4 right-4 w-9 h-9 rounded-xl glass flex items-center justify-center shadow-btn z-10"
           >
             <Camera size={16} className="text-foreground" />
@@ -130,19 +130,12 @@ const StaffProfile = () => {
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-4">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate(-1)}
+              aria-label="Back to staff directory" onClick={() => navigate("/staff")}
               className="w-10 h-10 rounded-xl glass flex items-center justify-center shadow-btn"
             >
               <ArrowLeft size={18} />
             </motion.button>
-            <div className="flex gap-2">
-              <button className="w-10 h-10 rounded-xl glass flex items-center justify-center shadow-btn">
-                <Bell size={16} />
-              </button>
-              <button className="w-10 h-10 rounded-xl btn-estate flex items-center justify-center text-primary-foreground">
-                <Shield size={16} />
-              </button>
-            </div>
+
           </div>
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -158,13 +151,13 @@ const StaffProfile = () => {
 
       <div className="px-5 space-y-6 -mt-2">
         <section className="space-y-3 pt-4">
-          <p className="label-sm text-muted-foreground">Homemaker Profile</p>
+          <p className="label-sm text-muted-foreground">Staff profile</p>
           <h1 className="font-display text-3xl text-foreground tracking-tight leading-tight">{s.name}</h1>
-          <div className="flex gap-8">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="flex items-center gap-1.5">
                 <p className="label-sm text-muted-foreground">Position</p>
-                <button onClick={() => { setEditingRole(true); setRoleInput(s.role); }} className="text-secondary">
+                <button aria-label="Edit role" onClick={() => { setEditingRole(true); setRoleInput(s.role); }} className="text-secondary">
                   <Pencil size={10} />
                 </button>
               </div>
@@ -194,7 +187,7 @@ const StaffProfile = () => {
             <div className="flex items-center gap-1.5">
               <Clock size={12} className="text-muted-foreground" />
               <p className="label-sm text-muted-foreground">Shift Timings</p>
-              <button onClick={() => { setEditingShift(true); setShiftStartInput(s.shiftStart); setShiftEndInput(s.shiftEnd); }} className="text-secondary">
+              <button aria-label="Edit shift" onClick={() => { setEditingShift(true); setShiftStartInput(s.shiftStart); setShiftEndInput(s.shiftEnd); }} className="text-secondary">
                 <Pencil size={10} />
               </button>
             </div>

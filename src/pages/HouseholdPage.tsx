@@ -1,3 +1,4 @@
+import { RoomDirectory, ResidenceBanner } from "@/components/ResidenceDesign";
 import { useCallback, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { DoorOpen, Home, Pencil, Plus, Save, Trash2, UserRound, X } from "lucide-react";
@@ -171,18 +172,7 @@ export default function HouseholdPage() {
         </section>
 
         <section className="glass-card rounded-3xl p-5 space-y-4">
-          <div className="flex items-start gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Home size={20} className="text-primary" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="label-sm text-muted-foreground">Active Household</p>
-              <h2 className="headline-sm text-card-foreground truncate">{householdProfile?.name || "My Household"}</h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                {householdProfile?.addressLabel || "Address not set"} - {householdProfile?.timezone || "Asia/Kolkata"}
-              </p>
-            </div>
-          </div>
+          <ResidenceBanner title={householdProfile?.name || "My household"} subtitle={householdProfile?.addressLabel || householdProfile?.timezone} />
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-2xl bg-surface-low p-3">
               <p className="label-sm text-muted-foreground">Residents</p>
@@ -281,6 +271,7 @@ export default function HouseholdPage() {
             </motion.button>
           </div>
 
+          <RoomDirectory rooms={rooms} />
           {roomFormOpen && (
             <div className="glass-card rounded-2xl p-5 space-y-3">
               <h3 className="headline-sm text-foreground">{editingRoomId ? "Edit Room" : "New Room"}</h3>

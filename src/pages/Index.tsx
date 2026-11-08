@@ -56,17 +56,17 @@ const Index = () => {
           <h1 className="display-sm text-foreground">
             {greeting},
             <br />
-            <span className="italic">{ownerName}</span> ✨
+            <span className="italic text-secondary">{ownerName}.</span>
           </h1>
-          <div className="mt-3 flex flex-wrap gap-2 text-sm">
-            <button className="glass-btn rounded-lg px-3 py-2" onClick={() => navigate("/staff")}>{staff.filter(s => s.status === "on-duty" || s.status === "late").length} on duty</button>
-            <button className="glass-btn rounded-lg px-3 py-2" onClick={() => navigate("/tasks")}>{totalTasks - doneTasks} pending tasks</button>
-            <button className="glass-btn rounded-lg px-3 py-2" onClick={() => navigate("/expenses")}>{pendingRequests} cash requests awaiting review</button>
+          <div className="summary-tiles">
+            <button onClick={() => navigate("/staff")}><small>On duty</small><strong>{staff.filter(s => s.status === "on-duty" || s.status === "late").length}</strong></button>
+            <button onClick={() => navigate("/tasks")}><small>Pending tasks</small><strong>{totalTasks-doneTasks}</strong></button>
+            <button onClick={() => navigate("/expenses")}><small>Requests</small><strong>{pendingRequests}</strong></button>
           </div>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/tasks")}
-            className="mt-4 btn-estate text-primary-foreground label-sm px-6 py-3 rounded-2xl"
+            className="mt-4 w-full md:w-auto btn-estate text-primary-foreground label-sm px-6 py-3 rounded-2xl"
           >
             {t("home.dispatchTask")}
           </motion.button>
@@ -143,27 +143,7 @@ const Index = () => {
               {t("home.allTasks")}
             </button>
           </div>
-          <div className="flex items-center justify-center">
-            <div className="relative w-32 h-32">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(var(--surface-container))" strokeWidth="8" />
-                <motion.circle
-                  cx="50" cy="50" r="40"
-                  fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  initial={{ strokeDasharray: "0 251" }}
-                  animate={{ strokeDasharray: `${taskPct * 2.51} 251` }}
-                  transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-display text-2xl text-foreground">{taskPct}%</span>
-                <span className="label-sm text-muted-foreground">{t("home.done")}</span>
-              </div>
-            </div>
-          </div>
+          <div className="residence-meter" role="meter" aria-label="Task completion" aria-valuenow={taskPct} aria-valuemin={0} aria-valuemax={100}><i style={{width: taskPct+"%"}} /></div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">{t("home.completionRate")}</span>
             <span className="text-card-foreground font-semibold">{doneTasks} / {totalTasks}</span>

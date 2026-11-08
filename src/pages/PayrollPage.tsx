@@ -41,10 +41,18 @@ const PayrollPage = () => {
           <p className="label-sm text-muted-foreground">
             {appRole === "staff" ? t("payroll.myCompensation") : t("payroll.compensationHub")}
           </p>
-          <h1 className="display-sm text-foreground">{t("nav.payroll")}</h1>
+          <h1 className="display-sm text-foreground">{appRole === "staff" ? t("payroll.myPay") : t("nav.payroll")}</h1>
         </section>
 
-        <AnimatedCard delay={0.1} className="btn-estate rounded-2xl p-6 space-y-3">
+        {appRole === "staff" ? <section className="payslip space-y-3">
+          <p className="residence-kicker">Pay statement</p>
+          <select aria-label="Payroll period" className="bg-card text-foreground rounded p-2" value={period} onChange={e=>setPeriod(e.target.value)}>{periods.map(p=><option key={p}>{p}</option>)}</select>
+          {rows.length ? <dl>
+            <div><dt>{t("payroll.baseSalary")}</dt><dd>₹{rows[0].payroll.baseSalary.toLocaleString("en-IN")}</dd></div>
+            <div><dt>{t("payroll.deductions")}</dt><dd>₹{totalDeductions.toLocaleString("en-IN")}</dd></div>
+            <div><dt>{t("payroll.netPay")}</dt><dd className="font-display text-3xl">₹{totalPayroll.toLocaleString("en-IN")}</dd></div>
+          </dl> : <p>No pay statement for this period.</p>}
+        </section> : <AnimatedCard delay={0.1} className="btn-estate rounded-2xl p-6 space-y-3">
           <div className="flex items-center justify-between">
             <p className="label-sm text-primary-foreground/60"><select aria-label="Payroll period" className="rounded bg-card p-2 text-card-foreground" value={period} onChange={e => setPeriod(e.target.value)}>{periods.map(p => <option key={p}>{p}</option>)}</select></p>
             <TrendingUp size={16} className="text-primary-foreground/60" />
@@ -65,12 +73,12 @@ const PayrollPage = () => {
               </div>
             )}
           </div>
-        </AnimatedCard>
+        </AnimatedCard>}
 
-        <StaggerContainer className="space-y-3 pb-4">
+        {appRole === "owner" && <StaggerContainer className="space-y-3 pb-4">
           <div className="flex items-center justify-between">
             <h3 className="headline-sm text-foreground">
-              {appRole === "staff" ? t("payroll.myPay") : t("payroll.homemakerCompensation")}
+              {t("payroll.homemakerCompensation")}
             </h3>
             {appRole === "owner" && (
               <button
@@ -109,7 +117,7 @@ const PayrollPage = () => {
               </PressableCard>
             </StaggerItem>
           ))}
-        </StaggerContainer>
+        </StaggerContainer>}
       </PageTransition>
     </PullToRefresh>
   );

@@ -50,9 +50,6 @@ const StaffDirectory = () => {
     return deptMatch && statusMatch;
   });
 
-  const onDuty = staff.filter((s) => s.status === "on-duty").length;
-  const lateCount = staff.filter((s) => s.status === "late").length;
-  const absentCount = staff.filter((s) => s.status === "absent").length;
 
   const handleRefresh = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 800));
@@ -121,7 +118,7 @@ const StaffDirectory = () => {
   return (
       <PageTransition className="px-5 space-y-6">
         <section className="space-y-2">
-          <h1 className="display-sm text-foreground">Staff</h1>
+          <h1 className="display-sm text-foreground">Staff directory</h1>
           <div className="flex gap-3 mt-3">
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -132,7 +129,7 @@ const StaffDirectory = () => {
             </motion.button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Last synced: {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+            {staff.length} household staff
           </p>
         </section>
 
@@ -218,65 +215,11 @@ const StaffDirectory = () => {
         </AnimatePresence>
 
         {/* Stats */}
-        <div className="space-y-2">
-          <div className="grid grid-cols-3 gap-3">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              onClick={() => setStatusFilter("")}
-              className={`glass-card rounded-2xl p-4 cursor-pointer transition-all ${statusFilter === "" ? "ring-2 ring-secondary" : ""}`}
-            >
-              <p className="label-sm text-muted-foreground">Headcount</p>
-              <p className="font-display text-2xl text-card-foreground mt-1">{staff.length}</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              onClick={() => setStatusFilter(statusFilter === "on-duty" ? "" : "on-duty")}
-              className={`glass-card rounded-2xl p-4 cursor-pointer transition-all ${statusFilter === "on-duty" ? "ring-2 ring-status-on-time" : ""}`}
-            >
-              <p className="label-sm text-status-on-time">Active</p>
-              <p className="font-display text-2xl text-card-foreground mt-1">{onDuty}</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              onClick={() => setStatusFilter(statusFilter === "late" ? "" : "late")}
-              className={`glass-card rounded-2xl p-4 cursor-pointer transition-all ${statusFilter === "late" ? "ring-2 ring-status-late" : ""}`}
-            >
-              <p className="label-sm text-status-late">Flagged</p>
-              <p className="font-display text-2xl text-status-late mt-1">{lateCount}</p>
-            </motion.div>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            onClick={() => setStatusFilter(statusFilter === "absent" ? "" : "absent")}
-            className={`glass-card rounded-2xl p-4 cursor-pointer transition-all flex items-center justify-between ${statusFilter === "absent" ? "ring-2 ring-destructive" : ""}`}
-          >
-            <p className="label-sm text-destructive">Absent</p>
-            <p className="font-display text-2xl text-destructive">{absentCount}</p>
-          </motion.div>
-        </div>
-
-        {/* Department Tabs */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
-          {["All", ...departments].map((dept) => (
-            <button
-              key={dept}
-              onClick={() => setActiveDept(dept)}
-              className={`label-sm whitespace-nowrap px-4 py-2.5 rounded-xl transition-all ${
-                activeDept === dept ? "btn-estate text-primary-foreground" : "glass-btn text-muted-foreground"
-              }`}
-            >
-              {dept === "All" ? "All Roles" : dept}
-            </button>
-          ))}
-        </div>
+        <label className="flex items-center justify-between gap-2 text-sm text-muted-foreground">Department
+          <select className="rounded-xl border border-border bg-card px-3 py-2 text-foreground" value={activeDept} onChange={e => setActiveDept(e.target.value)}>
+            {["All", ...departments].map(dept=><option key={dept} value={dept}>{dept === "All" ? "All departments" : dept}</option>)}
+          </select>
+        </label>
 
         {/* Status Filter Chips */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
@@ -302,7 +245,7 @@ const StaffDirectory = () => {
         </div>
 
         {/* Staff List */}
-        <StaggerContainer className="space-y-4 pb-4">
+        <StaggerContainer className="staff-grid pb-4">
           {filtered.map((s) => (
             <StaggerItem key={s.id}>
                 <PressableCard className="glass-card rounded-2xl overflow-hidden">
@@ -313,14 +256,14 @@ const StaffDirectory = () => {
                         {statusLabel[s.status]}
                       </span>
                       <h3 className="font-display text-xl text-card-foreground mt-2 leading-tight">
-                        {s.name.split(" ")[0]}
-                        <br />
-                        {s.name.split(" ").slice(1).join(" ")}
+                        {s.name}
                       </h3>
                       <p className="label-sm text-muted-foreground mt-1">
                         {s.role} · {getDeptLabel(s.department, s.customDepartment)}
                       </p>
-                      <div className="flex items-center gap-3 mt-2">
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-5 pb-3">
                         <div className="flex items-center gap-1">
                           <p className="text-[10px] text-muted-foreground">Reliability</p>
                           <p className="text-xs font-bold text-card-foreground">{s.reliabilityScore}%</p>
@@ -331,21 +274,19 @@ const StaffDirectory = () => {
                             {s.punctualityScore}%
                           </p>
                         </div>
-                      </div>
-                    </div>
                   </div>
                   <div className="flex border-t border-border/40">
                     <button
-                      onClick={() => toast.success(`Calling ${s.name}...`)}
+                      disabled={!s.phone} aria-label={`Call ${s.name}`} onClick={() => { window.location.href = `tel:${s.phone.replace(/[^+0-9]/g,"")}`; }}
                       className="flex-1 flex items-center justify-center gap-2 py-3 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Phone size={14} />
+                      <Phone size={14} /> Call
                     </button>
                     <button
                       onClick={() => handleMessage(s.phone, s.name)}
                       className="flex-1 flex items-center justify-center gap-2 py-3 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <MessageCircle size={14} />
+                      <MessageCircle size={14} /> Message
                     </button>
                     <button
                       onClick={() => navigate(`/staff/${s.id}`)}

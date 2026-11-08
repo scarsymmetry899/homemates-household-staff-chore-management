@@ -1,3 +1,4 @@
+import { localDateKey } from "@/lib/localDate";
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Circle, Clock, Plus, X, Trash2, CalendarDays, Send, AlertTriangle, RotateCcw, ArrowRightLeft } from "lucide-react";
@@ -33,7 +34,7 @@ const TasksPage = () => {
   });
   const [reassignPickerTask, setReassignPickerTask] = useState<TaskItem | null>(null);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = localDateKey(new Date());
   const visibleStaff = appRole === "staff"
     ? staff.filter((member) => member.id === activeStaffId)
     : staff;
@@ -287,21 +288,16 @@ const TasksPage = () => {
   return (
       <PageTransition className="px-4 sm:px-6 md:px-8 space-y-6">
         <section className="space-y-2">
+          <p className="residence-kicker">{appRole === "staff" ? staff.find(s => s.id === activeStaffId)?.name : new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</p>
           <h1 className="display-sm text-foreground">
-            {t("nav.tasks")}
+            {appRole === "staff" ? t("staff.myTasksToday") : t("nav.tasks")}
           </h1>
         </section>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-on-time">{t("tasks.shipped")}</p>
-            <p className="font-display text-2xl text-card-foreground mt-1">{doneCount}</p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-4">
-            <p className="label-sm text-status-late">{t("tasks.inQueue")}</p>
-            <p className="font-display text-2xl text-card-foreground mt-1">{pendingCount}</p>
-          </motion.div>
+        <div className="summary-tiles" style={{ gridTemplateColumns: "repeat(2,1fr)" }}>
+          <div><small>{t("tasks.shipped")}</small><strong>{doneCount}</strong></div>
+          <div><small>{t("tasks.inQueue")}</small><strong>{pendingCount}</strong></div>
         </div>
 
         {/* Filter Tabs */}
@@ -324,7 +320,7 @@ const TasksPage = () => {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowForm(!showForm)}
-            className="w-full glass-card text-card-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
+            className="w-full btn-estate text-primary-foreground label-sm py-3.5 rounded-2xl flex items-center justify-center gap-2"
           >
             <Plus size={16} /> {t("tasks.queueTask")}
           </motion.button>
@@ -408,6 +404,7 @@ const TasksPage = () => {
           )}
         </AnimatePresence>
 
+        {appRole === "staff" && <section className="space-y-2"><div className="flex justify-between"><h2 className="headline-sm">Progress</h2><small>{doneCount} / {allTasks.length}</small></div><div className="residence-meter"><i style={{width:(allTasks.length ? doneCount / allTasks.length * 100 : 0)+"%"}} /></div></section>}
         {/* By Date View */}
         {filter === "bydate" ? (
           <div className="space-y-6 pb-4">

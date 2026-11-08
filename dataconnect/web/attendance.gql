@@ -1,0 +1,28 @@
+query OwnerAttendancePeriod($householdId: UUID!, $from: Date!, $to: Date!, $start: Timestamp!, $end: Timestamp!) @auth(level: USER) {
+  corrections: attendanceCorrectionRequests(where: {
+    household: { id: { eq: $householdId }, ownerUid: { eq_expr: "auth.uid" } }
+    status: { eq: "approved" }
+    requestedFor: { ge: $from, le: $to }
+  }, orderBy: [{ reviewedAt: DESC }], limit: 10000) {
+    staffId requestedFor requestedStatus
+  }
+  events: attendanceEvents(where: {
+    household: { id: { eq: $householdId }, ownerUid: { eq_expr: "auth.uid" } }
+    occurredAt: { ge: $start, lt: $end }
+  }, orderBy: [{ occurredAt: DESC }], limit: 10000) {
+    staffId occurredAt eventType source detail
+  }
+}
+
+mutation SetOwnerDayAttendance($householdId: UUID!, $staffId: UUID!, $date: Date!, $status: String!, $reason: String!) @auth(level: USER) @transaction {
+  query @redact {
+    staffMember(id: $staffId) @check(expr: "this != null", message: "Staff member not found") {
+      householdId @check(expr: "this == vars.householdId && vars.status in ['present','late','absent','off-duty']", message: "Invalid household or attendance status")
+      household { ownerUid @check(expr: "this == auth.uid", message: "Owner access required") }
+    }
+  }
+  attendanceCorrectionRequest_insert(data: {
+    householdId: $householdId, staffId: $staffId, requestedFor: $date, requestedStatus: $status,
+    reason: $reason, status: "approved", reviewedAt_expr: "request.time", notes: "Owner attendance edit"
+  })
+}
