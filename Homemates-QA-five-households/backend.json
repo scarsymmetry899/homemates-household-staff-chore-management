@@ -1,0 +1,448 @@
+[
+  {
+    "expenseEntries_on_household": [
+      {
+        "category": "Fuel",
+        "description": "Fresh vegetables",
+        "amount": 185
+      }
+    ],
+    "inventoryItems_on_household": [
+      {
+        "name": "Rice",
+        "unit": "kg",
+        "currentQuantity": 0
+      },
+      {
+        "name": "Cleaning liquid",
+        "unit": "bottle",
+        "currentQuantity": 0
+      },
+      {
+        "unit": "kg",
+        "currentQuantity": 4,
+        "name": "QA Tomatoes"
+      }
+    ],
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "staff": {
+          "name": "Noor"
+        },
+        "requestedStatus": "present",
+        "requestedFor": "2026-11-08",
+        "status": "approved"
+      }
+    ],
+    "staffCashRequests_on_household": [],
+    "payrollRuns_on_household": [
+      {
+        "status": "draft",
+        "staff": {
+          "name": "Mira"
+        },
+        "netPay": 10000
+      }
+    ],
+    "attendanceEvents_on_household": [],
+    "createdAt": "2026-11-08T14:25:24.198140Z",
+    "taskInstances_on_household": [
+      {
+        "assignedStaff": {
+          "name": "Noor"
+        },
+        "title": "Prepare family breakfast",
+        "status": "completed",
+        "completedAt": "2026-11-08T14:25:44.751000Z"
+      }
+    ],
+    "name": "QA Cedar Kitchen",
+    "staffMembers_on_household": [
+      {
+        "salary": 10000,
+        "status": "off-duty",
+        "name": "Mira",
+        "role": "Cook + Cleaner"
+      },
+      {
+        "name": "Noor",
+        "role": "Kitchen helper",
+        "salary": 12000,
+        "status": "off-duty",
+        "photoScheme": "blob",
+        "newBrowserPixels": 0
+      }
+    ],
+    "payrollProfiles_on_household": [
+      {
+        "baseSalary": 10000,
+        "staff": {
+          "name": "Mira"
+        }
+      }
+    ]
+  },
+  {
+    "payrollProfiles_on_household": [
+      {
+        "staff": {
+          "name": "Ravi"
+        },
+        "baseSalary": 11000
+      }
+    ],
+    "name": "QA Maple Garden",
+    "createdAt": "2026-11-08T14:26:16.244191Z",
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "status": "approved",
+        "staff": {
+          "name": "Isha"
+        },
+        "requestedStatus": "late",
+        "requestedFor": "2026-11-08"
+      }
+    ],
+    "staffCashRequests_on_household": [
+      {
+        "purchasedAt": "2026-11-08T14:31:26.012533Z",
+        "linkedExpense": null,
+        "inventoryItem": null,
+        "staff": {
+          "name": "Isha"
+        },
+        "reason": "QA seedling tray",
+        "status": "purchased",
+        "amountRequested": 65,
+        "amountApproved": 65
+      }
+    ],
+    "taskInstances_on_household": [
+      {
+        "completedAt": "2026-11-08T14:31:00.493000Z",
+        "assignedStaff": {
+          "name": "Isha"
+        },
+        "title": "Water the balcony herbs",
+        "status": "completed"
+      }
+    ],
+    "inventoryItems_on_household": [
+      {
+        "name": "Rice",
+        "unit": "kg",
+        "currentQuantity": 0
+      },
+      {
+        "name": "Cleaning liquid",
+        "unit": "bottle",
+        "currentQuantity": 0
+      },
+      {
+        "name": "QA Compost",
+        "unit": "bags",
+        "currentQuantity": 4
+      }
+    ],
+    "payrollRuns_on_household": [
+      {
+        "netPay": 11000,
+        "status": "draft",
+        "staff": {
+          "name": "Ravi"
+        }
+      }
+    ],
+    "staffMembers_on_household": [
+      {
+        "role": "Gardener",
+        "salary": 11000,
+        "status": "off-duty",
+        "name": "Ravi"
+      },
+      {
+        "role": "Plant caretaker",
+        "salary": 12000,
+        "status": "off-duty",
+        "name": "Isha",
+        "photoScheme": "blob",
+        "newBrowserPixels": 0
+      }
+    ],
+    "expenseEntries_on_household": [
+      {
+        "category": "Fuel",
+        "description": "Potting soil",
+        "amount": 320
+      },
+      {
+        "category": "Groceries",
+        "description": "QA seedling tray",
+        "amount": 65
+      }
+    ],
+    "attendanceEvents_on_household": []
+  },
+  {
+    "createdAt": "2026-11-08T14:27:26.064408Z",
+    "staffMembers_on_household": [
+      {
+        "salary": 12000,
+        "status": "off-duty",
+        "name": "Anil",
+        "role": "Housekeeper"
+      },
+      {
+        "name": "Dev",
+        "role": "Chauffeur",
+        "salary": 12000,
+        "status": "off-duty",
+        "photoScheme": "blob",
+        "newBrowserPixels": 0
+      }
+    ],
+    "payrollProfiles_on_household": [
+      {
+        "baseSalary": 12000,
+        "staff": {
+          "name": "Anil"
+        }
+      }
+    ],
+    "expenseEntries_on_household": [
+      {
+        "amount": 900,
+        "category": "Fuel",
+        "description": "Vehicle fuel"
+      }
+    ],
+    "inventoryItems_on_household": [
+      {
+        "unit": "kg",
+        "currentQuantity": 0,
+        "name": "Rice"
+      },
+      {
+        "currentQuantity": 0,
+        "name": "Cleaning liquid",
+        "unit": "bottle"
+      },
+      {
+        "currentQuantity": 4,
+        "name": "QA Washer fluid",
+        "unit": "litres"
+      }
+    ],
+    "staffCashRequests_on_household": [],
+    "attendanceEvents_on_household": [],
+    "payrollRuns_on_household": [
+      {
+        "netPay": 12000,
+        "status": "draft",
+        "staff": {
+          "name": "Anil"
+        }
+      }
+    ],
+    "taskInstances_on_household": [
+      {
+        "assignedStaff": {
+          "name": "Dev"
+        },
+        "title": "Inspect tyres before school pickup",
+        "status": "completed",
+        "completedAt": "2026-11-08T14:27:49.942000Z"
+      }
+    ],
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "requestedStatus": "present",
+        "requestedFor": "2026-11-08",
+        "status": "approved",
+        "staff": {
+          "name": "Dev"
+        }
+      }
+    ],
+    "name": "QA Harbor Commute"
+  },
+  {
+    "payrollRuns_on_household": [
+      {
+        "netPay": 13000,
+        "status": "draft",
+        "staff": {
+          "name": "Leela"
+        }
+      }
+    ],
+    "staffMembers_on_household": [
+      {
+        "name": "Leela",
+        "role": "Housekeeper",
+        "salary": 13000,
+        "status": "off-duty"
+      },
+      {
+        "name": "Sara",
+        "role": "Baby caretaker",
+        "salary": 12000,
+        "status": "off-duty",
+        "photoScheme": "blob",
+        "newBrowserPixels": 0
+      }
+    ],
+    "expenseEntries_on_household": [
+      {
+        "category": "Fuel",
+        "description": "Baby supplies",
+        "amount": 245
+      }
+    ],
+    "inventoryItems_on_household": [
+      {
+        "currentQuantity": 0,
+        "name": "Rice",
+        "unit": "kg"
+      },
+      {
+        "currentQuantity": 0,
+        "name": "Cleaning liquid",
+        "unit": "bottle"
+      },
+      {
+        "currentQuantity": 4,
+        "name": "QA Baby wipes",
+        "unit": "packs"
+      }
+    ],
+    "attendanceEvents_on_household": [],
+    "staffCashRequests_on_household": [],
+    "name": "QA Willow Nursery",
+    "createdAt": "2026-11-08T14:28:21.612881Z",
+    "payrollProfiles_on_household": [
+      {
+        "baseSalary": 13000,
+        "staff": {
+          "name": "Leela"
+        }
+      }
+    ],
+    "taskInstances_on_household": [
+      {
+        "title": "Prepare the lunchtime feeding kit",
+        "status": "completed",
+        "completedAt": "2026-11-08T14:32:48.136000Z",
+        "assignedStaff": {
+          "name": "Sara"
+        }
+      }
+    ],
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "staff": {
+          "name": "Sara"
+        },
+        "requestedStatus": "present",
+        "requestedFor": "2026-11-08",
+        "status": "approved"
+      }
+    ]
+  },
+  {
+    "inventoryItems_on_household": [
+      {
+        "name": "Rice",
+        "unit": "kg",
+        "currentQuantity": 0
+      },
+      {
+        "name": "Cleaning liquid",
+        "unit": "bottle",
+        "currentQuantity": 0
+      },
+      {
+        "name": "QA Dog food",
+        "unit": "kg",
+        "currentQuantity": 4
+      }
+    ],
+    "attendanceEvents_on_household": [],
+    "payrollProfiles_on_household": [
+      {
+        "staff": {
+          "name": "Ria"
+        },
+        "baseSalary": 14000
+      }
+    ],
+    "createdAt": "2026-11-08T14:29:17.279101Z",
+    "taskInstances_on_household": [
+      {
+        "title": "Refill water after the evening walk",
+        "status": "completed",
+        "completedAt": "2026-11-08T14:29:33.243000Z",
+        "assignedStaff": {
+          "name": "Omar"
+        }
+      }
+    ],
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "status": "approved",
+        "staff": {
+          "name": "Omar"
+        },
+        "requestedStatus": "present",
+        "requestedFor": "2026-11-08"
+      },
+      {
+        "status": "approved",
+        "staff": {
+          "name": "Omar"
+        },
+        "requestedStatus": "absent",
+        "requestedFor": "2026-11-08"
+      }
+    ],
+    "staffCashRequests_on_household": [],
+    "payrollRuns_on_household": [
+      {
+        "netPay": 14000,
+        "status": "draft",
+        "staff": {
+          "name": "Ria"
+        }
+      }
+    ],
+    "expenseEntries_on_household": [
+      {
+        "category": "Fuel",
+        "description": "Pet supplies",
+        "amount": 410
+      },
+      {
+        "amount": 80,
+        "category": "Household",
+        "description": "Dog biscuits"
+      }
+    ],
+    "staffMembers_on_household": [
+      {
+        "name": "Ria",
+        "role": "Dog walker",
+        "salary": 14000,
+        "status": "off-duty"
+      },
+      {
+        "name": "Omar",
+        "role": "Pet caretaker",
+        "salary": 12000,
+        "status": "off-duty",
+        "photoScheme": "blob",
+        "newBrowserPixels": 0
+      }
+    ],
+    "name": "QA Birch Pets"
+  }
+]

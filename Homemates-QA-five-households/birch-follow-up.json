@@ -1,0 +1,31 @@
+{
+  "task": "Completed after independent login",
+  "absence": "Absent saved",
+  "payrollExport": [
+    {
+      "Staff": "Omar",
+      "Period": "November 2026",
+      "Base": 12000,
+      "Deductions": 0,
+      "Net": 12000
+    },
+    {
+      "Staff": "Ria",
+      "Period": "November 2026",
+      "Base": 14000,
+      "Deductions": 0,
+      "Net": 14000
+    }
+  ],
+  "receipt": {
+    "lines": [
+      "Dog biscuits\n\nHousehold · ₹80",
+      "Pet soap\n\nHousehold · ₹40"
+    ],
+    "month": "Report month \nNovember 2026\nOctober 2026\nSeptember 2026\nAugust 2026\nJuly 2026\nJune 2026\nMay 2026\nApril 2026\nMarch 2026\nFebruary 2026\nJanuary 2026\nDecember 2025\n\nMonthly Spending\n\n₹490\n\nDay 1\nDay 30"
+  },
+  "integrationSetup": {
+    "noReader": true,
+    "telegramSetup": true
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "home": "QA Harbor Commute",
+  "period": "Round 3716871",
+  "checks": {
+    "directoryHire": {
+      "pass": true,
+      "detail": {
+        "name": "Relief Dev Round 3716871",
+        "net": 6000
+      }
+    },
+    "photo": {
+      "pass": true,
+      "detail": {
+        "width": 384,
+        "height": 384,
+        "sha256": "58689a14c5914143"
+      }
+    },
+    "tasks": {
+      "pass": true,
+      "detail": {
+        "peerMs": 1863,
+        "status": "completed",
+        "completedAt": "2026-11-08T16:03:17.812000Z",
+        "assignedStaff": {
+          "name": "Dev"
+        },
+        "title": "Inspect tyres before school pickup · Round 3716871"
+      }
+    },
+    "payroll": {
+      "pass": true,
+      "detail": {
+        "exportedNet": 11600,
+        "absentNet": 11600,
+        "restoredNet": 12000,
+        "absenceDeduction": 400
+      }
+    },
+    "category": {
+      "pass": true,
+      "detail": {
+        "id": "c53d0e9f0e0c4ffbb567d35db2f22ae8",
+        "category": "Fuel",
+        "amount": 23,
+        "description": "Round 3716871 Vehicle fuel"
+      }
+    },
+    "purchase": {
+      "pass": true,
+      "detail": {
+        "requestId": "d54259420fbe47389abb371c6676ea61",
+        "expenseId": "d54259420fbe47389abb371c6676ea61",
+        "item": "QA Washer fluid",
+        "from": 4,
+        "to": 6,
+        "amount": 47
+      }
+    },
+    "language": {
+      "pass": true,
+      "detail": {
+        "code": "kn",
+        "peerTitle": "ಕೆಲಸಗಳು"
+      }
+    }
+  },
+  "returned": true
+}

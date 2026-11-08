@@ -1,0 +1,397 @@
+[
+  {
+    "id": "2f799d57bafc4ca29376c7f36e2c89c3",
+    "payrollRuns_on_household": [
+      {
+        "monthLabel": "November 2026",
+        "baseSalary": 12000,
+        "netPay": 12000,
+        "deductions": 0,
+        "attendanceDeductions": 0
+      }
+    ],
+    "expenseEntries_on_household": [
+      {
+        "id": "50cb14824edc483aa705b2bc81be266d",
+        "description": "Round 3563860 Fresh vegetables",
+        "amount": 23,
+        "category": "Groceries"
+      }
+    ],
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "id": "bfeac6ceb64749d0b1dcc80c7235f866",
+        "requestedFor": "2026-11-08",
+        "requestedStatus": "present",
+        "reviewedAt": "2026-11-08T16:06:42.076136Z"
+      }
+    ],
+    "owner": {
+      "language": "en"
+    },
+    "staffCashRequests_on_household": [
+      {
+        "amountApproved": 47,
+        "purchasedAt": "2026-11-08T16:00:27.874063Z",
+        "linkedExpense": {
+          "id": "763400e210804e229caf132a65a37096",
+          "amount": 47
+        },
+        "inventoryItem": {
+          "id": "8bc7797f98da44f9bd2ef15e0f2c559a",
+          "name": "QA Tomatoes",
+          "unit": "kg",
+          "currentQuantity": 7
+        },
+        "id": "763400e210804e229caf132a65a37096",
+        "status": "purchased"
+      }
+    ],
+    "inventoryMovements_on_household": [
+      {
+        "id": "763400e210804e229caf132a65a37096",
+        "quantity": 2,
+        "movementType": "purchase",
+        "occurredAt": "2026-11-08T16:00:27.874063Z"
+      }
+    ],
+    "payrollProfiles_on_household": [
+      {
+        "id": "01b837515cd64c15973f4dbac8e5b019",
+        "staff": {
+          "name": "Relief Noor Round 3563860",
+          "role": "Kitchen helper + Cleaning"
+        },
+        "baseSalary": 6000
+      }
+    ],
+    "name": "QA Cedar Kitchen",
+    "taskInstances_on_household": [
+      {
+        "id": "5e0372f6b4be45d38fdcb7823a3d6d39",
+        "title": "Prepare family breakfast · Round 3563860",
+        "status": "completed",
+        "completedAt": "2026-11-08T15:59:57.471000Z",
+        "assignedStaff": {
+          "name": "Noor"
+        }
+      }
+    ]
+  },
+  {
+    "owner": {
+      "language": "en"
+    },
+    "staffCashRequests_on_household": [
+      {
+        "inventoryItem": {
+          "id": "44e14e8ac38246a895624e54dfc566ae",
+          "name": "QA Compost",
+          "unit": "bags",
+          "currentQuantity": 6
+        },
+        "id": "61a2c9968db5490f84bdd80fccf07977",
+        "status": "purchased",
+        "amountApproved": 47,
+        "purchasedAt": "2026-11-08T16:02:45.894755Z",
+        "linkedExpense": {
+          "id": "61a2c9968db5490f84bdd80fccf07977",
+          "amount": 47
+        }
+      }
+    ],
+    "inventoryMovements_on_household": [
+      {
+        "id": "61a2c9968db5490f84bdd80fccf07977",
+        "quantity": 2,
+        "movementType": "purchase",
+        "occurredAt": "2026-11-08T16:02:45.894755Z"
+      }
+    ],
+    "payrollProfiles_on_household": [
+      {
+        "id": "1ca891e661f34f1eab102da01f1a70e1",
+        "staff": {
+          "name": "Relief Isha Round 3716871",
+          "role": "Plant caretaker + Cleaning"
+        },
+        "baseSalary": 6000
+      }
+    ],
+    "id": "ec620367524d4387b9c859a8bac3b24d",
+    "taskInstances_on_household": [
+      {
+        "assignedStaff": {
+          "name": "Isha"
+        },
+        "id": "e41e84b50a20497db41627ab3d3ef756",
+        "title": "Water the balcony herbs · Round 3716871",
+        "status": "completed",
+        "completedAt": "2026-11-08T16:02:28.347000Z"
+      }
+    ],
+    "payrollRuns_on_household": [
+      {
+        "baseSalary": 12000,
+        "netPay": 12000,
+        "deductions": 0,
+        "attendanceDeductions": 0,
+        "monthLabel": "November 2026"
+      }
+    ],
+    "expenseEntries_on_household": [
+      {
+        "id": "d14eb6a239884e26a4241a8fcfa6d20d",
+        "description": "Round 3716871 Potting soil",
+        "amount": 23,
+        "category": "Household"
+      }
+    ],
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "id": "cd29abb1a69c45238ceb75fd4e7dd70d",
+        "requestedFor": "2026-11-08",
+        "requestedStatus": "present",
+        "reviewedAt": "2026-11-08T16:07:54.117659Z"
+      }
+    ],
+    "name": "QA Maple Garden"
+  },
+  {
+    "taskInstances_on_household": [
+      {
+        "completedAt": "2026-11-08T16:03:17.812000Z",
+        "assignedStaff": {
+          "name": "Dev"
+        },
+        "id": "f87016baf0cc47ab9acd8db7b6edfc37",
+        "title": "Inspect tyres before school pickup · Round 3716871",
+        "status": "completed"
+      }
+    ],
+    "staffCashRequests_on_household": [
+      {
+        "amountApproved": 47,
+        "purchasedAt": "2026-11-08T16:03:35.543011Z",
+        "linkedExpense": {
+          "id": "d54259420fbe47389abb371c6676ea61",
+          "amount": 47
+        },
+        "inventoryItem": {
+          "unit": "litres",
+          "currentQuantity": 6,
+          "id": "da43229b87554c91a60b0dc090c08091",
+          "name": "QA Washer fluid"
+        },
+        "id": "d54259420fbe47389abb371c6676ea61",
+        "status": "purchased"
+      }
+    ],
+    "payrollProfiles_on_household": [
+      {
+        "id": "f50a2e2eeb6d49959b066dc076c7989b",
+        "staff": {
+          "name": "Relief Dev Round 3716871",
+          "role": "Chauffeur + Cleaning"
+        },
+        "baseSalary": 6000
+      }
+    ],
+    "name": "QA Harbor Commute",
+    "owner": {
+      "language": "en"
+    },
+    "inventoryMovements_on_household": [
+      {
+        "id": "d54259420fbe47389abb371c6676ea61",
+        "quantity": 2,
+        "movementType": "purchase",
+        "occurredAt": "2026-11-08T16:03:35.543011Z"
+      }
+    ],
+    "payrollRuns_on_household": [
+      {
+        "baseSalary": 12000,
+        "netPay": 12000,
+        "deductions": 0,
+        "attendanceDeductions": 0,
+        "monthLabel": "November 2026"
+      }
+    ],
+    "id": "1b5b71b31d484122b88b1f3375269b4d",
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "id": "39639851397c46a78e1fb0af2338a272",
+        "requestedFor": "2026-11-08",
+        "requestedStatus": "present",
+        "reviewedAt": "2026-11-08T16:08:21.592130Z"
+      }
+    ],
+    "expenseEntries_on_household": [
+      {
+        "amount": 23,
+        "category": "Fuel",
+        "id": "c53d0e9f0e0c4ffbb567d35db2f22ae8",
+        "description": "Round 3716871 Vehicle fuel"
+      }
+    ]
+  },
+  {
+    "inventoryMovements_on_household": [
+      {
+        "id": "663c5bfc0eb847ee98810912b70dc072",
+        "quantity": 2,
+        "movementType": "purchase",
+        "occurredAt": "2026-11-08T16:04:46.256510Z"
+      }
+    ],
+    "payrollProfiles_on_household": [
+      {
+        "staff": {
+          "name": "Relief Sara Round 3716871",
+          "role": "Baby caretaker + Cleaning"
+        },
+        "baseSalary": 6000,
+        "id": "3b93701471c748d9916321590ba15047"
+      }
+    ],
+    "expenseEntries_on_household": [
+      {
+        "id": "c8aec2ee6cf94a71b7223e20aa28977a",
+        "description": "Round 3716871 Baby supplies",
+        "amount": 23,
+        "category": "Household"
+      }
+    ],
+    "id": "d3bd9c1ef93e42459936c325bb9fe0ba",
+    "taskInstances_on_household": [
+      {
+        "completedAt": "2026-11-08T16:04:28.558000Z",
+        "assignedStaff": {
+          "name": "Sara"
+        },
+        "id": "8d5b372a14ea44dbbefecf7617a12618",
+        "title": "Prepare the lunchtime feeding kit · Round 3716871",
+        "status": "completed"
+      }
+    ],
+    "staffCashRequests_on_household": [
+      {
+        "amountApproved": 47,
+        "purchasedAt": "2026-11-08T16:04:46.256510Z",
+        "linkedExpense": {
+          "id": "663c5bfc0eb847ee98810912b70dc072",
+          "amount": 47
+        },
+        "inventoryItem": {
+          "unit": "packs",
+          "currentQuantity": 6,
+          "id": "d1002cb0478a402a8ab24bc442cf4b7c",
+          "name": "QA Baby wipes"
+        },
+        "id": "663c5bfc0eb847ee98810912b70dc072",
+        "status": "purchased"
+      }
+    ],
+    "payrollRuns_on_household": [
+      {
+        "netPay": 12000,
+        "deductions": 0,
+        "attendanceDeductions": 0,
+        "monthLabel": "November 2026",
+        "baseSalary": 12000
+      }
+    ],
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "reviewedAt": "2026-11-08T16:08:48.247061Z",
+        "id": "6b7f6909c62945138addbebd39c09a5d",
+        "requestedFor": "2026-11-08",
+        "requestedStatus": "present"
+      }
+    ],
+    "owner": {
+      "language": "en"
+    },
+    "name": "QA Willow Nursery"
+  },
+  {
+    "taskInstances_on_household": [
+      {
+        "id": "1faa739809ab4acb9cdcb4085b52964b",
+        "title": "Refill water after the evening walk · Round 3716871",
+        "status": "completed",
+        "completedAt": "2026-11-08T16:05:36.422000Z",
+        "assignedStaff": {
+          "name": "Omar"
+        }
+      }
+    ],
+    "staffCashRequests_on_household": [
+      {
+        "purchasedAt": "2026-11-08T16:05:56.492489Z",
+        "linkedExpense": {
+          "id": "4fc4a14829e74b7da8c5f8537308912c",
+          "amount": 47
+        },
+        "inventoryItem": {
+          "name": "QA Dog food",
+          "unit": "kg",
+          "currentQuantity": 6,
+          "id": "9a045646cfa64bafaf8cd04f27ae5b60"
+        },
+        "id": "4fc4a14829e74b7da8c5f8537308912c",
+        "status": "purchased",
+        "amountApproved": 47
+      }
+    ],
+    "payrollProfiles_on_household": [
+      {
+        "staff": {
+          "role": "Pet caretaker + Cleaning",
+          "name": "Relief Omar Round 3716871"
+        },
+        "baseSalary": 6000,
+        "id": "8cd7160fb87a4de0a03453fff35ecd30"
+      }
+    ],
+    "id": "b825d1883e524c7b9dfd2093508190b6",
+    "owner": {
+      "language": "en"
+    },
+    "expenseEntries_on_household": [
+      {
+        "id": "123c8a521a6c448ebca92252b4a6cc5a",
+        "description": "Round 3716871 Pet supplies",
+        "amount": 23,
+        "category": "Household"
+      }
+    ],
+    "inventoryMovements_on_household": [
+      {
+        "quantity": 2,
+        "movementType": "purchase",
+        "occurredAt": "2026-11-08T16:05:56.492489Z",
+        "id": "4fc4a14829e74b7da8c5f8537308912c"
+      }
+    ],
+    "payrollRuns_on_household": [
+      {
+        "monthLabel": "November 2026",
+        "baseSalary": 12000,
+        "netPay": 12000,
+        "deductions": 0,
+        "attendanceDeductions": 0
+      }
+    ],
+    "attendanceCorrectionRequests_on_household": [
+      {
+        "reviewedAt": "2026-11-08T16:09:15.579923Z",
+        "id": "547497f41ed7457cb40817244ee68229",
+        "requestedFor": "2026-11-08",
+        "requestedStatus": "present"
+      }
+    ],
+    "name": "QA Birch Pets"
+  }
+]

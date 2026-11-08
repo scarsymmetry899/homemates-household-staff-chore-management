@@ -1,0 +1,95 @@
+{
+  "home": "QA Cedar Kitchen",
+  "period": "Round 3563860",
+  "checks": {
+    "directoryHire": {
+      "pass": true,
+      "detail": {
+        "name": "Relief Noor Round 3563860",
+        "net": 6000
+      }
+    },
+    "photo": {
+      "pass": true,
+      "detail": {
+        "width": 384,
+        "height": 384,
+        "sha256": "c9ed8b61df91bc42"
+      }
+    },
+    "tasks": {
+      "pass": true,
+      "detail": {
+        "peerMs": 1879,
+        "completedAt": "2026-11-08T15:59:57.471000Z",
+        "assignedStaff": {
+          "name": "Noor"
+        },
+        "title": "Prepare family breakfast · Round 3563860",
+        "status": "completed"
+      }
+    },
+    "payroll": {
+      "pass": true,
+      "detail": {
+        "exportedNet": 11600,
+        "absentNet": 11600,
+        "restoredNet": 12000,
+        "absenceDeduction": 400
+      }
+    },
+    "category": {
+      "pass": true,
+      "detail": {
+        "id": "50cb14824edc483aa705b2bc81be266d",
+        "category": "Groceries",
+        "amount": 23,
+        "description": "Round 3563860 Fresh vegetables"
+      }
+    },
+    "purchase": {
+      "pass": true,
+      "detail": {
+        "requestId": "763400e210804e229caf132a65a37096",
+        "expenseId": "763400e210804e229caf132a65a37096",
+        "item": "QA Tomatoes",
+        "from": 4,
+        "to": 6,
+        "amount": 47
+      }
+    },
+    "language": {
+      "pass": true,
+      "detail": {
+        "code": "hi",
+        "peerTitle": "कार्य"
+      }
+    },
+    "allLanguages": {
+      "pass": true,
+      "detail": [
+        {
+          "code": "hi",
+          "title": "कार्य"
+        },
+        {
+          "code": "te",
+          "title": "పనులు"
+        },
+        {
+          "code": "kn",
+          "title": "ಕೆಲಸಗಳು"
+        },
+        {
+          "code": "ml",
+          "title": "ജോലികൾ"
+        },
+        {
+          "code": "en",
+          "title": "Tasks"
+        }
+      ]
+    }
+  },
+  "returned": true
+}

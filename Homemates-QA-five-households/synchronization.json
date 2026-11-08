@@ -1,0 +1,43 @@
+{
+  "writerConfirmed": true,
+  "peerUpdateMs": null,
+  "afterReload": true,
+  "languages": [
+    {
+      "code": "hi",
+      "initial": "hi",
+      "after": "en",
+      "title": "Tasks"
+    },
+    {
+      "code": "te",
+      "initial": "te",
+      "after": "te",
+      "title": "పనులు"
+    },
+    {
+      "code": "kn",
+      "initial": "te",
+      "after": "te",
+      "title": "పనులు"
+    },
+    {
+      "code": "ml",
+      "initial": "ml",
+      "after": "ml",
+      "title": "ജോലികൾ"
+    },
+    {
+      "code": "en",
+      "initial": "en",
+      "after": "en",
+      "title": "Tasks"
+    }
+  ],
+  "longPressOptions": [
+    "Present",
+    "Late",
+    "Absent",
+    "Off-Duty"
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "home": "QA Maple Garden",
+  "period": "Round 3716871",
+  "checks": {
+    "directoryHire": {
+      "pass": true,
+      "detail": {
+        "name": "Relief Isha Round 3716871",
+        "net": 6000
+      }
+    },
+    "photo": {
+      "pass": true,
+      "detail": {
+        "width": 384,
+        "height": 384,
+        "sha256": "5a7e88eff7891421"
+      }
+    },
+    "tasks": {
+      "pass": true,
+      "detail": {
+        "peerMs": 1875,
+        "status": "completed",
+        "completedAt": "2026-11-08T16:02:28.347000Z",
+        "assignedStaff": {
+          "name": "Isha"
+        },
+        "title": "Water the balcony herbs · Round 3716871"
+      }
+    },
+    "payroll": {
+      "pass": true,
+      "detail": {
+        "exportedNet": 11600,
+        "absentNet": 11600,
+        "restoredNet": 12000,
+        "absenceDeduction": 400
+      }
+    },
+    "category": {
+      "pass": true,
+      "detail": {
+        "id": "d14eb6a239884e26a4241a8fcfa6d20d",
+        "category": "Household",
+        "amount": 23,
+        "description": "Round 3716871 Potting soil"
+      }
+    },
+    "purchase": {
+      "pass": true,
+      "detail": {
+        "requestId": "61a2c9968db5490f84bdd80fccf07977",
+        "expenseId": "61a2c9968db5490f84bdd80fccf07977",
+        "item": "QA Compost",
+        "from": 4,
+        "to": 6,
+        "amount": 47
+      }
+    },
+    "language": {
+      "pass": true,
+      "detail": {
+        "code": "te",
+        "peerTitle": "పనులు"
+      }
+    }
+  },
+  "returned": true
+}

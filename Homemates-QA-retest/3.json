@@ -1,0 +1,70 @@
+{
+  "home": "QA Willow Nursery",
+  "period": "Round 3716871",
+  "checks": {
+    "directoryHire": {
+      "pass": true,
+      "detail": {
+        "name": "Relief Sara Round 3716871",
+        "net": 6000
+      }
+    },
+    "photo": {
+      "pass": true,
+      "detail": {
+        "width": 384,
+        "height": 384,
+        "sha256": "ca92b0c5725011d8"
+      }
+    },
+    "tasks": {
+      "pass": true,
+      "detail": {
+        "peerMs": 1869,
+        "status": "completed",
+        "completedAt": "2026-11-08T16:04:28.558000Z",
+        "assignedStaff": {
+          "name": "Sara"
+        },
+        "title": "Prepare the lunchtime feeding kit · Round 3716871"
+      }
+    },
+    "payroll": {
+      "pass": true,
+      "detail": {
+        "exportedNet": 11600,
+        "absentNet": 11600,
+        "restoredNet": 12000,
+        "absenceDeduction": 400
+      }
+    },
+    "category": {
+      "pass": true,
+      "detail": {
+        "description": "Round 3716871 Baby supplies",
+        "id": "c8aec2ee6cf94a71b7223e20aa28977a",
+        "category": "Household",
+        "amount": 23
+      }
+    },
+    "purchase": {
+      "pass": true,
+      "detail": {
+        "requestId": "663c5bfc0eb847ee98810912b70dc072",
+        "expenseId": "663c5bfc0eb847ee98810912b70dc072",
+        "item": "QA Baby wipes",
+        "from": 4,
+        "to": 6,
+        "amount": 47
+      }
+    },
+    "language": {
+      "pass": true,
+      "detail": {
+        "code": "ml",
+        "peerTitle": "ജോലികൾ"
+      }
+    }
+  },
+  "returned": true
+}

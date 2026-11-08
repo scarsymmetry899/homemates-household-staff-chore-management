@@ -1,0 +1,39 @@
+{
+  "categories": [
+    {
+      "home": "Cedar Kitchen",
+      "description": "Fresh vegetables",
+      "amount": 185,
+      "category": "Groceries"
+    },
+    {
+      "home": "Maple Garden",
+      "description": "Potting soil",
+      "amount": 320,
+      "category": "Household"
+    },
+    {
+      "home": "Harbor Commute",
+      "description": "Vehicle fuel",
+      "amount": 900,
+      "category": "Fuel"
+    },
+    {
+      "home": "Willow Nursery",
+      "description": "Baby supplies",
+      "amount": 245,
+      "category": "Household"
+    },
+    {
+      "home": "Birch Pets",
+      "description": "Pet supplies",
+      "amount": 410,
+      "category": "Household"
+    }
+  ],
+  "legacyPurchase": {
+    "request": "e07adc1843e445a188f69d13e4dc5e77",
+    "expense": "6b650397feb14f8a9059d40360578c21",
+    "amount": 65
+  }
+}

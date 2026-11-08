@@ -1,0 +1,271 @@
+[
+  {
+    "home": "Cedar Kitchen",
+    "first": "Mira",
+    "role": "Cook + Cleaner",
+    "second": "Noor",
+    "role2": "Kitchen helper",
+    "task": "Prepare family breakfast",
+    "item": "Fresh vegetables",
+    "amount": 185,
+    "stock": "Tomatoes",
+    "checks": [
+      {
+        "label": "Account and onboarding",
+        "pass": true
+      },
+      {
+        "label": "Add second staff member",
+        "pass": true
+      },
+      {
+        "label": "Attach staff photo",
+        "pass": true
+      },
+      {
+        "label": "Image element present after reload (decode not checked)",
+        "pass": true
+      },
+      {
+        "label": "Assign and complete task",
+        "pass": true
+      },
+      {
+        "label": "Expense and monthly total",
+        "pass": true
+      },
+      {
+        "label": "Inventory and quantity",
+        "pass": true
+      },
+      {
+        "label": "Attendance correction",
+        "pass": true
+      },
+      {
+        "label": "Payroll total",
+        "pass": true
+      },
+      {
+        "label": "Returning owner",
+        "pass": true
+      }
+    ]
+  },
+  {
+    "home": "Maple Garden",
+    "first": "Ravi",
+    "role": "Gardener",
+    "second": "Isha",
+    "role2": "Plant caretaker",
+    "task": "Water the balcony herbs",
+    "item": "Potting soil",
+    "amount": 320,
+    "stock": "Compost",
+    "checks": [
+      {
+        "label": "Account and onboarding",
+        "pass": true
+      },
+      {
+        "label": "Add second staff member",
+        "pass": true
+      },
+      {
+        "label": "Attach staff photo",
+        "pass": true
+      },
+      {
+        "label": "Image element present after reload (decode not checked)",
+        "pass": true
+      },
+      {
+        "label": "Assign and complete task",
+        "pass": false,
+        "error": "locator.click: Timeout 16000ms exceeded. Call log: \u001b[2m  - waiting for getByRole('button', { name: 'Mark complete: Water the balcony herbs', exact: true })\u001b[22m"
+      },
+      {
+        "label": "Expense and monthly total",
+        "pass": true
+      },
+      {
+        "label": "Inventory and quantity",
+        "pass": true
+      },
+      {
+        "label": "Attendance correction",
+        "pass": false,
+        "error": "locator.check: Timeout 16000ms exceeded. Call log: \u001b[2m  - waiting for getByRole('radio', { name: /^present$/i })\u001b[22m"
+      },
+      {
+        "label": "Payroll total",
+        "pass": true
+      },
+      {
+        "label": "Returning owner",
+        "pass": true
+      }
+    ]
+  },
+  {
+    "home": "Harbor Commute",
+    "first": "Anil",
+    "role": "Housekeeper",
+    "second": "Dev",
+    "role2": "Chauffeur",
+    "task": "Inspect tyres before school pickup",
+    "item": "Vehicle fuel",
+    "amount": 900,
+    "stock": "Washer fluid",
+    "checks": [
+      {
+        "label": "Account and onboarding",
+        "pass": true
+      },
+      {
+        "label": "Add second staff member",
+        "pass": true
+      },
+      {
+        "label": "Attach staff photo",
+        "pass": true
+      },
+      {
+        "label": "Image element present after reload (decode not checked)",
+        "pass": true
+      },
+      {
+        "label": "Assign and complete task",
+        "pass": true
+      },
+      {
+        "label": "Expense and monthly total",
+        "pass": true
+      },
+      {
+        "label": "Inventory and quantity",
+        "pass": true
+      },
+      {
+        "label": "Attendance correction",
+        "pass": true
+      },
+      {
+        "label": "Payroll total",
+        "pass": true
+      },
+      {
+        "label": "Returning owner",
+        "pass": true
+      }
+    ]
+  },
+  {
+    "home": "Willow Nursery",
+    "first": "Leela",
+    "role": "Housekeeper",
+    "second": "Sara",
+    "role2": "Baby caretaker",
+    "task": "Prepare the lunchtime feeding kit",
+    "item": "Baby supplies",
+    "amount": 245,
+    "stock": "Baby wipes",
+    "checks": [
+      {
+        "label": "Account and onboarding",
+        "pass": true
+      },
+      {
+        "label": "Add second staff member",
+        "pass": true
+      },
+      {
+        "label": "Attach staff photo",
+        "pass": true
+      },
+      {
+        "label": "Image element present after reload (decode not checked)",
+        "pass": true
+      },
+      {
+        "label": "Assign and complete task",
+        "pass": false,
+        "error": "locator.click: Timeout 16000ms exceeded. Call log: \u001b[2m  - waiting for getByRole('button', { name: 'Mark complete: Prepare the lunchtime feeding kit', exact: true })\u001b[22m"
+      },
+      {
+        "label": "Expense and monthly total",
+        "pass": true
+      },
+      {
+        "label": "Inventory and quantity",
+        "pass": true
+      },
+      {
+        "label": "Attendance correction",
+        "pass": true
+      },
+      {
+        "label": "Payroll total",
+        "pass": true
+      },
+      {
+        "label": "Returning owner",
+        "pass": true
+      }
+    ]
+  },
+  {
+    "home": "Birch Pets",
+    "first": "Ria",
+    "role": "Dog walker",
+    "second": "Omar",
+    "role2": "Pet caretaker",
+    "task": "Refill water after the evening walk",
+    "item": "Pet supplies",
+    "amount": 410,
+    "stock": "Dog food",
+    "checks": [
+      {
+        "label": "Account and onboarding",
+        "pass": true
+      },
+      {
+        "label": "Add second staff member",
+        "pass": true
+      },
+      {
+        "label": "Attach staff photo",
+        "pass": true
+      },
+      {
+        "label": "Image element present after reload (decode not checked)",
+        "pass": true
+      },
+      {
+        "label": "Assign and complete task",
+        "pass": false,
+        "error": "locator.waitFor: Timeout 16000ms exceeded. Call log: \u001b[2m  - waiting for getByRole('button', { name: 'Mark pending: Refill water after the evening walk', exact: true }) to be visible\u001b[22m"
+      },
+      {
+        "label": "Expense and monthly total",
+        "pass": true
+      },
+      {
+        "label": "Inventory and quantity",
+        "pass": true
+      },
+      {
+        "label": "Attendance correction",
+        "pass": true
+      },
+      {
+        "label": "Payroll total",
+        "pass": true
+      },
+      {
+        "label": "Returning owner",
+        "pass": true
+      }
+    ]
+  }
+]

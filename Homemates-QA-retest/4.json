@@ -1,0 +1,70 @@
+{
+  "home": "QA Birch Pets",
+  "period": "Round 3716871",
+  "checks": {
+    "directoryHire": {
+      "pass": true,
+      "detail": {
+        "name": "Relief Omar Round 3716871",
+        "net": 6000
+      }
+    },
+    "photo": {
+      "pass": true,
+      "detail": {
+        "width": 384,
+        "height": 384,
+        "sha256": "d21e8d5a87cf8d5e"
+      }
+    },
+    "tasks": {
+      "pass": true,
+      "detail": {
+        "peerMs": 1872,
+        "assignedStaff": {
+          "name": "Omar"
+        },
+        "title": "Refill water after the evening walk · Round 3716871",
+        "status": "completed",
+        "completedAt": "2026-11-08T16:05:36.422000Z"
+      }
+    },
+    "payroll": {
+      "pass": true,
+      "detail": {
+        "exportedNet": 11600,
+        "absentNet": 11600,
+        "restoredNet": 12000,
+        "absenceDeduction": 400
+      }
+    },
+    "category": {
+      "pass": true,
+      "detail": {
+        "id": "123c8a521a6c448ebca92252b4a6cc5a",
+        "category": "Household",
+        "amount": 23,
+        "description": "Round 3716871 Pet supplies"
+      }
+    },
+    "purchase": {
+      "pass": true,
+      "detail": {
+        "requestId": "4fc4a14829e74b7da8c5f8537308912c",
+        "expenseId": "4fc4a14829e74b7da8c5f8537308912c",
+        "item": "QA Dog food",
+        "from": 4,
+        "to": 6,
+        "amount": 47
+      }
+    },
+    "language": {
+      "pass": true,
+      "detail": {
+        "code": "en",
+        "peerTitle": "Tasks"
+      }
+    }
+  },
+  "returned": true
+}

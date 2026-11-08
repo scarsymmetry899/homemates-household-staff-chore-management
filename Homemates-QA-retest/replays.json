@@ -1,0 +1,17 @@
+{
+  "purchase": {
+    "invalidHouseholdStockRolledBack": true,
+    "concurrentPosts": 2,
+    "expenseRows": 1,
+    "movementRows": 1,
+    "quantityAdded": 1,
+    "requestId": "def7b904b02545c6ac4ec17c86406c92"
+  },
+  "payroll": {
+    "baseNet": 6000,
+    "manual": 25,
+    "absentWrites": 2,
+    "absentNet": 5775,
+    "restoredNet": 5975
+  }
+}
