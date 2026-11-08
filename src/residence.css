@@ -27,10 +27,34 @@
 .attendance-cell.bg-status-late {color:#302114}
 .week-strip {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));padding:6px;background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:14px}
 .week-strip button {display:grid;justify-items:center;padding:6px 0;border-radius:8px}
-.week-strip button:hover:not(:disabled) {background:hsl(var(--secondary-container))}
+@media (hover:hover) and (pointer:fine) {
+  .week-strip button:hover:not(:disabled) {background:hsl(var(--secondary-container))}
+}
 .week-strip button:disabled {opacity:.55}
 .week-strip strong {font:1.25rem 'Noto Serif',Georgia,serif}
 .residence-ledger {padding:1.2rem;border-radius:1rem;background:hsl(var(--card));border:1px solid hsl(var(--border))}
 .staff-grid {display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+
+/* Let the header, tabs, and portal sheets clear edge-to-edge phone chrome. */
+.brand-header {padding-top:calc(.75rem + env(safe-area-inset-top,0px))}
+.native-shell, .native-entry, .native-sheet {
+  padding-left:max(var(--edge-padding,0px),env(safe-area-inset-left,0px));
+  padding-right:max(var(--edge-padding,0px),env(safe-area-inset-right,0px));
+}
+.native-entry {
+  padding-top:calc(1.25rem + env(safe-area-inset-top,0px));
+  padding-bottom:calc(1.25rem + env(safe-area-inset-bottom,0px));
+}
+.native-sheet {padding-bottom:env(safe-area-inset-bottom,0px)}
+[role=dialog]:not(.native-sheet) {max-width:calc(100% - 1rem - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)); max-height:calc(100dvh - 2rem - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)); overflow-y:auto; overscroll-behavior:contain}
+@media(max-width:767px) {
+  .native-shell nav {padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+}
+.app-shell-scroll,.native-sheet .overflow-y-auto {overscroll-behavior:contain}
+/* Outside Tailwind's layers so text-sm utilities cannot trigger iOS focus zoom. */
+@media (any-pointer:coarse) {
+  :root :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select) {font-size:max(16px,1rem)}
+  :where(button,[role=button],summary):active:not(:disabled) {background-image:linear-gradient(rgb(86 124 141 / .13),rgb(86 124 141 / .13))}
+}
 @media(max-width:380px){.residence-brand{font-size:.95rem}.brand-header{gap:2px;padding-inline:8px}.brand-header>div{gap:3px}.brand-header .glass-btn{min-width:34px;width:auto}}
 @media(min-width:768px){.residence-banner{min-height:12rem}.room-directory>div{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}.expense-trend svg{height:80px}.payslip{max-width:42rem}}

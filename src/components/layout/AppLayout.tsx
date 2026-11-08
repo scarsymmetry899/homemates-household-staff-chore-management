@@ -14,7 +14,7 @@ const AppLayout = () => {
     if (main.current) main.current.scrollTop = navigation === "POP" ? positions.current.get(location.key) || 0 : 0;
   }, [location.key, navigation]);
   return (
-    <div className="h-[100dvh] bg-background max-w-[1440px] mx-auto relative overflow-hidden md:grid md:grid-cols-[220px_minmax(0,1fr)] md:border-x md:border-border/40">
+    <div className="native-shell h-[100dvh] bg-background max-w-[1440px] mx-auto relative overflow-hidden md:grid md:grid-cols-[220px_minmax(0,1fr)] md:border-x md:border-border/40">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[70] focus:top-3 focus:left-3 focus:rounded-xl focus:bg-card focus:px-4 focus:py-2">
         Skip to content
       </a>

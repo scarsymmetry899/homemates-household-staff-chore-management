@@ -488,6 +488,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content",
+      getComputedStyle(document.body).backgroundColor);
   }, [isDarkMode]);
 
   useEffect(() => {

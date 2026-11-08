@@ -130,6 +130,9 @@
     height: 100%;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+    color-scheme: light;
   }
 
   body {
@@ -139,7 +142,6 @@
     overflow-x: hidden;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
   }
 
   #root {
@@ -151,6 +153,8 @@
   }
 
   button, [role="button"] {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     user-select: none;
   }
 
@@ -159,9 +163,7 @@
     outline-offset: 3px;
   }
 
-  @media (pointer: coarse) {
-    input, textarea, select { font-size: 16px; }
-  }
+  html.dark { color-scheme: dark; }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Noto Serif', serif;

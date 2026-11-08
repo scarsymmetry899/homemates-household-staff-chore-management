@@ -253,7 +253,7 @@ export default function HouseholdSetupWizard() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] flex items-center justify-center">
+    <div className="native-entry [--edge-padding:1rem] min-h-[100dvh] bg-background px-4 py-6 flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}

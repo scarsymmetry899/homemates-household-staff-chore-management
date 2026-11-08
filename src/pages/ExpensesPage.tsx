@@ -304,6 +304,7 @@ const ExpensesPage = () => {
                     <div className="grid grid-cols-[1fr_auto_auto] gap-2">
                       <input
                         type="number"
+                        inputMode="decimal"
                         placeholder="Approve amount"
                         value={approvalAmounts[request.id] || ""}
                         onChange={(event) => setApprovalAmounts((prev) => ({ ...prev, [request.id]: event.target.value }))}
@@ -376,6 +377,7 @@ const ExpensesPage = () => {
                 <input
                   type="number"
                   placeholder="Amount (₹)"
+                  inputMode="decimal"
                   value={newExpense.amount}
                   onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"
@@ -563,6 +565,7 @@ const ExpensesPage = () => {
                 <input
                   type="number"
                   placeholder="Amount (₹)"
+                  inputMode="decimal"
                   value={editForm.amount}
                   onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
                   className="w-full bg-surface-low rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 border border-border/30"

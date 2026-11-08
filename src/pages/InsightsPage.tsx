@@ -445,7 +445,7 @@ const InsightsPage = () => {
         {/* Scrollable Attendance Grid */}
         <AnimatedCard delay={0.1} className="glass-card rounded-2xl overflow-hidden">
           <div
-            className="touch-pan-x"
+            className="overscroll-x-contain"
             onPointerDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
           >

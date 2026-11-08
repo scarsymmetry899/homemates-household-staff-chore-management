@@ -521,7 +521,7 @@ const SmartCommandBox = () => {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/20 z-50" />
         <Dialog.Content aria-describedby={undefined} onOpenAutoFocus={e => { e.preventDefault(); inputRef.current?.focus(); }}
-            className="fixed inset-x-0 bottom-0 z-50 mx-auto bg-card rounded-t-2xl shadow-card-hover overflow-hidden border border-border flex flex-col md:left-auto md:right-4 md:bottom-4 md:top-20 md:w-96 md:rounded-2xl"
+            className="native-sheet fixed inset-x-0 bottom-0 z-50 mx-auto bg-card rounded-t-2xl shadow-card-hover overflow-hidden border border-border flex flex-col md:left-auto md:right-4 md:bottom-4 md:top-20 md:w-96 md:rounded-2xl"
             style={{ maxHeight: "85dvh" }}
           >
             {/* Header */}
@@ -669,9 +669,10 @@ const SmartCommandBox = () => {
             <div className="px-3 py-2 border-t border-border/30 flex gap-2 items-center">
               <input
                 ref={inputRef}
+                enterKeyHint="send"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && !e.shiftKey && handleSend()}
                 placeholder={guidedCmd ? `Type a staff name…` : isGeminiConfigured ? "Ask anything about your staff…" : "Type a command…"}
                 className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none px-2 py-2"
                 disabled={isThinking}

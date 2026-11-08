@@ -13,6 +13,12 @@ async function walk(browser, width) {
   async function screen(name) {
     await page.getByRole("heading").first().waitFor();
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), name + " overflows");
+    if(width < 768) {
+      const small = await page.locator("input:visible,textarea:visible,select:visible").evaluateAll(fields =>
+        fields.filter(f => !["checkbox","radio","range"].includes(f.type) && parseFloat(getComputedStyle(f).fontSize)<16)
+          .map(f => f.getAttribute("aria-label") || f.name || f.tagName));
+      assert.deepEqual(small,[],name+" has touch inputs below 16px");
+    }
     count++;
   }
   const visit = async route => { await page.goto(base+"#"+route); await page.locator("main").waitFor(); };
@@ -52,6 +58,13 @@ async function walk(browser, width) {
     await page.keyboard.press("Escape");
     await cell.focus(); await page.keyboard.press("Enter");
     await page.getByRole("radio",{name:/^late$/i}).check();
+    if(width < 768) {
+      await page.setViewportSize({width:844,height:390});
+      const dialog = page.getByRole("dialog");
+      const box = await dialog.boundingBox();
+      assert(box.y >= -1 && box.y+box.height <= 391,"Dialog must fit short landscape viewport");
+      await page.setViewportSize({width,height:860});
+    }
     await btn("Save attendance").click(); await page.getByRole("dialog").waitFor({state:"hidden"});
     await page.reload(); await btn("daily").click(); await page.getByRole("button",{name:/^Elena Moretti, .*: late$/}).waitFor();
     await page.evaluate(()=>{ localStorage.setItem("homemaker_app_role","staff"); localStorage.setItem("homemaker_active_staff_id","1"); });

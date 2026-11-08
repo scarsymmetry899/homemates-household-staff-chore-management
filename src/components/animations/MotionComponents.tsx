@@ -50,7 +50,6 @@ export const AnimatedCard = ({ children, className, delay = 0 }: CardProps) => (
 export const PressableCard = ({ children, className }: Props) => (
   <motion.div
     whileTap={{ scale: 0.97 }}
-    whileHover={{ y: -2 }}
     transition={{ type: "spring", stiffness: 400, damping: 25 }}
     className={className}
   >
@@ -111,7 +110,7 @@ export const SwipeableCard = ({
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.15}
-        style={{ x }}
+        style={{ x, touchAction: "pan-y pinch-zoom" }}
         onDragEnd={handleDragEnd}
         whileTap={{ scale: 0.98 }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}

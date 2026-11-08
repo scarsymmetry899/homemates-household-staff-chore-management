@@ -131,7 +131,7 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col items-center justify-center px-6">
+    <div className="native-entry [--edge-padding:1.5rem] min-h-[100svh] bg-background flex flex-col items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -200,7 +200,7 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
             <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="email"
-              id="auth-email" autoComplete="email"
+              id="auth-email" autoComplete="email" autoCapitalize="none" autoCorrect="off" enterKeyHint="next"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -212,7 +212,7 @@ const AuthPage = ({ onLogin }: AuthPageProps) => {
             <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type={showPassword ? "text" : "password"}
-              id="auth-password" autoComplete={isSignUp ? "new-password" : "current-password"}
+              id="auth-password" enterKeyHint="go" autoComplete={isSignUp ? "new-password" : "current-password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

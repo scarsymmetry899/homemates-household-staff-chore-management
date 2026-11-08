@@ -492,10 +492,10 @@ const StaffProfile = () => {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 glass-card rounded-t-3xl overflow-hidden"
-              style={{ maxHeight: "70vh" }}
+              className="native-sheet fixed bottom-0 left-0 right-0 z-50 glass-card rounded-t-3xl overflow-y-auto"
+              style={{ maxHeight: "70dvh" }}
             >
-              <div className="overflow-y-auto" style={{ maxHeight: "70vh" }}>
+              <div>
                 {/* Handle bar */}
                 <div className="flex justify-center pt-3 pb-1">
                   <div className="w-10 h-1 rounded-full bg-border/50" />
