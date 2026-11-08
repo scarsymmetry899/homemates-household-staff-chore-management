@@ -31,10 +31,28 @@ mutation CreateHousehold($name: String!, $timezone: String!, $addressLabel: Stri
 }
 
 query MyHouseholds @auth(level: USER)
+  @refresh(onMutationExecuted: { operation: "AddPaidStaffMember", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "UpdateStaffPhoto", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "AddTaskInstance", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "SetTaskCompletion", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "DeleteTaskInstance", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "ReassignTaskInstance", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "UpdateTaskDueDate", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "SaveAttendanceAndPay", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "EnsureMonthlyPayroll", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "SetAppLanguage", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "PostCashPurchase", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "ReviewStaffCashRequest", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "CreateStaffCashRequest", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "AddExpenseEntry", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "CreateInventoryItem", condition: "mutation.auth.uid == request.auth.uid" })
+  @refresh(onMutationExecuted: { operation: "RecordPayrollDeduction", condition: "mutation.auth.uid == request.auth.uid" })
   @refresh(onMutationExecuted: { operation: "CreateHousehold", condition: "mutation.auth.uid == request.auth.uid" }) {
   households(where: { ownerUid: { eq_expr: "auth.uid" } }, orderBy: [{ createdAt: DESC }]) {
     id
     name
+    owner { language }
+    payrollProfiles_on_household(limit: 1000) { staffId }
     timezone
     addressLabel
     createdAt

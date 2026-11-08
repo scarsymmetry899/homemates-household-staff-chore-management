@@ -1,5 +1,6 @@
 type User @table(key: "uid") {
   uid: String!
+  language: String
   displayName: String
   email: String
   createdAt: Timestamp! @default(expr: "request.time")
@@ -132,6 +133,7 @@ type PayrollRun @table {
   monthLabel: String!
   baseSalary: Int! @default(value: 0)
   deductions: Int! @default(value: 0)
+  attendanceDeductions: Int! @default(value: 0)
   advances: Int! @default(value: 0)
   netPay: Int! @default(value: 0)
   status: String! @default(value: "draft")

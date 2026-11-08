@@ -22,6 +22,7 @@ import {
   createPayrollProfile,
   createRoomZone,
   createStaffSkill,
+  ensureMonthlyPayroll,
   myHouseholds,
   recordPayrollDeduction,
   updateStaffPhoto,
@@ -32,6 +33,7 @@ import {
 import type { HouseholdSetupPayload } from "@/context/AppContext";
 
 export interface SqlConnectHouseholdSnapshot {
+  language?: string;
   householdId: UUIDString;
   staff: StaffMember[];
   expenses: Expense[];
@@ -122,7 +124,7 @@ function toAttendanceRequestStatus(value: string): AttendanceCorrectionStatus {
   return value === "approved" || value === "rejected" ? value : "pending";
 }
 
-function mapHousehold(household: SqlHousehold, ownerName: string): SqlConnectHouseholdSnapshot {
+export function mapHousehold(household: SqlHousehold, ownerName: string): SqlConnectHouseholdSnapshot {
   const tasksByStaffId = new Map<string, { id: string; task: string; done: boolean; dueDate?: string }[]>();
   const latestPayrollByStaffId = new Map<string, SqlHousehold["payrollRuns_on_household"][number]>();
 
@@ -146,6 +148,7 @@ function mapHousehold(household: SqlHousehold, ownerName: string): SqlConnectHou
   });
 
   return {
+    language: household.owner.language || undefined,
     householdId: household.id,
     ownerName,
     householdProfile: {
@@ -452,7 +455,16 @@ export async function bootstrapSqlConnectHousehold(
     item.inventoryItems_on_household.length > 0
   );
 
-  if (!household) return null;
+  if (!household) return householdsResult.data.households[0] ? mapHousehold(householdsResult.data.households[0], user.displayName || seed.ownerName) : null;
+  const month = new Date().toLocaleDateString("en-US", {month: "long", year: "numeric", timeZone: household.timezone});
+  if (household.staffMembers_on_household.some(member =>
+    !household.payrollProfiles_on_household.some(profile => profile.staffId === member.id) ||
+    !household.payrollRuns_on_household.some(run => run.staff.id === member.id && run.monthLabel === month))) {
+    await ensureMonthlyPayroll({householdId: household.id});
+    const fresh = await myHouseholds({fetchPolicy: "SERVER_ONLY"});
+    const saved = fresh.data.households.find(item => item.id === household.id);
+    if (saved) return mapHousehold(saved, user.displayName || seed.ownerName);
+  }
 
   return mapHousehold(household, user.displayName || seed.ownerName || "Boss");
 }

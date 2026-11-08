@@ -23,6 +23,35 @@ export interface AddExpenseEntryVariables {
   receiptUrl?: string | null;
 }
 
+export interface AddManualPayDeductionData {
+  lockStaff?: number | null;
+  deduction?: number | null;
+}
+
+export interface AddManualPayDeductionVariables {
+  staffId: UUIDString;
+  month: string;
+  amount: number;
+}
+
+export interface AddPaidStaffMemberData {
+  staffMember_insert: StaffMember_Key;
+  payrollProfile_insert: PayrollProfile_Key;
+  payrollRun_insert: PayrollRun_Key;
+}
+
+export interface AddPaidStaffMemberVariables {
+  householdId: UUIDString;
+  month: string;
+  name: string;
+  role: string;
+  department: string;
+  phone?: string | null;
+  salary: number;
+  shiftStart?: string | null;
+  shiftEnd?: string | null;
+}
+
 export interface AddStaffMemberData {
   staffMember_insert: StaffMember_Key;
 }
@@ -150,26 +179,6 @@ export interface CreateHomemateProfileVariables {
   notes?: string | null;
 }
 
-export interface UpdateHomemateProfileData {
-  homemateProfile_update?: HomemateProfile_Key | null;
-}
-
-export interface UpdateHomemateProfileVariables {
-  homemateId: UUIDString;
-  name: string;
-  relationLabel?: string | null;
-  phone?: string | null;
-  notes?: string | null;
-}
-
-export interface DeleteHomemateProfileData {
-  homemateProfile_delete?: HomemateProfile_Key | null;
-}
-
-export interface DeleteHomemateProfileVariables {
-  homemateId: UUIDString;
-}
-
 export interface CreateHouseholdData {
   user_upsert: User_Key;
   household_insert: Household_Key;
@@ -195,14 +204,6 @@ export interface CreateInventoryItemVariables {
   minimumQuantity?: number | null;
 }
 
-export interface DeleteInventoryItemData {
-  inventoryItem_delete?: InventoryItem_Key | null;
-}
-
-export interface DeleteInventoryItemVariables {
-  itemId: UUIDString;
-}
-
 export interface CreatePayrollProfileData {
   payrollProfile_insert: PayrollProfile_Key;
 }
@@ -224,25 +225,6 @@ export interface CreateRoomZoneVariables {
   name: string;
   floorLabel?: string | null;
   notes?: string | null;
-}
-
-export interface UpdateRoomZoneData {
-  roomZone_update?: RoomZone_Key | null;
-}
-
-export interface UpdateRoomZoneVariables {
-  roomId: UUIDString;
-  name: string;
-  floorLabel?: string | null;
-  notes?: string | null;
-}
-
-export interface DeleteRoomZoneData {
-  roomZone_delete?: RoomZone_Key | null;
-}
-
-export interface DeleteRoomZoneVariables {
-  roomId: UUIDString;
 }
 
 export interface CreateStaffCashRequestData {
@@ -277,6 +259,30 @@ export interface DeleteExpenseEntryVariables {
   expenseId: UUIDString;
 }
 
+export interface DeleteHomemateProfileData {
+  homemateProfile_delete?: HomemateProfile_Key | null;
+}
+
+export interface DeleteHomemateProfileVariables {
+  homemateId: UUIDString;
+}
+
+export interface DeleteInventoryItemData {
+  inventoryItem_delete?: InventoryItem_Key | null;
+}
+
+export interface DeleteInventoryItemVariables {
+  itemId: UUIDString;
+}
+
+export interface DeleteRoomZoneData {
+  roomZone_delete?: RoomZone_Key | null;
+}
+
+export interface DeleteRoomZoneVariables {
+  roomId: UUIDString;
+}
+
 export interface DeleteTaskInstanceData {
   taskInstance_delete?: TaskInstance_Key | null;
 }
@@ -293,9 +299,30 @@ export interface DismissAlertVariables {
   alertId: UUIDString;
 }
 
+export interface EnsureMonthlyPayrollData {
+  lockHousehold?: number | null;
+  profiles?: number | null;
+  runs?: number | null;
+}
+
+export interface EnsureMonthlyPayrollVariables {
+  householdId: UUIDString;
+}
+
 export interface ExpenseEntry_Key {
   id: UUIDString;
   __typename?: 'ExpenseEntry_Key';
+}
+
+export interface FindStaffAttendanceTagData {
+  nfcTags: ({
+    id: UUIDString;
+  } & NfcTag_Key)[];
+}
+
+export interface FindStaffAttendanceTagVariables {
+  householdId: UUIDString;
+  staffId: UUIDString;
 }
 
 export interface HomemateProfile_Key {
@@ -338,6 +365,12 @@ export interface MyHouseholdsData {
   households: ({
     id: UUIDString;
     name: string;
+    owner: {
+      language?: string | null;
+    };
+    payrollProfiles_on_household: ({
+      staffId: UUIDString;
+    })[];
     timezone: string;
     addressLabel?: string | null;
     createdAt: TimestampString;
@@ -503,6 +536,29 @@ export interface NfcTapEvent_Key {
   __typename?: 'NfcTapEvent_Key';
 }
 
+export interface OwnerAttendancePeriodData {
+  corrections: ({
+    staffId: UUIDString;
+    requestedFor: DateString;
+    requestedStatus: string;
+  })[];
+  events: ({
+    staffId: UUIDString;
+    occurredAt: TimestampString;
+    eventType: string;
+    source: string;
+    detail?: string | null;
+  })[];
+}
+
+export interface OwnerAttendancePeriodVariables {
+  householdId: UUIDString;
+  from: DateString;
+  to: DateString;
+  start: TimestampString;
+  end: TimestampString;
+}
+
 export interface PayrollProfile_Key {
   id: UUIDString;
   __typename?: 'PayrollProfile_Key';
@@ -511,6 +567,20 @@ export interface PayrollProfile_Key {
 export interface PayrollRun_Key {
   id: UUIDString;
   __typename?: 'PayrollRun_Key';
+}
+
+export interface PostCashPurchaseData {
+  claim?: number | null;
+  expense?: number | null;
+  post?: number | null;
+  stock?: number | null;
+  movement?: number | null;
+}
+
+export interface PostCashPurchaseVariables {
+  requestId: UUIDString;
+  itemId?: UUIDString | null;
+  quantity: number;
 }
 
 export interface ReassignTaskInstanceData {
@@ -624,6 +694,43 @@ export interface RoomZone_Key {
   __typename?: 'RoomZone_Key';
 }
 
+export interface SaveAttendanceAndPayData {
+  lockStaff?: number | null;
+  review?: number | null;
+  edit?: number | null;
+  ensureRun?: number | null;
+  reconcile?: number | null;
+}
+
+export interface SaveAttendanceAndPayVariables {
+  householdId: UUIDString;
+  staffId: UUIDString;
+  date: DateString;
+  status: string;
+  reason: string;
+  requestId?: UUIDString | null;
+}
+
+export interface SetAppLanguageData {
+  user_upsert: User_Key;
+}
+
+export interface SetAppLanguageVariables {
+  language: string;
+}
+
+export interface SetOwnerDayAttendanceData {
+  attendanceCorrectionRequest_insert: AttendanceCorrectionRequest_Key;
+}
+
+export interface SetOwnerDayAttendanceVariables {
+  householdId: UUIDString;
+  staffId: UUIDString;
+  date: DateString;
+  status: string;
+  reason: string;
+}
+
 export interface SetTaskCompletionData {
   taskInstance_update?: TaskInstance_Key | null;
 }
@@ -669,6 +776,43 @@ export interface UpdateExpenseEntryVariables {
   category: string;
   amount: number;
   description: string;
+}
+
+export interface UpdateHomemateProfileData {
+  homemateProfile_update?: HomemateProfile_Key | null;
+}
+
+export interface UpdateHomemateProfileVariables {
+  homemateId: UUIDString;
+  name: string;
+  relationLabel?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateInventoryItemData {
+  inventoryItem_update?: InventoryItem_Key | null;
+}
+
+export interface UpdateInventoryItemVariables {
+  itemId: UUIDString;
+  roomId?: UUIDString | null;
+  name: string;
+  category: string;
+  unit: string;
+  currentQuantity: number;
+  minimumQuantity?: number | null;
+}
+
+export interface UpdateRoomZoneData {
+  roomZone_update?: RoomZone_Key | null;
+}
+
+export interface UpdateRoomZoneVariables {
+  roomId: UUIDString;
+  name: string;
+  floorLabel?: string | null;
+  notes?: string | null;
 }
 
 export interface UpdateStaffPhotoData {
@@ -717,20 +861,6 @@ export interface UpdateStaffTelegramIdVariables {
   telegramChatId: string;
 }
 
-export interface UpdateInventoryItemData {
-  inventoryItem_update?: InventoryItem_Key | null;
-}
-
-export interface UpdateInventoryItemVariables {
-  itemId: UUIDString;
-  roomId?: UUIDString | null;
-  name: string;
-  category: string;
-  unit: string;
-  currentQuantity: number;
-  minimumQuantity?: number | null;
-}
-
 export interface UpdateTaskDueDateData {
   taskInstance_update?: TaskInstance_Key | null;
 }
@@ -753,6 +883,114 @@ export interface User_Key {
   uid: string;
   __typename?: 'User_Key';
 }
+
+interface OwnerAttendancePeriodRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: OwnerAttendancePeriodVariables): QueryRef<OwnerAttendancePeriodData, OwnerAttendancePeriodVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: OwnerAttendancePeriodVariables): QueryRef<OwnerAttendancePeriodData, OwnerAttendancePeriodVariables>;
+  operationName: string;
+}
+export const ownerAttendancePeriodRef: OwnerAttendancePeriodRef;
+
+export function ownerAttendancePeriod(vars: OwnerAttendancePeriodVariables, options?: ExecuteQueryOptions): QueryPromise<OwnerAttendancePeriodData, OwnerAttendancePeriodVariables>;
+export function ownerAttendancePeriod(dc: DataConnect, vars: OwnerAttendancePeriodVariables, options?: ExecuteQueryOptions): QueryPromise<OwnerAttendancePeriodData, OwnerAttendancePeriodVariables>;
+
+interface SetOwnerDayAttendanceRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: SetOwnerDayAttendanceVariables): MutationRef<SetOwnerDayAttendanceData, SetOwnerDayAttendanceVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: SetOwnerDayAttendanceVariables): MutationRef<SetOwnerDayAttendanceData, SetOwnerDayAttendanceVariables>;
+  operationName: string;
+}
+export const setOwnerDayAttendanceRef: SetOwnerDayAttendanceRef;
+
+export function setOwnerDayAttendance(vars: SetOwnerDayAttendanceVariables): MutationPromise<SetOwnerDayAttendanceData, SetOwnerDayAttendanceVariables>;
+export function setOwnerDayAttendance(dc: DataConnect, vars: SetOwnerDayAttendanceVariables): MutationPromise<SetOwnerDayAttendanceData, SetOwnerDayAttendanceVariables>;
+
+interface SaveAttendanceAndPayRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: SaveAttendanceAndPayVariables): MutationRef<SaveAttendanceAndPayData, SaveAttendanceAndPayVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: SaveAttendanceAndPayVariables): MutationRef<SaveAttendanceAndPayData, SaveAttendanceAndPayVariables>;
+  operationName: string;
+}
+export const saveAttendanceAndPayRef: SaveAttendanceAndPayRef;
+
+export function saveAttendanceAndPay(vars: SaveAttendanceAndPayVariables): MutationPromise<SaveAttendanceAndPayData, SaveAttendanceAndPayVariables>;
+export function saveAttendanceAndPay(dc: DataConnect, vars: SaveAttendanceAndPayVariables): MutationPromise<SaveAttendanceAndPayData, SaveAttendanceAndPayVariables>;
+
+interface SetAppLanguageRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: SetAppLanguageVariables): MutationRef<SetAppLanguageData, SetAppLanguageVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: SetAppLanguageVariables): MutationRef<SetAppLanguageData, SetAppLanguageVariables>;
+  operationName: string;
+}
+export const setAppLanguageRef: SetAppLanguageRef;
+
+export function setAppLanguage(vars: SetAppLanguageVariables): MutationPromise<SetAppLanguageData, SetAppLanguageVariables>;
+export function setAppLanguage(dc: DataConnect, vars: SetAppLanguageVariables): MutationPromise<SetAppLanguageData, SetAppLanguageVariables>;
+
+interface EnsureMonthlyPayrollRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: EnsureMonthlyPayrollVariables): MutationRef<EnsureMonthlyPayrollData, EnsureMonthlyPayrollVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: EnsureMonthlyPayrollVariables): MutationRef<EnsureMonthlyPayrollData, EnsureMonthlyPayrollVariables>;
+  operationName: string;
+}
+export const ensureMonthlyPayrollRef: EnsureMonthlyPayrollRef;
+
+export function ensureMonthlyPayroll(vars: EnsureMonthlyPayrollVariables): MutationPromise<EnsureMonthlyPayrollData, EnsureMonthlyPayrollVariables>;
+export function ensureMonthlyPayroll(dc: DataConnect, vars: EnsureMonthlyPayrollVariables): MutationPromise<EnsureMonthlyPayrollData, EnsureMonthlyPayrollVariables>;
+
+interface PostCashPurchaseRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: PostCashPurchaseVariables): MutationRef<PostCashPurchaseData, PostCashPurchaseVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: PostCashPurchaseVariables): MutationRef<PostCashPurchaseData, PostCashPurchaseVariables>;
+  operationName: string;
+}
+export const postCashPurchaseRef: PostCashPurchaseRef;
+
+export function postCashPurchase(vars: PostCashPurchaseVariables): MutationPromise<PostCashPurchaseData, PostCashPurchaseVariables>;
+export function postCashPurchase(dc: DataConnect, vars: PostCashPurchaseVariables): MutationPromise<PostCashPurchaseData, PostCashPurchaseVariables>;
+
+interface AddPaidStaffMemberRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: AddPaidStaffMemberVariables): MutationRef<AddPaidStaffMemberData, AddPaidStaffMemberVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: AddPaidStaffMemberVariables): MutationRef<AddPaidStaffMemberData, AddPaidStaffMemberVariables>;
+  operationName: string;
+}
+export const addPaidStaffMemberRef: AddPaidStaffMemberRef;
+
+export function addPaidStaffMember(vars: AddPaidStaffMemberVariables): MutationPromise<AddPaidStaffMemberData, AddPaidStaffMemberVariables>;
+export function addPaidStaffMember(dc: DataConnect, vars: AddPaidStaffMemberVariables): MutationPromise<AddPaidStaffMemberData, AddPaidStaffMemberVariables>;
+
+interface AddManualPayDeductionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: AddManualPayDeductionVariables): MutationRef<AddManualPayDeductionData, AddManualPayDeductionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: AddManualPayDeductionVariables): MutationRef<AddManualPayDeductionData, AddManualPayDeductionVariables>;
+  operationName: string;
+}
+export const addManualPayDeductionRef: AddManualPayDeductionRef;
+
+export function addManualPayDeduction(vars: AddManualPayDeductionVariables): MutationPromise<AddManualPayDeductionData, AddManualPayDeductionVariables>;
+export function addManualPayDeduction(dc: DataConnect, vars: AddManualPayDeductionVariables): MutationPromise<AddManualPayDeductionData, AddManualPayDeductionVariables>;
+
+interface FindStaffAttendanceTagRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: FindStaffAttendanceTagVariables): QueryRef<FindStaffAttendanceTagData, FindStaffAttendanceTagVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: FindStaffAttendanceTagVariables): QueryRef<FindStaffAttendanceTagData, FindStaffAttendanceTagVariables>;
+  operationName: string;
+}
+export const findStaffAttendanceTagRef: FindStaffAttendanceTagRef;
+
+export function findStaffAttendanceTag(vars: FindStaffAttendanceTagVariables, options?: ExecuteQueryOptions): QueryPromise<FindStaffAttendanceTagData, FindStaffAttendanceTagVariables>;
+export function findStaffAttendanceTag(dc: DataConnect, vars: FindStaffAttendanceTagVariables, options?: ExecuteQueryOptions): QueryPromise<FindStaffAttendanceTagData, FindStaffAttendanceTagVariables>;
 
 interface UpsertCurrentUserRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -1269,3 +1507,4 @@ export const recordCctvHealthEventRef: RecordCctvHealthEventRef;
 
 export function recordCctvHealthEvent(vars: RecordCctvHealthEventVariables): MutationPromise<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
 export function recordCctvHealthEvent(dc: DataConnect, vars: RecordCctvHealthEventVariables): MutationPromise<RecordCctvHealthEventData, RecordCctvHealthEventVariables>;
+

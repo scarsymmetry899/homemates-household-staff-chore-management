@@ -28,6 +28,7 @@ const StaffProfile = () => {
   const [telegramIdInput, setTelegramIdInput] = useState("");
   const [sendingTest, setSendingTest] = useState(false);
 
+  const [savingPhoto, setSavingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   if (!s) {
@@ -92,12 +93,31 @@ const StaffProfile = () => {
     setEditingTelegramId(false);
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const objectUrl = URL.createObjectURL(file);
-    updateStaffPhoto(s.id, objectUrl);
-    toast.success("Photo updated");
+    e.target.value = "";
+    setSavingPhoto(true);
+    const preview = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      image.src = preview;
+      await image.decode();
+      const scale = Math.min(1, 384 / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error();
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      await updateStaffPhoto(s.id, canvas.toDataURL("image/jpeg", 0.72));
+      toast.success("Photo saved");
+    } catch {
+      toast.error("Photo could not be saved. Select the picture to retry.");
+    } finally {
+      URL.revokeObjectURL(preview);
+      setSavingPhoto(false);
+    }
   };
 
   return (
@@ -114,7 +134,7 @@ const StaffProfile = () => {
 
           {/* Camera overlay button */}
           <button
-            aria-label="Change profile photo" onClick={() => photoInputRef.current?.click()}
+            disabled={savingPhoto} aria-busy={savingPhoto} aria-label="Change profile photo" onClick={() => photoInputRef.current?.click()}
             className="absolute bottom-4 right-4 w-9 h-9 rounded-xl glass flex items-center justify-center shadow-btn z-10"
           >
             <Camera size={16} className="text-foreground" />

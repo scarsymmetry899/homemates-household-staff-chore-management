@@ -15,7 +15,7 @@ function initialsFor(name: string) {
 }
 
 function isUsablePhoto(src?: string) {
-  if (!src) return false;
+  if (!src || src.startsWith("blob:")) return false;
   if (src === "/placeholder.svg") return false;
   return true;
 }

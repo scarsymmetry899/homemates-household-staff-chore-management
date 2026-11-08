@@ -14,38 +14,38 @@ If a user is not using a supported framework, they can use the generated SDK dir
 Here's an example of how to use it with the first 5 operations:
 
 ```js
-import { upsertCurrentUser, createHousehold, myHouseholds, addStaffMember, createHomemateProfile, createRoomZone, createInventoryItem, createPayrollProfile, createStaffSkill, updateStaffStatus } from '@homemaker/dataconnect';
+import { ownerAttendancePeriod, setOwnerDayAttendance, saveAttendanceAndPay, setAppLanguage, ensureMonthlyPayroll, postCashPurchase, addPaidStaffMember, addManualPayDeduction, findStaffAttendanceTag, upsertCurrentUser } from '@homemaker/dataconnect';
 
+
+// Operation OwnerAttendancePeriod:  For variables, look at type OwnerAttendancePeriodVars in ../index.d.ts
+const { data } = await OwnerAttendancePeriod(dataConnect, ownerAttendancePeriodVars);
+
+// Operation SetOwnerDayAttendance:  For variables, look at type SetOwnerDayAttendanceVars in ../index.d.ts
+const { data } = await SetOwnerDayAttendance(dataConnect, setOwnerDayAttendanceVars);
+
+// Operation SaveAttendanceAndPay:  For variables, look at type SaveAttendanceAndPayVars in ../index.d.ts
+const { data } = await SaveAttendanceAndPay(dataConnect, saveAttendanceAndPayVars);
+
+// Operation SetAppLanguage:  For variables, look at type SetAppLanguageVars in ../index.d.ts
+const { data } = await SetAppLanguage(dataConnect, setAppLanguageVars);
+
+// Operation EnsureMonthlyPayroll:  For variables, look at type EnsureMonthlyPayrollVars in ../index.d.ts
+const { data } = await EnsureMonthlyPayroll(dataConnect, ensureMonthlyPayrollVars);
+
+// Operation PostCashPurchase:  For variables, look at type PostCashPurchaseVars in ../index.d.ts
+const { data } = await PostCashPurchase(dataConnect, postCashPurchaseVars);
+
+// Operation AddPaidStaffMember:  For variables, look at type AddPaidStaffMemberVars in ../index.d.ts
+const { data } = await AddPaidStaffMember(dataConnect, addPaidStaffMemberVars);
+
+// Operation AddManualPayDeduction:  For variables, look at type AddManualPayDeductionVars in ../index.d.ts
+const { data } = await AddManualPayDeduction(dataConnect, addManualPayDeductionVars);
+
+// Operation FindStaffAttendanceTag:  For variables, look at type FindStaffAttendanceTagVars in ../index.d.ts
+const { data } = await FindStaffAttendanceTag(dataConnect, findStaffAttendanceTagVars);
 
 // Operation UpsertCurrentUser:  For variables, look at type UpsertCurrentUserVars in ../index.d.ts
 const { data } = await UpsertCurrentUser(dataConnect, upsertCurrentUserVars);
-
-// Operation CreateHousehold:  For variables, look at type CreateHouseholdVars in ../index.d.ts
-const { data } = await CreateHousehold(dataConnect, createHouseholdVars);
-
-// Operation MyHouseholds: 
-const { data } = await MyHouseholds(dataConnect);
-
-// Operation AddStaffMember:  For variables, look at type AddStaffMemberVars in ../index.d.ts
-const { data } = await AddStaffMember(dataConnect, addStaffMemberVars);
-
-// Operation CreateHomemateProfile:  For variables, look at type CreateHomemateProfileVars in ../index.d.ts
-const { data } = await CreateHomemateProfile(dataConnect, createHomemateProfileVars);
-
-// Operation CreateRoomZone:  For variables, look at type CreateRoomZoneVars in ../index.d.ts
-const { data } = await CreateRoomZone(dataConnect, createRoomZoneVars);
-
-// Operation CreateInventoryItem:  For variables, look at type CreateInventoryItemVars in ../index.d.ts
-const { data } = await CreateInventoryItem(dataConnect, createInventoryItemVars);
-
-// Operation CreatePayrollProfile:  For variables, look at type CreatePayrollProfileVars in ../index.d.ts
-const { data } = await CreatePayrollProfile(dataConnect, createPayrollProfileVars);
-
-// Operation CreateStaffSkill:  For variables, look at type CreateStaffSkillVars in ../index.d.ts
-const { data } = await CreateStaffSkill(dataConnect, createStaffSkillVars);
-
-// Operation UpdateStaffStatus:  For variables, look at type UpdateStaffStatusVars in ../index.d.ts
-const { data } = await UpdateStaffStatus(dataConnect, updateStaffStatusVars);
 
 
 ```

@@ -27,9 +27,9 @@ interface ScanItem {
 }
 
 const ExpensesPage = () => {
-  const { expenses, cashRequests, addExpense, editExpense, deleteExpense, reviewCashRequest, markCashRequestPurchased } = useAppState();
+  const { expenses, inventoryItems, cashRequests, addExpense, editExpense, deleteExpense, reviewCashRequest, markCashRequestPurchased } = useAppState();
   const [showForm, setShowForm] = useState(false);
-  const [newExpense, setNewExpense] = useState({ category: "Fuel" as Expense["category"], amount: "", description: "", staffName: "" });
+  const [newExpense, setNewExpense] = useState({ category: "" as Expense["category"] | "", amount: "", description: "", staffName: "" });
   const [approvalAmounts, setApprovalAmounts] = useState<Record<string, string>>({});
 
   // Edit modal
@@ -62,6 +62,7 @@ const ExpensesPage = () => {
   const pendingCashRequests = cashRequests.filter((request) => request.status === "pending").length;
 
   const handleAdd = () => {
+    if (!newExpense.category) { toast.error("Choose an expense category"); return; }
     if (!newExpense.amount || !newExpense.description) return;
     addExpense({
       category: newExpense.category,
@@ -70,7 +71,7 @@ const ExpensesPage = () => {
       staffName: newExpense.staffName || undefined,
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     });
-    setNewExpense({ category: "Fuel", amount: "", description: "", staffName: "" });
+    setNewExpense({ category: "", amount: "", description: "", staffName: "" });
     setShowForm(false);
     toast.success("Expense added");
   };
@@ -86,17 +87,19 @@ const ExpensesPage = () => {
     toast.success("Cash request rejected");
   };
 
-  const convertRequestToExpense = (request: (typeof cashRequests)[number]) => {
-    const amount = request.amountApproved || request.amountRequested;
-    addExpense({
-      category: categoryList.includes(request.category as Expense["category"]) ? request.category as Expense["category"] : "Household",
-      amount,
-      description: request.reason,
-      staffName: request.staffName,
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    });
-    markCashRequestPurchased(request.id, undefined, request.receiptUrl, "Added to household expenses");
-    toast.success("Request moved to expenses", { description: request.reason });
+  const [purchaseStock,setPurchaseStock] = useState<Record<string,string>>({});
+  const [quantities,setQuantities] = useState<Record<string,string>>({});
+  const [posting,setPosting] = useState<string | null>(null);
+  const convertRequestToExpense = async (request: (typeof cashRequests)[number]) => {
+    const item = purchaseStock[request.id] || request.inventoryItemId || null;
+    const quantity = item ? Number(quantities[request.id]) : 0;
+    if (item && (!Number.isFinite(quantity) || quantity <= 0)) { toast.error("Enter the quantity purchased"); return; }
+    setPosting(request.id);
+    try {
+      await markCashRequestPurchased(request.id, item, quantity);
+      toast.success("Purchase saved to expenses");
+    } catch { toast.error("Could not post this purchase. Check the request and retry."); }
+    finally { setPosting(null); }
   };
 
   const openEditModal = (expense: Expense) => {
@@ -325,14 +328,19 @@ const ExpensesPage = () => {
                         Reject
                       </button>
                     </div>
-                  ) : request.status === "approved" ? (
-                    <button
+                  ) : request.status === "approved" ? (<div className="grid gap-2">
+                    <label>Inventory item<select aria-label="Inventory item" className="w-full rounded-xl p-2" value={purchaseStock[request.id] || request.inventoryItemId || ""} onChange={e => setPurchaseStock(prev => ({...prev,[request.id]:e.target.value}))}>
+                      <option value="">Expense only</option>
+                      {inventoryItems.map(i => <option key={i.id} value={i.id}>{i.name} ({i.unit})</option>)}
+                    </select></label>
+                    {(purchaseStock[request.id] || request.inventoryItemId) && <label>Quantity purchased<input type="number" min="0" step="any" className="w-full rounded-xl p-2" value={quantities[request.id] || ""} onChange={e => setQuantities(prev => ({...prev,[request.id]:e.target.value}))}/></label>}
+                    <button disabled={posting !== null}
                       type="button"
                       onClick={() => convertRequestToExpense(request)}
                       className="w-full glass-btn text-foreground label-sm py-3 rounded-xl"
                     >
                       Mark Purchased & Add To Expenses
-                    </button>
+                    </button></div>
                   ) : null}
                 </div>
               ))}
@@ -363,6 +371,7 @@ const ExpensesPage = () => {
                   {categoryList.map((cat) => (
                     <button
                       key={cat}
+                      aria-pressed={newExpense.category === cat}
                       onClick={() => setNewExpense({ ...newExpense, category: cat })}
                       className={`label-sm px-3 py-2 rounded-xl transition-all ${
                         newExpense.category === cat

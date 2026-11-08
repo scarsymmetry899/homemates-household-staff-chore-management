@@ -7,6 +7,134 @@ const connectorConfig = {
 };
 exports.connectorConfig = connectorConfig;
 
+const ownerAttendancePeriodRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'OwnerAttendancePeriod', inputVars);
+}
+ownerAttendancePeriodRef.operationName = 'OwnerAttendancePeriod';
+exports.ownerAttendancePeriodRef = ownerAttendancePeriodRef;
+
+exports.ownerAttendancePeriod = function ownerAttendancePeriod(dcOrVars, varsOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
+  return executeQuery(ownerAttendancePeriodRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+;
+
+const setOwnerDayAttendanceRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'SetOwnerDayAttendance', inputVars);
+}
+setOwnerDayAttendanceRef.operationName = 'SetOwnerDayAttendance';
+exports.setOwnerDayAttendanceRef = setOwnerDayAttendanceRef;
+
+exports.setOwnerDayAttendance = function setOwnerDayAttendance(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(setOwnerDayAttendanceRef(dcInstance, inputVars));
+}
+;
+
+const saveAttendanceAndPayRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'SaveAttendanceAndPay', inputVars);
+}
+saveAttendanceAndPayRef.operationName = 'SaveAttendanceAndPay';
+exports.saveAttendanceAndPayRef = saveAttendanceAndPayRef;
+
+exports.saveAttendanceAndPay = function saveAttendanceAndPay(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(saveAttendanceAndPayRef(dcInstance, inputVars));
+}
+;
+
+const setAppLanguageRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'SetAppLanguage', inputVars);
+}
+setAppLanguageRef.operationName = 'SetAppLanguage';
+exports.setAppLanguageRef = setAppLanguageRef;
+
+exports.setAppLanguage = function setAppLanguage(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(setAppLanguageRef(dcInstance, inputVars));
+}
+;
+
+const ensureMonthlyPayrollRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'EnsureMonthlyPayroll', inputVars);
+}
+ensureMonthlyPayrollRef.operationName = 'EnsureMonthlyPayroll';
+exports.ensureMonthlyPayrollRef = ensureMonthlyPayrollRef;
+
+exports.ensureMonthlyPayroll = function ensureMonthlyPayroll(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(ensureMonthlyPayrollRef(dcInstance, inputVars));
+}
+;
+
+const postCashPurchaseRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'PostCashPurchase', inputVars);
+}
+postCashPurchaseRef.operationName = 'PostCashPurchase';
+exports.postCashPurchaseRef = postCashPurchaseRef;
+
+exports.postCashPurchase = function postCashPurchase(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(postCashPurchaseRef(dcInstance, inputVars));
+}
+;
+
+const addPaidStaffMemberRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'AddPaidStaffMember', inputVars);
+}
+addPaidStaffMemberRef.operationName = 'AddPaidStaffMember';
+exports.addPaidStaffMemberRef = addPaidStaffMemberRef;
+
+exports.addPaidStaffMember = function addPaidStaffMember(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(addPaidStaffMemberRef(dcInstance, inputVars));
+}
+;
+
+const addManualPayDeductionRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'AddManualPayDeduction', inputVars);
+}
+addManualPayDeductionRef.operationName = 'AddManualPayDeduction';
+exports.addManualPayDeductionRef = addManualPayDeductionRef;
+
+exports.addManualPayDeduction = function addManualPayDeduction(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(addManualPayDeductionRef(dcInstance, inputVars));
+}
+;
+
+const findStaffAttendanceTagRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'FindStaffAttendanceTag', inputVars);
+}
+findStaffAttendanceTagRef.operationName = 'FindStaffAttendanceTag';
+exports.findStaffAttendanceTagRef = findStaffAttendanceTagRef;
+
+exports.findStaffAttendanceTag = function findStaffAttendanceTag(dcOrVars, varsOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
+  return executeQuery(findStaffAttendanceTagRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+;
+
 const upsertCurrentUserRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars);
   dcInstance._useGeneratedSdk();

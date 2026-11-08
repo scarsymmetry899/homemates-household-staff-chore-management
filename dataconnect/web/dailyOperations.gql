@@ -1,0 +1,90 @@
+mutation SetAppLanguage($language: String!) @auth(expr: "auth.uid != '' && vars.language in ['en','hi','te','kn','ml']") {
+  user_upsert(data: {uid_expr: "auth.uid", language: $language, updatedAt_expr: "request.time"})
+}
+
+# Serialize concurrent initializations for older directory hires and new pay periods.
+mutation EnsureMonthlyPayroll($householdId: UUID!) @auth(level: USER) @transaction {
+  query @redact { household(id:$householdId) @check(expr:"this != null") { ownerUid @check(expr:"this == auth.uid") } }
+  lockHousehold: _execute(sql: "UPDATE household SET updated_at = updated_at WHERE id=$1::uuid AND owner_uid=$2", params: [$householdId, {_expr: "auth.uid"}]) @check(expr: "this == 1")
+  profiles: _execute(sql: """
+    INSERT INTO payroll_profile (household_id,staff_id,base_salary,pay_frequency,created_at,updated_at)
+    SELECT s.household_id,s.id,s.salary,'monthly',now(),now() FROM staff_member s
+    WHERE s.household_id=$1::uuid AND NOT EXISTS (SELECT 1 FROM payroll_profile p WHERE p.staff_id=s.id)
+  """,params: [$householdId])
+  runs: _execute(sql: """
+    INSERT INTO payroll_run (household_id,staff_id,base_salary,net_pay,month_label,created_at,updated_at)
+    SELECT s.household_id,s.id,s.salary,s.salary,to_char(now() AT TIME ZONE h.timezone,'FMMonth YYYY'),now(),now()
+    FROM staff_member s JOIN household h ON h.id=s.household_id
+    WHERE h.id=$1::uuid AND NOT EXISTS (SELECT 1 FROM payroll_run p WHERE p.staff_id=s.id AND p.month_label=to_char(now() AT TIME ZONE h.timezone,'FMMonth YYYY'))
+  """,params: [$householdId])
+}
+
+mutation PostCashPurchase($requestId: UUID!, $itemId: UUID, $quantity: Float!) @auth(level: USER) @transaction {
+  query @redact { staffCashRequest(id:$requestId) @check(expr:"this != null") { household {ownerUid @check(expr:"this == auth.uid")} } }
+  claim: _execute(sql: """
+    UPDATE staff_cash_request r SET updated_at=now() FROM household h
+    WHERE r.id=$1::uuid AND h.id=r.household_id AND h.owner_uid=$2 AND r.status='approved'
+      AND (($3::uuid IS NULL AND r.inventory_item_id IS NULL AND $4::float8=0) OR
+           ($4::float8>0 AND EXISTS (SELECT 1 FROM inventory_item i WHERE i.id=coalesce($3::uuid,r.inventory_item_id) AND i.household_id=h.id)))
+  """,params: [$requestId,{_expr:"auth.uid"},$itemId,$quantity]) @check(expr: "this == 1",message:"This purchase was already posted or its stock details changed.")
+  expense: _execute(sql: """
+    INSERT INTO expense_entry(id, household_id,staff_id,category,amount,description,receipt_url,spent_at,created_at,updated_at)
+    SELECT id,household_id,staff_id,CASE WHEN category IN ('Fuel','Groceries','Repairs','Advances') THEN category ELSE 'Household' END,
+      coalesce(amount_approved,amount_requested),reason,receipt_url,now(),now(),now() FROM staff_cash_request WHERE id=$1::uuid
+  """,params: [$requestId])
+  post: _execute(sql: """
+    UPDATE staff_cash_request SET linked_expense_id=id,inventory_item_id=coalesce($2::uuid,inventory_item_id),
+      status='purchased',purchased_at=now(),updated_at=now() WHERE id=$1::uuid
+  """,params: [$requestId,$itemId])
+  stock: _execute(sql: """
+    UPDATE inventory_item i SET current_quantity=i.current_quantity+$2::float8,updated_at=now()
+    FROM staff_cash_request r WHERE r.id=$1::uuid AND i.id=r.inventory_item_id
+  """,params: [$requestId,$quantity])
+  movement: _execute(sql: """
+    INSERT INTO inventory_movement(id,household_id,item_id,movement_type,quantity,source,notes,occurred_at,created_at)
+    SELECT id,household_id,inventory_item_id,'purchase',$2::float8,'cash-request',reason,now(),now() FROM staff_cash_request
+    WHERE id=$1::uuid AND inventory_item_id IS NOT NULL
+  """,params: [$requestId,$quantity])
+}
+
+mutation AddPaidStaffMember(
+  $householdId: UUID!
+  $month: String!
+  $name: String!
+  $role: String!
+  $department: String!
+  $phone: String
+  $salary: Int!
+  $shiftStart: String
+  $shiftEnd: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    household(id: $householdId) {
+      ownerUid @check(expr: "this == auth.uid", message: "You do not have access to this household")
+    }
+  }
+  staffMember_insert(
+    data: {
+      household: { id: $householdId }
+      name: $name
+      role: $role
+      department: $department
+      phone: $phone
+      salary: $salary
+      shiftStart: $shiftStart
+      shiftEnd: $shiftEnd
+      updatedAt_expr: "request.time"
+    }
+  )
+  payrollProfile_insert(data:{ householdId:$householdId, staffId_expr:"response.staffMember_insert.id", baseSalary:$salary, payFrequency:"monthly" })
+  payrollRun_insert(data:{ householdId:$householdId, staffId_expr:"response.staffMember_insert.id", baseSalary:$salary, netPay:$salary, monthLabel:$month })
+}
+
+mutation AddManualPayDeduction($staffId: UUID!, $month: String!, $amount: Int!) @auth(level: USER) @transaction {
+  query @redact { staffMember(id:$staffId) @check(expr:"this != null && vars.amount > 0") { household { ownerUid @check(expr:"this == auth.uid") } } }
+  lockStaff: _execute(sql:"UPDATE staff_member SET updated_at=now() WHERE id=$1::uuid",params:[$staffId])
+  deduction: _execute(sql:"""
+    UPDATE payroll_run SET deductions=deductions+$3::int,net_pay=net_pay-$3::int,updated_at=now()
+    WHERE id=(SELECT id FROM payroll_run WHERE staff_id=$1::uuid AND month_label=$2 ORDER BY updated_at DESC,id DESC LIMIT 1) AND status='draft'
+  """,params:[$staffId,$month,$amount]) @check(expr:"this == 1")
+}

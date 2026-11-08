@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
-import { executeQuery, getDataConnect, queryRef } from "firebase/data-connect";
-import { connectorConfig } from "@homemaker/dataconnect";
+import { executeQuery, getDataConnect, queryRef, subscribe } from "firebase/data-connect";
+import { connectorConfig, myHouseholds, myHouseholdsRef, addManualPayDeduction, setAppLanguage, postCashPurchase } from "@homemaker/dataconnect";
 import { staffMembers as initialStaff, type StaffMember, type StaffStatus } from "@/data/staff";
 import {
   saveHouseholdState,
@@ -9,12 +9,13 @@ import {
 } from "@/lib/householdStore";
 import { getCurrentAuthUser, isFirebaseConfigured, signOutFirebase } from "@/lib/firebase";
 import { toast } from "sonner";
-import { bootstrapSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
+import { bootstrapSqlConnectHousehold, mapHousehold } from "@/lib/sqlConnectHousehold";
+import { saveDayAttendance } from "@/lib/dayAttendance";
 import { localDateKey } from "@/lib/localDate";
 import { createConfiguredSqlConnectHousehold } from "@/lib/sqlConnectHousehold";
 import {
   addExpenseEntry as sqlAddExpenseEntry,
-  addStaffMember as sqlAddStaffMember,
+  addPaidStaffMember as sqlAddStaffMember,
   addTaskInstance as sqlAddTaskInstance,
   createAlert as sqlCreateAlert,
   createAttendanceCorrectionRequest as sqlCreateAttendanceCorrectionRequest,
@@ -34,7 +35,7 @@ import {
   registerNfcTag as sqlRegisterNfcTag,
   removeStaffMember as sqlRemoveStaffMember,
   createStaffCashRequest as sqlCreateStaffCashRequest,
-  markStaffCashRequestPurchased as sqlMarkStaffCashRequestPurchased,
+
   reviewAttendanceCorrectionRequest as sqlReviewAttendanceCorrectionRequest,
   reviewStaffCashRequest as sqlReviewStaffCashRequest,
   setTaskCompletion as sqlSetTaskCompletion,
@@ -199,9 +200,9 @@ interface AppState {
   addExpense: (expense: Omit<Expense, "id">) => void;
   createCashRequest: (request: Omit<StaffCashRequest, "id" | "status" | "requestedAt">) => void;
   reviewCashRequest: (requestId: string, status: "approved" | "rejected", amountApproved?: number, notes?: string) => void;
-  markCashRequestPurchased: (requestId: string, linkedExpenseId?: string, receiptUrl?: string, notes?: string) => void;
+  markCashRequestPurchased: (requestId: string, itemId: string | null, quantity: number) => Promise<void>;
   createAttendanceCorrectionRequest: (request: Omit<AttendanceCorrectionRequest, "id" | "status" | "requestedAt">) => void;
-  reviewAttendanceCorrectionRequest: (requestId: string, status: "approved" | "rejected", notes?: string) => void;
+  reviewAttendanceCorrectionRequest: (requestId: string, status: "approved" | "rejected", notes?: string) => Promise<void>;
   editExpense: (id: string, updates: Partial<Omit<Expense, "id">>) => void;
   deleteExpense: (id: string) => void;
   dismissAlert: (alertId: string) => void;
@@ -210,7 +211,7 @@ interface AppState {
   deleteTask: (staffId: string, taskIndex: number) => void;
   addStaff: (member: Omit<StaffMember, "id" | "assignments" | "attendance" | "payroll" | "reliabilityScore" | "skills" | "punctualityScore">) => Promise<void>;
   addDeduction: (staffId: string, amount: number, reason: string) => void;
-  updateStaffPhoto: (staffId: string, photoUrl: string) => void;
+  updateStaffPhoto: (staffId: string, photoUrl: string) => Promise<void>;
   updateTaskDueDate: (staffId: string, taskIndex: number, newDueDate: string) => void;
   addAlert: (alert: Omit<Alert, "id" | "dismissed">) => void;
   updateStaffTelegramId: (staffId: string, telegramChatId: string) => void;
@@ -439,6 +440,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [sqlLoadError, setSqlLoadError] = useState(false);
   const [pendingSqlWrites, setPendingSqlWrites] = useState(0);
   const pendingSqlWritesRef = useRef(0);
+  const writeVersion = useRef(0);
+  const languageVersion = useRef(0);
+  const languageWrites = useRef(Promise.resolve());
+  const languagePending = useRef(false);
+  const sqlActive = useRef(false);
 
   const isApplyingRemoteStateRef = useRef(false);
   const lastSavedStateRef = useRef("");
@@ -512,7 +518,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     subscribeToHouseholdState(
       (state) => {
-        if (cancelled) return;
+        if (cancelled || sqlActive.current) return;
         if (localStorage.getItem(demoModeKey) === "true") {
           remoteStateSettled = true;
           setHasLoadedRemoteState(true);
@@ -536,13 +542,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setRooms(state.rooms || []);
         setInventoryItems(state.inventoryItems || []);
         setOwnerNameState(state.ownerName);
-        setLanguageState(state.language || "en");
+
         setAppRoleState(state.appRole || "owner");
         setActiveStaffIdState(state.activeStaffId || null);
         setIsDarkModeState(state.isDarkMode);
         setNfcEnabledState(state.nfcEnabled);
         localStorage.setItem("homemaker_owner_name", state.ownerName);
-        localStorage.setItem("homemaker_language", state.language || "en");
+
         localStorage.setItem("homemaker_app_role", state.appRole || "owner");
         if (state.activeStaffId) localStorage.setItem("homemaker_active_staff_id", state.activeStaffId);
         localStorage.setItem("homemaker_dark_mode", String(state.isDarkMode));
@@ -580,7 +586,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!hasLoadedRemoteState || isApplyingRemoteStateRef.current) return;
     if (isFirebaseConfigured && !hasBootstrappedSql) return;
-    if (isDemoMode || sqlLoadError || pendingSqlWrites > 0) return;
+    if (isDemoMode || sqlActive.current || sqlLoadError || pendingSqlWrites > 0) return;
     if (lastSavedStateRef.current === currentHouseholdStateJson) return;
 
     const timeout = setTimeout(() => {
@@ -631,6 +637,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setAttendanceRequests(snapshot.attendanceRequests || []);
         setAlerts(snapshot.alerts);
         setOwnerNameState(snapshot.ownerName);
+        sqlActive.current = true;
+        if (snapshot.language && !languagePending.current) setLanguageState(snapshot.language as AppLanguage);
         setSqlHouseholdId(snapshot.householdId);
         setSetupComplete(true);
         rememberOnboardingCompletion().catch(() => undefined);
@@ -657,12 +665,61 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [hasLoadedRemoteState, isDemoMode]);
 
+  useEffect(() => {
+    if (!sqlHouseholdId || isDemoMode) return;
+    let active = true;
+    let loading = false;
+    let lastSnapshot = "";
+    async function refresh() {
+      if (loading || document.hidden || pendingSqlWritesRef.current) return;
+      loading = true;
+      const version = writeVersion.current;
+      try {
+        const result = await myHouseholds({fetchPolicy: "SERVER_ONLY"});
+        const household = result.data.households.find(item => item.id === sqlHouseholdId);
+        if (!active || !household || pendingSqlWritesRef.current || version !== writeVersion.current) return;
+        const serialized = JSON.stringify(household);
+        if (serialized === lastSnapshot) return;
+        lastSnapshot = serialized;
+        const data = mapHousehold(household, localStorage.getItem("homemaker_owner_name") || "Boss");
+        setStaff(current => data.staff.map(member => {
+          const previous = current.find(person => person.id === member.id);
+          return previous ? {...member, attendance: previous.attendance, skills: previous.skills} : member;
+        }));
+        setExpenses(data.expenses);
+        setCashRequests(data.cashRequests);
+        setAttendanceRequests(data.attendanceRequests);
+        setInventoryItems(data.inventoryItems);
+        setRooms(data.rooms);
+        setHomemates(data.homemates);
+        if (data.language && !languagePending.current) {
+          setLanguageState(data.language as AppLanguage);
+          localStorage.setItem("homemaker_language", data.language);
+        }
+      } catch (error) { console.warn("Household refresh failed", error); }
+      finally { loading = false; }
+    }
+    // Foreground reconciliation also recovers dropped subscription notifications.
+    const interval = window.setInterval(refresh, 5000);
+    const unsubscribe = subscribe(myHouseholdsRef(), () => { void refresh(); }, () => {});
+    window.addEventListener("focus", refresh);
+    window.addEventListener("homemates-saved", refresh);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      unsubscribe();
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("homemates-saved", refresh);
+    };
+  }, [sqlHouseholdId, isDemoMode]);
+
   const persistSql = useCallback((operation: () => Promise<unknown>) => {
     if (isDemoMode) return;
     if (!sqlHouseholdId) {
       toast.error("Household is not connected", { description: "Your change was not saved to Postgres. Reload and try again." });
       return;
     }
+    writeVersion.current += 1;
     pendingSqlWritesRef.current += 1;
     setPendingSqlWrites(pendingSqlWritesRef.current);
     Promise.resolve().then(operation).catch((error) => {
@@ -691,7 +748,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const setLanguage = useCallback((nextLanguage: AppLanguage) => {
     setLanguageState(nextLanguage);
     localStorage.setItem("homemaker_language", nextLanguage);
-  }, []);
+    if (isDemoMode || !isFirebaseConfigured) return;
+    const pendingKey = "homemates_pending_language_" + localStorage.getItem("homemaker_current_uid");
+    localStorage.setItem(pendingKey, nextLanguage);
+    const version = ++languageVersion.current;
+    languagePending.current = true;
+    writeVersion.current++;
+    languageWrites.current = languageWrites.current.then(async () => {
+      if (version !== languageVersion.current) return;
+      await setAppLanguage({language: nextLanguage});
+      if (localStorage.getItem(pendingKey) === nextLanguage) localStorage.removeItem(pendingKey);
+    }).catch(() => toast.error("Language saved on this device. Select it again to sync.")).then(() => {
+      if (version === languageVersion.current) languagePending.current = false;
+    });
+  }, [isDemoMode]);
+
+  useEffect(() => {
+    if (!sqlHouseholdId || isDemoMode) return;
+    const pending = localStorage.getItem("homemates_pending_language_" + localStorage.getItem("homemaker_current_uid"));
+    if (pending && ["en","hi","te","kn","ml"].includes(pending)) setLanguage(pending as AppLanguage);
+  }, [sqlHouseholdId,isDemoMode,setLanguage]);
 
   const setAppRole = useCallback((role: AppRole) => {
     setAppRoleState(role);
@@ -813,6 +889,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
     completing.current.add(key);
+    writeVersion.current += 1;
     pendingSqlWritesRef.current += 1;
     setPendingSqlWrites(pendingSqlWritesRef.current);
     try {
@@ -917,25 +994,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, [persistSql]);
 
-  const markCashRequestPurchased = useCallback((
-    requestId: string,
-    linkedExpenseId?: string,
-    receiptUrl?: string,
-    notes?: string
-  ) => {
-    const purchasedAt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    setCashRequests((prev) => prev.map((request) => (
-      request.id === requestId
-        ? { ...request, status: "purchased", linkedExpenseId, receiptUrl, notes: notes || request.notes, purchasedAt }
-        : request
-    )));
-    persistSql(() => sqlMarkStaffCashRequestPurchased({
-      requestId,
-      linkedExpenseId: linkedExpenseId || null,
-      receiptUrl: receiptUrl || null,
-      notes: notes || null,
-    }));
-  }, [persistSql]);
+  const markCashRequestPurchased = useCallback(async (requestId: string, itemId: string | null, quantity: number) => {
+    const request = cashRequests.find(item => item.id === requestId);
+    if (!request || request.status !== "approved") throw new Error("Only approved requests can be posted");
+    writeVersion.current++;
+    pendingSqlWritesRef.current++;
+    try {
+      if (!isDemoMode) await postCashPurchase({requestId, itemId, quantity});
+      const amount = request.amountApproved ?? request.amountRequested;
+      const category: Expense["category"] = ["Fuel","Repairs","Groceries","Advances"].includes(request.category) ? request.category as Expense["category"] : "Household";
+      const date = new Date().toLocaleDateString("en-US", {month:"short",day:"numeric",year:"numeric"});
+      setExpenses(prev => [{id:requestId, category, amount, date, description:request.reason, staffName:request.staffName}, ...prev.filter(item => item.id !== requestId)]);
+      setCashRequests(prev => prev.map(item => item.id === requestId ? {...item, status:"purchased", purchasedAt:date, linkedExpenseId:requestId, inventoryItemId:itemId || undefined} : item));
+      if (itemId) setInventoryItems(prev => prev.map(item => item.id === itemId ? {...item,currentQuantity:item.currentQuantity + quantity} : item));
+    } finally { pendingSqlWritesRef.current--; }
+  }, [cashRequests,isDemoMode]);
 
   const createAttendanceCorrectionRequest = useCallback((
     request: Omit<AttendanceCorrectionRequest, "id" | "status" | "requestedAt">
@@ -964,12 +1037,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [persistSql, sqlHouseholdId]);
 
-  const reviewAttendanceCorrectionRequest = useCallback((
+  const reviewAttendanceCorrectionRequest = useCallback(async (
     requestId: string,
     status: "approved" | "rejected",
     notes?: string
   ) => {
     const request = attendanceRequests.find((item) => item.id === requestId);
+    if (!isDemoMode && request && sqlHouseholdId && status === "approved") {
+      await saveDayAttendance(sqlHouseholdId, request.staffId, request.date, request.requestedStatus, request.reason, requestId);
+      window.dispatchEvent(new Event("homemates-saved"));
+      return;
+    }
     const reviewedAt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     setAttendanceRequests((prev) => prev.map((item) => (
       item.id === requestId ? { ...item, status, reviewedAt, notes: notes || item.notes } : item
@@ -1063,7 +1141,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         status: "draft",
       }));
     }
-  }, [attendanceRequests, persistSql, sqlHouseholdId, staff]);
+  }, [attendanceRequests, persistSql, sqlHouseholdId, staff, isDemoMode]);
 
   const editExpense = useCallback((id: string, updates: Partial<Omit<Expense, "id">>) => {
     const current = expenses.find((e) => e.id === id);
@@ -1090,6 +1168,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addTask = useCallback(async (staffId: string, task: string, dueDate?: string) => {
     if (!isDemoMode && !sqlHouseholdId) return false;
+    writeVersion.current += 1;
     pendingSqlWritesRef.current += 1;
     setPendingSqlWrites(pendingSqlWritesRef.current);
     try {
@@ -1098,7 +1177,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         dueAt: dueDate ? `${dueDate}T00:00:00.000Z` : null,
       })).data.taskInstance_insert.id;
       setStaff(prev => prev.map(member => member.id === staffId ? {
-        ...member, assignments: [...member.assignments, { id, task, done: false, dueDate }],
+        ...member, assignments: [...member.assignments.filter(item => item.id !== id), { id, task, done: false, dueDate }],
       } : member));
       return true;
     } catch {
@@ -1149,10 +1228,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     if (!sqlHouseholdId) throw new Error("Reconnect your household and try again.");
+    writeVersion.current += 1;
     pendingSqlWritesRef.current += 1;
     setPendingSqlWrites(pendingSqlWritesRef.current);
     try {
       const result = await sqlAddStaffMember({
+        month: newMember.payroll.month,
         householdId: sqlHouseholdId!,
         name: member.name,
         role: member.role,
@@ -1186,25 +1267,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       )
     );
     if (current) {
-      const deductions = current.payroll.deductions + amount;
-      const netPay = current.payroll.baseSalary - deductions;
-      persistSql(() => sqlRecordPayrollDeduction({
-        householdId: sqlHouseholdId!,
-        staffId,
-        monthLabel: current.payroll.month,
-        baseSalary: current.payroll.baseSalary,
-        deductions,
-        advances: 0,
-        netPay,
-        status: "draft",
-      }));
+      persistSql(() => addManualPayDeduction({staffId, month: current.payroll.month, amount}));
     }
   }, [persistSql, sqlHouseholdId, staff]);
 
-  const updateStaffPhoto = useCallback((staffId: string, photoUrl: string) => {
+  const updateStaffPhoto = useCallback(async (staffId: string, photoUrl: string) => {
+    writeVersion.current++;
+    if (!isDemoMode) await sqlUpdateStaffPhoto({ staffId, photoUrl });
+    writeVersion.current++;
     setStaff((prev) => prev.map((s) => (s.id === staffId ? { ...s, photo: photoUrl } : s)));
-    persistSql(() => sqlUpdateStaffPhoto({ staffId, photoUrl }));
-  }, [persistSql]);
+  }, [isDemoMode]);
 
   const updateTaskDueDate = useCallback((staffId: string, taskIndex: number, newDueDate: string) => {
     const taskId = staff.find((s) => s.id === staffId)?.assignments[taskIndex]?.id;
@@ -1405,7 +1477,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const todayKey = localDateKey(now);
     const dateStr = `${todayKey}, ${timeStr}`;
     const currentMember = staff.find((member) => member.id === staffId);
-    const shouldApplyDeduction = currentMember
+    if (!isDemoMode && shouldDeductForAttendance(type)) {
+      persistSql(() => saveDayAttendance(sqlHouseholdId!, staffId, todayKey, "absent", detail));
+    }
+    const shouldApplyDeduction = isDemoMode && currentMember
       ? shouldDeductForAttendance(type) && !hasAutoAbsenceDeduction(currentMember, todayKey)
       : false;
     const deductionAmount = currentMember && shouldApplyDeduction ? dailyAbsenceDeduction(currentMember) : 0;
@@ -1449,7 +1524,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         status: "draft",
       }));
     }
-  }, [persistSql, sqlHouseholdId, staff]);
+  }, [persistSql, sqlHouseholdId, staff,isDemoMode]);
 
   const registerStaffNfcTag = useCallback(async (staffId: string, label?: string): Promise<string | null> => {
     if (!sqlHouseholdId) return null;
@@ -1678,6 +1753,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setRooms(nextState.rooms || []);
     setInventoryItems(nextState.inventoryItems || []);
     setOwnerNameState(setup.ownerName);
+    sqlActive.current = !!snapshot;
     setSetupComplete(true);
     setSqlLoadError(false);
     localStorage.setItem("homemaker_owner_name", setup.ownerName);

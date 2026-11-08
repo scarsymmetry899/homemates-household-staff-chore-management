@@ -147,6 +147,7 @@ const InsightsPage = () => {
         if (!connectedHouseholdId) throw new Error();
         await saveDayAttendance(connectedHouseholdId, editor.id, editor.date, choice, reason.trim() || "Owner attendance edit");
       }
+      if (!demo) window.dispatchEvent(new Event("homemates-saved"));
       const next = new Map(history).set(editor.id + "/" + editor.date, choice);
       if (demo) sessionStorage.setItem("homemates-demo-day-edits", JSON.stringify([...next]));
       setHistory(next); setCellDetail(`${editor.name} · ${editor.date} · ${choice}`);
@@ -189,8 +190,9 @@ const InsightsPage = () => {
     return -1; // no highlight for past periods
   }, [viewMode, selectedDay, selectedWeek, selectedMonth]);
 
-  const approveAttendanceRequest = (requestId: string) => {
-    reviewAttendanceCorrectionRequest(requestId, "approved", "Approved from attendance insights");
+  const approveAttendanceRequest = async (requestId: string) => {
+    try { await reviewAttendanceCorrectionRequest(requestId, "approved", "Approved from attendance insights"); }
+    catch { toast.error("Attendance could not be confirmed. Please retry."); return; }
     toast.success("Attendance correction approved");
   };
 
@@ -517,7 +519,7 @@ const InsightsPage = () => {
               </label>)}
             </fieldset>
             <label className="text-sm">Note (optional)<input className="mt-1 w-full rounded-lg border bg-card p-3" value={reason} maxLength={300} disabled={saving} onChange={e => setReason(e.target.value)} /></label>
-            <p className="text-xs text-muted-foreground">This changes the daily record. Payroll and live check-in status are managed separately.</p>
+            <p className="text-xs text-muted-foreground">An approved absence deducts one day of base pay (monthly salary ÷ 30, rounded up). Correcting it restores the deduction in that month’s draft payroll.</p>
             {saveError && <p role="alert">{saveError}</p>}
             <button disabled={saving || !choice || choice === editor?.before} className="btn-estate rounded-xl p-3 text-primary-foreground disabled:opacity-50" onClick={applyEdit}>{saving ? "Saving…" : "Save attendance"}</button>
           </DialogContent>
