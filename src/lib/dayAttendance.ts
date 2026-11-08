@@ -40,7 +40,7 @@ export async function loadAttendancePeriod(householdId: string, from: string, to
   return days;
 }
 
-export async function saveDayAttendance(householdId: string, staffId: string, date: string, status: DayStatus, reason: string, requestId: string | null = null) {
-  const vars = { householdId, staffId, date, status, reason, requestId };
+export async function saveDayAttendance(householdId: string, staffId: string, date: string, status: DayStatus, reason: string) {
+  const vars = { householdId, staffId, date, status, reason };
   return executeMutation(mutationRef(getDataConnect(connectorConfig), "SaveAttendanceAndPay", vars));
 }

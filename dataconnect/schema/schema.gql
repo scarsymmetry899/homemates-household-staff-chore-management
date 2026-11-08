@@ -181,6 +181,7 @@ type StaffCashRequest @table {
   household: Household!
   staff: StaffMember
   inventoryItem: InventoryItem
+  purchaseQuantity: Float
   linkedExpense: ExpenseEntry
   category: String!
   amountRequested: Int!

@@ -27,44 +27,15 @@ mutation SetOwnerDayAttendance($householdId: UUID!, $staffId: UUID!, $date: Date
   })
 }
 
-mutation SaveAttendanceAndPay($householdId: UUID!, $staffId: UUID!, $date: Date!, $status: String!, $reason: String!, $requestId: UUID) @auth(level: USER) @transaction {
+mutation SaveAttendanceAndPay($householdId: UUID!, $staffId: UUID!, $date: Date!, $status: String!, $reason: String!) @auth(level: USER) @transaction {
   query @redact {
     staffMember(id: $staffId) @check(expr: "this != null", message: "Staff member not found") {
       householdId @check(expr: "this == vars.householdId && vars.status in ['present','late','absent','off-duty']", message: "Invalid household or attendance status")
       household { ownerUid @check(expr: "this == auth.uid", message: "Owner access required") }
     }
   }
-  lockStaff: _execute(sql: """
-    UPDATE staff_member s SET updated_at=now() FROM household h WHERE s.id=$1::uuid AND s.household_id=h.id
-      AND h.id=$2::uuid AND h.owner_uid=$3 AND $4::date <= (now() AT TIME ZONE h.timezone)::date
-  """,params: [$staffId,$householdId,{_expr:"auth.uid"},$date]) @check(expr:"this == 1")
-  review: _execute(sql: """
-    UPDATE attendance_correction_request SET status='approved',reviewed_at=now(),updated_at=now()
-    WHERE id=$1::uuid AND staff_id=$2::uuid AND requested_for=$3::date AND requested_status=$4 AND status='pending'
-  """, params: [$requestId,$staffId,$date,$status]) @check(expr:"vars.requestId == null || this == 1")
-  edit: _execute(sql: """
-    INSERT INTO attendance_correction_request(household_id,staff_id,requested_for,requested_status,reason,status,reviewed_at,requested_at,created_at,updated_at,notes)
-    SELECT $1::uuid,$2::uuid,$3::date,$4,$5,'approved',now(),now(),now(),now(),'Owner attendance edit' WHERE $6::uuid IS NULL
-  """,params: [$householdId,$staffId,$date,$status,$reason,$requestId])
-  ensureRun: _execute(sql: """
-    INSERT INTO payroll_run(household_id,staff_id,month_label,base_salary,net_pay,created_at,updated_at)
-    SELECT s.household_id,s.id,to_char($2::date,'FMMonth YYYY'),s.salary,s.salary,now(),now() FROM staff_member s
-    WHERE s.id=$1::uuid AND NOT EXISTS (SELECT 1 FROM payroll_run p WHERE p.staff_id=s.id AND p.month_label=to_char($2::date,'FMMonth YYYY'))
-  """,params: [$staffId,$date])
-  reconcile: _execute(sql: """
-    WITH latest AS (
-      SELECT id,status,base_salary FROM payroll_run WHERE staff_id=$1::uuid AND month_label=to_char($2::date,'FMMonth YYYY')
-      ORDER BY updated_at DESC,created_at DESC,id DESC LIMIT 1
-    ), days AS (
-      SELECT DISTINCT ON (requested_for) requested_status FROM attendance_correction_request
-      WHERE staff_id=$1::uuid AND status='approved' AND date_trunc('month',requested_for)=date_trunc('month',$2::date)
-      ORDER BY requested_for,reviewed_at DESC,created_at DESC,id DESC
-    ), adjusted AS (
-      SELECT id,least(base_salary,ceil(base_salary/30.0)::int * (SELECT count(*)::int FROM days WHERE requested_status='absent')) AS total
-      FROM latest WHERE status='draft'
-    )
-    UPDATE payroll_run p SET attendance_deductions=a.total,deductions=p.deductions-p.attendance_deductions+a.total,
-      net_pay=p.base_salary-p.advances-p.deductions+p.attendance_deductions-a.total,updated_at=now()
-    FROM adjusted a WHERE p.id=a.id
-  """, params: [$staffId,$date]) @check(expr:"this == 1",message:"Reopen the pay period before changing attendance.")
+  attendanceCorrectionRequest_insert(data:{
+    householdId:$householdId,staffId:$staffId,requestedFor:$date,requestedStatus:$status,reason:$reason,
+    status:"approved",reviewedAt_expr:"request.time",notes:"Owner attendance edit"
+  })
 }

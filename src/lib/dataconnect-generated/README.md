@@ -784,7 +784,6 @@ export interface SaveAttendanceAndPayVariables {
   date: DateString;
   status: string;
   reason: string;
-  requestId?: UUIDString | null;
 }
 ```
 ### Return Type
@@ -793,11 +792,7 @@ Recall that executing the `SaveAttendanceAndPay` mutation returns a `MutationPro
 The `data` property is an object of type `SaveAttendanceAndPayData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
 export interface SaveAttendanceAndPayData {
-  lockStaff?: number | null;
-  review?: number | null;
-  edit?: number | null;
-  ensureRun?: number | null;
-  reconcile?: number | null;
+  attendanceCorrectionRequest_insert: AttendanceCorrectionRequest_Key;
 }
 ```
 ### Using `SaveAttendanceAndPay`'s action shortcut function
@@ -813,33 +808,24 @@ const saveAttendanceAndPayVars: SaveAttendanceAndPayVariables = {
   date: ..., 
   status: ..., 
   reason: ..., 
-  requestId: ..., // optional
 };
 
 // Call the `saveAttendanceAndPay()` function to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await saveAttendanceAndPay(saveAttendanceAndPayVars);
 // Variables can be defined inline as well.
-const { data } = await saveAttendanceAndPay({ householdId: ..., staffId: ..., date: ..., status: ..., reason: ..., requestId: ..., });
+const { data } = await saveAttendanceAndPay({ householdId: ..., staffId: ..., date: ..., status: ..., reason: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
 const { data } = await saveAttendanceAndPay(dataConnect, saveAttendanceAndPayVars);
 
-console.log(data.lockStaff);
-console.log(data.review);
-console.log(data.edit);
-console.log(data.ensureRun);
-console.log(data.reconcile);
+console.log(data.attendanceCorrectionRequest_insert);
 
 // Or, you can use the `Promise` API.
 saveAttendanceAndPay(saveAttendanceAndPayVars).then((response) => {
   const data = response.data;
-  console.log(data.lockStaff);
-  console.log(data.review);
-  console.log(data.edit);
-  console.log(data.ensureRun);
-  console.log(data.reconcile);
+  console.log(data.attendanceCorrectionRequest_insert);
 });
 ```
 
@@ -856,13 +842,12 @@ const saveAttendanceAndPayVars: SaveAttendanceAndPayVariables = {
   date: ..., 
   status: ..., 
   reason: ..., 
-  requestId: ..., // optional
 };
 
 // Call the `saveAttendanceAndPayRef()` function to get a reference to the mutation.
 const ref = saveAttendanceAndPayRef(saveAttendanceAndPayVars);
 // Variables can be defined inline as well.
-const ref = saveAttendanceAndPayRef({ householdId: ..., staffId: ..., date: ..., status: ..., reason: ..., requestId: ..., });
+const ref = saveAttendanceAndPayRef({ householdId: ..., staffId: ..., date: ..., status: ..., reason: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -872,20 +857,12 @@ const ref = saveAttendanceAndPayRef(dataConnect, saveAttendanceAndPayVars);
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeMutation(ref);
 
-console.log(data.lockStaff);
-console.log(data.review);
-console.log(data.edit);
-console.log(data.ensureRun);
-console.log(data.reconcile);
+console.log(data.attendanceCorrectionRequest_insert);
 
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
-  console.log(data.lockStaff);
-  console.log(data.review);
-  console.log(data.edit);
-  console.log(data.ensureRun);
-  console.log(data.reconcile);
+  console.log(data.attendanceCorrectionRequest_insert);
 });
 ```
 
@@ -1041,9 +1018,7 @@ Recall that executing the `EnsureMonthlyPayroll` mutation returns a `MutationPro
 The `data` property is an object of type `EnsureMonthlyPayrollData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
 export interface EnsureMonthlyPayrollData {
-  lockHousehold?: number | null;
-  profiles?: number | null;
-  runs?: number | null;
+  household_update?: Household_Key | null;
 }
 ```
 ### Using `EnsureMonthlyPayroll`'s action shortcut function
@@ -1067,16 +1042,12 @@ const { data } = await ensureMonthlyPayroll({ householdId: ..., });
 const dataConnect = getDataConnect(connectorConfig);
 const { data } = await ensureMonthlyPayroll(dataConnect, ensureMonthlyPayrollVars);
 
-console.log(data.lockHousehold);
-console.log(data.profiles);
-console.log(data.runs);
+console.log(data.household_update);
 
 // Or, you can use the `Promise` API.
 ensureMonthlyPayroll(ensureMonthlyPayrollVars).then((response) => {
   const data = response.data;
-  console.log(data.lockHousehold);
-  console.log(data.profiles);
-  console.log(data.runs);
+  console.log(data.household_update);
 });
 ```
 
@@ -1104,16 +1075,12 @@ const ref = ensureMonthlyPayrollRef(dataConnect, ensureMonthlyPayrollVars);
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeMutation(ref);
 
-console.log(data.lockHousehold);
-console.log(data.profiles);
-console.log(data.runs);
+console.log(data.household_update);
 
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
-  console.log(data.lockHousehold);
-  console.log(data.profiles);
-  console.log(data.runs);
+  console.log(data.household_update);
 });
 ```
 
@@ -1162,11 +1129,7 @@ Recall that executing the `PostCashPurchase` mutation returns a `MutationPromise
 The `data` property is an object of type `PostCashPurchaseData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
 export interface PostCashPurchaseData {
-  claim?: number | null;
-  expense?: number | null;
-  post?: number | null;
-  stock?: number | null;
-  movement?: number | null;
+  staffCashRequest_update?: StaffCashRequest_Key | null;
 }
 ```
 ### Using `PostCashPurchase`'s action shortcut function
@@ -1192,20 +1155,12 @@ const { data } = await postCashPurchase({ requestId: ..., itemId: ..., quantity:
 const dataConnect = getDataConnect(connectorConfig);
 const { data } = await postCashPurchase(dataConnect, postCashPurchaseVars);
 
-console.log(data.claim);
-console.log(data.expense);
-console.log(data.post);
-console.log(data.stock);
-console.log(data.movement);
+console.log(data.staffCashRequest_update);
 
 // Or, you can use the `Promise` API.
 postCashPurchase(postCashPurchaseVars).then((response) => {
   const data = response.data;
-  console.log(data.claim);
-  console.log(data.expense);
-  console.log(data.post);
-  console.log(data.stock);
-  console.log(data.movement);
+  console.log(data.staffCashRequest_update);
 });
 ```
 
@@ -1235,20 +1190,12 @@ const ref = postCashPurchaseRef(dataConnect, postCashPurchaseVars);
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeMutation(ref);
 
-console.log(data.claim);
-console.log(data.expense);
-console.log(data.post);
-console.log(data.stock);
-console.log(data.movement);
+console.log(data.staffCashRequest_update);
 
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
-  console.log(data.claim);
-  console.log(data.expense);
-  console.log(data.post);
-  console.log(data.stock);
-  console.log(data.movement);
+  console.log(data.staffCashRequest_update);
 });
 ```
 
@@ -1440,8 +1387,7 @@ Recall that executing the `AddManualPayDeduction` mutation returns a `MutationPr
 The `data` property is an object of type `AddManualPayDeductionData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
 export interface AddManualPayDeductionData {
-  lockStaff?: number | null;
-  deduction?: number | null;
+  payrollRun_update?: PayrollRun_Key | null;
 }
 ```
 ### Using `AddManualPayDeduction`'s action shortcut function
@@ -1467,14 +1413,12 @@ const { data } = await addManualPayDeduction({ staffId: ..., month: ..., amount:
 const dataConnect = getDataConnect(connectorConfig);
 const { data } = await addManualPayDeduction(dataConnect, addManualPayDeductionVars);
 
-console.log(data.lockStaff);
-console.log(data.deduction);
+console.log(data.payrollRun_update);
 
 // Or, you can use the `Promise` API.
 addManualPayDeduction(addManualPayDeductionVars).then((response) => {
   const data = response.data;
-  console.log(data.lockStaff);
-  console.log(data.deduction);
+  console.log(data.payrollRun_update);
 });
 ```
 
@@ -1504,14 +1448,12 @@ const ref = addManualPayDeductionRef(dataConnect, addManualPayDeductionVars);
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeMutation(ref);
 
-console.log(data.lockStaff);
-console.log(data.deduction);
+console.log(data.payrollRun_update);
 
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
-  console.log(data.lockStaff);
-  console.log(data.deduction);
+  console.log(data.payrollRun_update);
 });
 ```
 

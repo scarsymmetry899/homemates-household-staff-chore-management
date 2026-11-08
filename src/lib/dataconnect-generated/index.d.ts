@@ -24,8 +24,7 @@ export interface AddExpenseEntryVariables {
 }
 
 export interface AddManualPayDeductionData {
-  lockStaff?: number | null;
-  deduction?: number | null;
+  payrollRun_update?: PayrollRun_Key | null;
 }
 
 export interface AddManualPayDeductionVariables {
@@ -300,9 +299,7 @@ export interface DismissAlertVariables {
 }
 
 export interface EnsureMonthlyPayrollData {
-  lockHousehold?: number | null;
-  profiles?: number | null;
-  runs?: number | null;
+  household_update?: Household_Key | null;
 }
 
 export interface EnsureMonthlyPayrollVariables {
@@ -570,11 +567,7 @@ export interface PayrollRun_Key {
 }
 
 export interface PostCashPurchaseData {
-  claim?: number | null;
-  expense?: number | null;
-  post?: number | null;
-  stock?: number | null;
-  movement?: number | null;
+  staffCashRequest_update?: StaffCashRequest_Key | null;
 }
 
 export interface PostCashPurchaseVariables {
@@ -695,11 +688,7 @@ export interface RoomZone_Key {
 }
 
 export interface SaveAttendanceAndPayData {
-  lockStaff?: number | null;
-  review?: number | null;
-  edit?: number | null;
-  ensureRun?: number | null;
-  reconcile?: number | null;
+  attendanceCorrectionRequest_insert: AttendanceCorrectionRequest_Key;
 }
 
 export interface SaveAttendanceAndPayVariables {
@@ -708,7 +697,6 @@ export interface SaveAttendanceAndPayVariables {
   date: DateString;
   status: string;
   reason: string;
-  requestId?: UUIDString | null;
 }
 
 export interface SetAppLanguageData {

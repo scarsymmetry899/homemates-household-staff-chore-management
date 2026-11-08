@@ -1044,7 +1044,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     const request = attendanceRequests.find((item) => item.id === requestId);
     if (!isDemoMode && request && sqlHouseholdId && status === "approved") {
-      await saveDayAttendance(sqlHouseholdId, request.staffId, request.date, request.requestedStatus, request.reason, requestId);
+      await sqlReviewAttendanceCorrectionRequest({requestId,status,notes:notes || null});
       window.dispatchEvent(new Event("homemates-saved"));
       return;
     }
