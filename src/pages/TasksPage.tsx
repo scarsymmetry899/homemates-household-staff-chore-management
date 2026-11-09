@@ -7,6 +7,7 @@ import { PageTransition, StaggerContainer, StaggerItem, PressableCard } from "@/
 import StaffAvatar from "@/components/StaffAvatar";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
+import RecurringChores from "@/components/RecurringChores";
 
 type TaskFilter = "all" | "pending" | "done" | "bydate";
 
@@ -22,7 +23,7 @@ interface TaskItem {
 }
 
 const TasksPage = () => {
-  const { staff, appRole, activeStaffId, toggleTask, addTask, deleteTask, updateTaskDueDate, reassignTask } = useAppState();
+  const { staff, appRole, connectedHouseholdId, isDemoMode, activeStaffId, toggleTask, addTask, deleteTask, updateTaskDueDate, reassignTask } = useAppState();
   const { t } = useI18n();
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [showForm, setShowForm] = useState(false);
@@ -249,7 +250,7 @@ const TasksPage = () => {
 
       {/* Inline reassign picker */}
       {canManageTasks && <AnimatePresence>
-        {reassignPickerTask?.task === task.task && reassignPickerTask?.staffId === task.staffId && (
+        {reassignPickerTask?.taskIndex === task.taskIndex && reassignPickerTask?.staffId === task.staffId && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -301,6 +302,7 @@ const TasksPage = () => {
         </div>
 
         {/* Filter Tabs */}
+        {canManageTasks && connectedHouseholdId && !isDemoMode && <RecurringChores householdId={connectedHouseholdId}/>}
         <div className="flex gap-2 flex-wrap">
           {(["all", "pending", "done", "bydate"] as TaskFilter[]).map((f) => (
             <button

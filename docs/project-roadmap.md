@@ -28,8 +28,7 @@ This document tracks the current build status, what still needs to be wired, and
 
 ## Still To Wire
 
-- Full owner vs staff gated views.
-- Staff-only app mode showing only the staff member's daily tasks, attendance, payments, and request flows.
+- Cash and attendance correction requests from an independently signed-in staff account.
 - Full app-wide translations for Staff, Expenses, Payroll, Insights, Alerts, onboarding, toast messages, forms, and AI chat.
 - Staff cash request UI and owner approval workflow.
 - Expense request to purchase to bill upload to monthly expense linking.
@@ -58,7 +57,8 @@ Goal: remove demo assumptions and make the current app dependable for real house
 
 Goal: support the real workflows of staff, owners, household purchases, attendance, and NFC.
 
-- Staff daily mode: tasks, check-in status, payment view, attendance history, requests.
+- Implemented independent staff sign-in with an owner-issued invitation, personal tasks, attendance, pay, and revocation. Cash and attendance correction requests are the next staff workflows.
+- Implemented date-bounded recurring chores with weekday selection, household-local times, optional room and instructions, one-date changes and series edits. Leave and automatic coverage remain planned.
 - Cash request workflow: request, owner approval, amount given, purchase, receipt, expense linking.
 - Grocery/fuel/supplies tracking by category, staff member, item, date, and household ledger.
 - NFC setup flow: write tag, assign tag, test tap, link to staff, room, task, attendance station, or inventory station.

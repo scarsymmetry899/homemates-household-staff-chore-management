@@ -2,7 +2,7 @@
 
 > Your household, simplified.
 
-A household staff management app under active production development. Owners can manage saved staff, tasks, spending, payroll, and inventory; staff sign-in and some integrations are still in progress.
+A household staff management app for owners and staff. Owners manage schedules, spending, payroll and supplies. Invited staff use their own account to see their assignments, attendance and pay.
 
 ---
 
@@ -18,6 +18,9 @@ A household staff management app under active production development. Owners can
 
 ### What Works Today
 
+- Open a staff profile and choose **Create invitation**. Share the private link with that person. They sign in with Google or email/password and accept the invitation. A link lasts 24 hours, works once, and can be replaced or canceled. **Disconnect staff login** revokes access. PostgreSQL-backed connector operations resolve the profile from the Firebase UID for every staff read and completion.
+- Under **Tasks → Recurring chores**, select the weekdays, person, optional room, household-local due time and end date. Each date gets a separate task. Owners can change one occurrence, update pending chores in the series, or stop the routine. Completed occurrences retain their original details. Each schedule spans at most 90 days between its start and end.
+
 - Per-account sign-in gate and fresh household onboarding.
 - Setup wizard for household, owner, homemates, rooms, staff, payroll base, inventory, and initial task assignments.
 - Combined staff responsibilities such as Cook + Cleaner + Nanny.
@@ -32,10 +35,9 @@ A household staff management app under active production development. Owners can
 
 ### Still In Progress
 
-- Full owner vs staff gated experience.
-- Staff-only mobile view for today's tasks, attendance, payment, and cash/expense requests.
+- Cash requests and attendance discrepancy submission from an independently signed-in staff account.
 - Complete app-wide translations across all screens, forms, toasts, onboarding, and AI chat.
-- Independent staff sign-in and backend-enforced role permissions. The current staff view is an owner preview.
+- Additional staff workflows beyond the personal task, attendance and pay workspace.
 - Receipt upload and full expense-to-inventory reconciliation.
 - Historical attendance-event hydration and payroll-policy edge cases.
 - Realtime sync for all operational modules.

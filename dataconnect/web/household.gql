@@ -157,8 +157,9 @@ query MyHouseholds @auth(level: USER)
       telegramChatId
       notes
     }
-    taskInstances_on_household(limit: 100, orderBy: [{ createdAt: DESC }]) {
+    taskInstances_on_household(limit: 10000, orderBy: [{ createdAt: DESC }]) {
       id
+      occurrenceDay
       title
       status
       dueAt

@@ -20,6 +20,7 @@ import HouseholdPage from "./pages/HouseholdPage";
 import AlertsPage from "./pages/AlertsPage";
 import SettingsPage from "./pages/SettingsPage";
 import StaffWorkspace from "./pages/StaffWorkspace";
+import StaffSession from "./components/StaffSession";
 import NotFound from "./pages/NotFound";
 import { onAuthStateChange, isFirebaseConfigured, signOutFirebase } from "@/lib/firebase";
 import { useNfcAttendance } from "@/hooks/useNfcAttendance";
@@ -79,12 +80,14 @@ const App = () => {
     return localStorage.getItem("homemaker_auth") === "true";
   });
   const [authChecked, setAuthChecked] = useState(!isFirebaseConfigured);
+  const [uid,setUid]=useState<string|null>(null);
 
   // Listen to Firebase auth state if Firebase is configured
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     let unsubscribe: (() => void) | null = null;
     onAuthStateChange((user) => {
+      setUid(user?.uid ?? null);
       if (user) {
         localStorage.setItem("homemaker_auth", "true");
         localStorage.setItem("homemaker_current_uid", user.uid);
@@ -121,7 +124,7 @@ const App = () => {
   // While Firebase resolves auth state, show nothing (or a brief splash)
   if (!authChecked) return null;
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || (isFirebaseConfigured && !uid)) {
     return (
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
@@ -133,14 +136,15 @@ const App = () => {
     );
   }
 
+  const householdView = <AppProvider key={uid}>
+    <Toaster />
+    <Sonner />
+    <AppInner onLogout={handleLogout} />
+  </AppProvider>;
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AppProvider>
-          <Toaster />
-          <Sonner />
-          <AppInner onLogout={handleLogout} />
-        </AppProvider>
+        {uid ? <StaffSession key={uid} uid={uid} onLogout={handleLogout}>{householdView}</StaffSession> : householdView}
       </TooltipProvider>
     </QueryClientProvider>
   );

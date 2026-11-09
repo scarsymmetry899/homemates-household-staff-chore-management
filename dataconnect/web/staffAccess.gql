@@ -1,0 +1,39 @@
+query MyStaffIdentity @auth(level: USER) {
+  profiles: staffMembers(where: {loginUid: {eq_expr: "auth.uid"}}, limit: 1) { id name }
+}
+
+query OwnerStaffAccess($staffId: UUID!) @auth(level: USER) {
+  profiles: staffMembers(where: {id: {eq: $staffId}, household: {ownerUid: {eq_expr: "auth.uid"}}}) { id loginUid inviteIssuedAt }
+}
+
+mutation InviteStaffLogin($staffId: UUID!, $code: UUID!) @auth(level: USER) @transaction {
+  query @redact { staffMember(id: $staffId) @check(expr: "this != null") { household { ownerUid @check(expr: "this == auth.uid") } } }
+  staffMember_updateMany(where: {id: {eq: $staffId}, loginUid: {isNull: true}}, data: {inviteCode: $code, inviteIssuedAt_expr: "request.time"}) @check(expr: "this == 1")
+}
+
+mutation ClaimStaffLogin($staffId: UUID!, $code: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    staffMember(id: $staffId) @check(expr: "this != null") {
+      household { ownerUid @check(expr: "this != auth.uid") }
+      inviteIssuedAt @check(expr: "this != null && request.time < timestamp(this) + duration('86400s')")
+    }
+  }
+  staffMember_updateMany(where: {id: {eq: $staffId}, inviteCode: {eq: $code}, loginUid: {isNull: true}}, data: {loginUid_expr: "auth.uid", inviteCode: null, inviteIssuedAt: null}) @check(expr: "this == 1")
+}
+
+mutation RevokeStaffLogin($staffId: UUID!) @auth(level: USER) @transaction {
+  query @redact { staffMember(id: $staffId) @check(expr: "this != null") { household { ownerUid @check(expr: "this == auth.uid") } } }
+  staffMember_update(id: $staffId, data: {loginUid: null, inviteCode: null, inviteIssuedAt: null})
+}
+
+query MyStaffWork @auth(level: USER) {
+  profiles: staffMembers(where: {loginUid: {eq_expr: "auth.uid"}}, limit: 1) { id name role household {name timezone} }
+  tasks: taskInstances(where: {assignedStaff: {loginUid: {eq_expr: "auth.uid"}}}, orderBy: [{createdAt: DESC}], limit: 1000) { id title status dueAt completedAt occurrenceDay routineRoom routineInstructions }
+  attendance: attendanceEvents(where: {staff: {loginUid: {eq_expr: "auth.uid"}}}, orderBy: [{occurredAt: DESC}], limit: 365) { id occurredAt eventType }
+  corrections: attendanceCorrectionRequests(where: {staff: {loginUid: {eq_expr: "auth.uid"}}, status: {eq: "approved"}}, orderBy: [{reviewedAt: DESC}], limit: 365) { id requestedFor requestedStatus }
+  pay: payrollRuns(where: {staff: {loginUid: {eq_expr: "auth.uid"}}}, orderBy: [{createdAt: DESC}], limit: 36) { id monthLabel baseSalary deductions advances netPay status }
+}
+
+mutation CompleteMyStaffTask($taskId: UUID!) @auth(level: USER) @transaction {
+  taskInstance_updateMany(where: {id: {eq: $taskId}, assignedStaff: {loginUid: {eq_expr: "auth.uid"}}, status: {ne: "completed"}}, data: {status: "completed", completionSource: "staff", completedAt_expr: "request.time", updatedAt_expr: "request.time"}) @check(expr: "this == 1")
+}

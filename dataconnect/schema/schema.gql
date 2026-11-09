@@ -34,6 +34,9 @@ type HomemateProfile @table {
 }
 
 type StaffMember @table {
+  loginUid: String @unique
+  inviteCode: UUID
+  inviteIssuedAt: Timestamp
   household: Household!
   name: String!
   role: String!
@@ -69,6 +72,12 @@ type RoomZone @table {
 }
 
 type TaskTemplate @table {
+  assignedStaff: StaffMember
+  weekdays: String
+  startsOn: Date
+  endsOn: Date
+  localTime: String
+  instructions: String
   household: Household!
   room: RoomZone
   name: String!
@@ -80,6 +89,9 @@ type TaskTemplate @table {
 }
 
 type TaskInstance @table {
+  occurrenceDay: Date
+  routineRoom: String
+  routineInstructions: String
   household: Household!
   template: TaskTemplate
   assignedStaff: StaffMember

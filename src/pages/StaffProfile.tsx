@@ -5,13 +5,14 @@ import { ArrowLeft, Bell, CalendarDays, Shield, Pencil, Download, Trash2, Clock,
 import { useAppState } from "@/context/AppContext";
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/animations/MotionComponents";
 import StaffAvatar from "@/components/StaffAvatar";
+import StaffLoginAccess from "@/components/StaffLoginAccess";
 import { toast } from "sonner";
 import { sendMessage as sendTelegram } from "@/lib/telegram";
 
 const StaffProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { staff, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction, updateStaffPhoto, updateStaffTelegramId } = useAppState();
+  const { staff, connectedHouseholdId, isDemoMode, toggleTask, removeStaff, deleteTask, updateStaffRole, updateStaffShift, addDeduction, updateStaffPhoto, updateStaffTelegramId } = useAppState();
   const s = staff.find((s) => s.id === id);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -289,6 +290,7 @@ const StaffProfile = () => {
         </section>
 
         {/* Assignments */}
+        {connectedHouseholdId && !isDemoMode && <StaffLoginAccess key={s.id} staffId={s.id}/>}
         <AnimatedCard delay={0.15} className="glass-card rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="headline-sm text-card-foreground">Assignments</h3>

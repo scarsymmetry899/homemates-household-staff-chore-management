@@ -136,7 +136,7 @@ export function mapHousehold(household: SqlHousehold, ownerName: string): SqlCon
       id: task.id,
       task: task.title,
       done: task.status === "completed",
-      dueDate: task.dueAt ? task.dueAt.split("T")[0] : undefined,
+      dueDate: (task as typeof task & {occurrenceDay?:string}).occurrenceDay || (task.dueAt ? task.dueAt.split("T")[0] : undefined),
     });
     tasksByStaffId.set(staffId, existing);
   });

@@ -1,0 +1,28 @@
+query HouseholdRoutines($householdId: UUID!) @auth(level: USER) {
+  routines: taskTemplates(where: {household: {id: {eq: $householdId}, ownerUid: {eq_expr: "auth.uid"}}, weekdays: {isNull: false}}, orderBy: [{createdAt: DESC}], limit: 500) {
+    id name assignedStaffId roomId weekdays startsOn endsOn localTime instructions
+  }
+}
+
+mutation StopRoutine($id: UUID!) @auth(level: USER) @transaction {
+  query @redact { taskTemplate(id: $id) @check(expr: "this != null") { household {ownerUid @check(expr: "this == auth.uid")} } }
+  taskTemplate_update(id: $id,data:{weekdays:null,updatedAt_expr:"request.time"})
+}
+
+mutation CreateRoutine($id: UUID!, $householdId: UUID!, $name: String!, $staffId: UUID!, $roomId: UUID, $weekdays: String!, $start: Date!, $end: Date!, $time: String!, $instructions: String!) @auth(level: USER) @transaction {
+  query @redact { household(id: $householdId) @check(expr: "this != null") { ownerUid @check(expr: "this == auth.uid") } }
+  taskTemplate_insert(data: {id: $id, householdId: $householdId, category: "routine", name: $name, assignedStaffId: $staffId, roomId: $roomId, weekdays: $weekdays, startsOn: $start, endsOn: $end, localTime: $time, instructions: $instructions})
+}
+
+mutation EditRoutine($id: UUID!, $name: String!, $staffId: UUID!, $roomId: UUID, $weekdays: String!, $start: Date!, $end: Date!, $time: String!, $instructions: String!) @auth(level: USER) @transaction {
+  query @redact { taskTemplate(id: $id) @check(expr: "this != null && this.weekdays != null") { weekdays household {ownerUid @check(expr: "this == auth.uid")} } }
+  taskTemplate_update(id: $id, data: {name: $name, assignedStaffId: $staffId, roomId: $roomId, weekdays: $weekdays, startsOn: $start, endsOn: $end, localTime: $time, instructions: $instructions, updatedAt_expr: "request.time"})
+}
+query RoutineOccurrences($id: UUID!) @auth(level: USER) {
+  chores: taskInstances(where: {templateId:{eq:$id},household:{ownerUid:{eq_expr:"auth.uid"}},status:{eq:"pending"}},orderBy:[{occurrenceDay:ASC}],limit:100) { id occurrenceDay title assignedStaffId }
+}
+
+mutation EditOneChore($id: UUID!, $householdId: UUID!, $staffId: UUID!, $name: String!) @auth(level: USER) @transaction {
+  query @redact { staffMember(id:$staffId) @check(expr:"this != null") { householdId @check(expr:"this == vars.householdId") household { ownerUid @check(expr:"this == auth.uid") } } }
+  taskInstance_updateMany(where:{id:{eq:$id},householdId:{eq:$householdId},occurrenceDay:{isNull:false},status:{eq:"pending"}},data:{title:$name,assignedStaffId:$staffId,updatedAt_expr:"request.time"}) @check(expr:"this == 1")
+}
